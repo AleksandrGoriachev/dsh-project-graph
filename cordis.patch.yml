@@ -1,0 +1,43 @@
+# Bundle patch for dsh-project-graph.
+#
+# The reconciler appends this package to `dsh.profile.bundles` and applies this
+# patch layer. `roots` lists the project repositories whose `structure/` folder
+# the graph may read; the first entry is selected by default. Paths must be
+# absolute. Neither the panel nor the spawn tool writes to them.
+#
+# `structureDir` is the folder inside a project that holds the structure
+# (`structure` by default). Every `*.json` in it is one fragment of the graph;
+# fragments are merged, so the structure may grow beyond a single file.
+#
+# `provider` names the ctx.subagents provider the `project_graph_spawn` tool
+# uses; `maxDepth`, when set, overrides the host delegation depth.
+- insert:
+    - id: dsh-project-graph
+      name: dsh-project-graph
+      config:
+        roots: []
+        structureDir: structure
+        provider: spawn
+        # Exchange facts: extra folders, if any; empty means the `coordination`
+        # folder next to the workspace (the convention this team uses).
+        exchange: []
+        # Which node stands for the session that owns this structure: it shows
+        # "работает" while that session works.
+        self: coordinator
+        # A message in the box wakes the addressee's last active session; when that
+        # workspace has no live session, the node is started there with the message
+        # as its prompt (wakeSpawn). Off means the box stays read-only.
+        wakeSpawn: true
+        # How old a message may be and still be delivered after a restart.
+        exchangeBacklogMs: 1800000
+        # Which label belongs to which workspace in the exchange headers.
+        # The bundle ships NO labels and NO paths: they belong to the profile layer
+        # (cordis.patch.yml профиля). Иначе любой другой DSH, поставивший плагин,
+        # видел бы в реестре воркспейсы чужой машины — и личные пути уходили бы в
+        # публичный пакет.
+        participants: {}
+        # Install spec of the workflow plugin the panel may offer in its card.
+        # Empty means "no install button": the card keeps the manual instruction.
+        # The package is the plugin (dsh-workflow-console), not the spec repo.
+        # Stable asset of the workflow plugin release (schema v1, approved 2026-10-28).
+        workflowInstallSpec: 'https://github.com/AleksandrGoriachev/subagent-workflow/releases/latest/download/dsh-workflow-console.tgz'
