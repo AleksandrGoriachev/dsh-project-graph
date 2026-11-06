@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "models": {
+    "work": {
+      "provider": "opencode",
+      "model": "deepseek-v4.1-flash"
+    }
+  }
+}
