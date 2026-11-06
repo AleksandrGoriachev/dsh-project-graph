@@ -1,0 +1,48 @@
+{
+  "name": "dsh-project-graph",
+  "version": "1.0.23",
+  "description": "Project structure graph for DeepSeek Harness: build and edit a graph, check LLM routes/presets/provider, run one node and watch its state.",
+  "license": "MIT",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js"
+  },
+  "files": [
+    "lib",
+    "cordis.patch.yml",
+    "README.md",
+    "structure",
+    "examples"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node tools/test.mjs",
+    "preview": "node tools/preview.mjs"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web"
+    }
+  },
+  "devDependencies": {
+    "@playwright/test": "1.64.0",
+    "jsdom": "^30.1.3",
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AleksandrGoriachev/dsh-project-graph.git"
+  },
+  "homepage": "https://github.com/AleksandrGoriachev/dsh-project-graph#readme",
+  "bugs": {
+    "url": "https://github.com/AleksandrGoriachev/dsh-project-graph/issues"
+  }
+}
