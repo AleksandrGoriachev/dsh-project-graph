@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "nodes": [
+    {
+      "id": "design.lead",
+      "role": "lead",
+      "model": "work",
+      "brief": "координирует дизайнеров"
+    },
+    {
+      "id": "design.designer",
+      "role": "designer",
+      "model": "work",
+      "brief": "делает дизайн"
+    }
+  ],
+  "edges": [
+    {
+      "from": "design.lead",
+      "to": "design.designer",
+      "kind": "delegate"
+    }
+  ]
+}
