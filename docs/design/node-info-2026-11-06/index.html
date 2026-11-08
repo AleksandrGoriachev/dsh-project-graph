@@ -1,0 +1,1826 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Окно узла: сведения, состояние, настройки — макет 2026-11-06</title>
+<!--
+  МАКЕТ, а не рабочий экран. Один файл, без сети и внешних файлов: открывается двойным щелчком.
+
+  Что показывает. Только панель Structure (не весь DSH): карточки 176 x 62, связи, нижняя
+  панель, контекстное меню по правой кнопке и окно узла. Экран 01 — как сейчас: состояние
+  узла в нижней панели (renderDetails), настройки — отдельным окном после правой кнопки
+  (renderNodeEditModal). Экран 02 — вариант A: одно окно узла с вкладками «Состояние» и
+  «Настройки». Экран 03 — вариант B: кнопка «...» на карточке и панель под ней, где
+  состояние и настройки рядом. Экран 04 — вариант C (рекомендуется): одно окно, три
+  вкладки — «Сведения» (паспорт), «Состояние» (живое), «Настройки» (правка).
+
+  Как снимать превью (1280 x 800, панель 1248 x 768):
+    msedge --headless=new --hide-scrollbars --window-size=1280,800 --virtual-time-budget=2000 ^
+      --screenshot=01-before.png "file:///.../index.html?scene=before"
+    (так же scene=a, scene=b и scene=c). Без параметра открывается лист целиком: все
+    четыре экрана, плюсы и минусы, таблицы и рекомендация.
+-->
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+
+  :root {
+    --text: #1b1b1f;
+    --muted: #5b5b66;
+    --tertiary: #6f6f7a;
+    --caption: #8b8b96;
+    --line: #e2e3e9;
+    --line-strong: #c9ccd4;
+    --accent: #4176e6;
+    --accent-soft: #eef2ff;
+    --success: #1f9d55;
+    --warn: #a86200;
+    --danger: #c92626;
+    --panel: #ffffff;
+    --canvas: #f4f5f8;
+    --bg: #eef0f5;
+    --layer1: rgba(127, 127, 127, 0.06);
+    --layer2: rgba(127, 127, 127, 0.10);
+    --shadow: 0 10px 26px rgba(20, 20, 45, 0.08);
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+
+  [data-theme="dark"] {
+    --text: #e9ebee;
+    --muted: #a8aeb8;
+    --tertiary: #858c97;
+    --caption: #6b727d;
+    --line: #2c3038;
+    --line-strong: #3b4049;
+    --accent: #4d7cf3;
+    --accent-soft: #1a2436;
+    --success: #31c46e;
+    --warn: #e0a33e;
+    --danger: #e5484d;
+    --panel: #1e2126;
+    --canvas: #141518;
+    --bg: #101114;
+    --layer1: rgba(255, 255, 255, 0.05);
+    --layer2: rgba(255, 255, 255, 0.09);
+    --shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+  }
+
+  html, body { margin: 0; }
+
+  body {
+    padding: 20px;
+    background: var(--bg);
+    color: var(--text);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size: 15px;
+    line-height: 1.4;
+  }
+
+  .sheet { max-width: 1288px; margin: 0 auto; }
+
+  .kicker {
+    margin: 0 0 0.25rem;
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  h1 { margin: 0 0 0.35rem; font-size: 1.45rem; letter-spacing: -0.01em; }
+
+  .lead {
+    margin: 0 0 1rem;
+    max-width: 82rem;
+    color: var(--muted);
+    font-size: 0.92rem;
+    line-height: 1.55;
+  }
+
+  .lead b { color: var(--text); }
+
+  .toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 0.4rem;
+  }
+
+  .seg {
+    display: inline-flex;
+    border: 1px solid var(--line-strong);
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--panel);
+  }
+
+  .seg a {
+    font-size: 12px;
+    padding: 6px 11px;
+    border-right: 1px solid var(--line);
+    color: var(--muted);
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .seg a:last-child { border-right: 0; }
+
+  .seg a.is-on { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+
+  .toolbar .btn { font: inherit; font-size: 12px; padding: 6px 11px; border-radius: 8px; border: 1px solid var(--line-strong); background: var(--panel); color: var(--text); cursor: pointer; }
+  .toolbar .btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  .readout {
+    margin-left: auto;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 6px 10px;
+    white-space: nowrap;
+  }
+
+  /* ================= сцены ================= */
+
+  .scene { margin: 0 0 1.6rem; }
+
+  .scene-head {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin: 1.3rem 0 0.5rem;
+  }
+
+  .scene-no {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  .scene-name { font-size: 1.02rem; font-weight: 700; }
+
+  .badge-rec {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #fff;
+    background: var(--accent);
+    border-radius: 999px;
+    padding: 2px 8px;
+  }
+
+  .scene-note { color: var(--muted); font-size: 0.82rem; }
+
+  .shot { margin: 0; width: min(1248px, 100%); }
+
+  .scene-notes, .scene-extra { margin: 0.8rem 0 0; }
+
+  /* ================= панель ================= */
+
+  .panel {
+    position: relative;
+    width: 100%;
+    height: 768px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: var(--panel);
+    color: var(--text);
+    font-size: 13px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+  }
+
+  .p-top {
+    flex: 0 0 46px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 14px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .p-title { font-size: 15px; font-weight: 600; }
+
+  .chip {
+    font-size: 11px;
+    color: var(--muted);
+    background: var(--layer2);
+    border-radius: 999px;
+    padding: 2px 8px;
+    white-space: nowrap;
+  }
+
+  .chip-flat { background: transparent; border: 1px solid var(--line); font-family: var(--mono); font-size: 10.5px; }
+
+  .panel-badge {
+    margin-left: 2px;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--accent);
+    border: 1px dashed var(--accent);
+    border-radius: 999px;
+    padding: 2px 9px;
+    white-space: nowrap;
+  }
+
+  .spacer { flex: 1 1 auto; }
+
+  .btn {
+    font: inherit;
+    font-size: 12px;
+    padding: 3px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--line-strong);
+    background: var(--layer1);
+    color: var(--text);
+    cursor: pointer;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+    font-weight: 600;
+  }
+
+  .btn-mini {
+    font: inherit;
+    font-size: 10.5px;
+    padding: 1px 7px;
+    border-radius: 6px;
+    border: 1px solid var(--line-strong);
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+  }
+
+  .p-main {
+    position: relative;
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 10px 12px 12px;
+  }
+
+  .canvas-shell { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+
+  .c-head {
+    flex: 0 0 34px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 12px;
+    border: 1px solid var(--line);
+    border-bottom: 0;
+    border-radius: 10px 10px 0 0;
+    background: var(--layer1);
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .c-head strong { font-size: 13px; color: var(--text); }
+
+  .canvas {
+    position: relative;
+    flex: 1 1 auto;
+    min-height: 0;
+    border: 1px solid var(--line);
+    border-radius: 0 0 10px 10px;
+    background: var(--canvas);
+    overflow: hidden;
+  }
+
+  .canvas::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(var(--line-strong) 1px, transparent 1px);
+    background-size: 16px 16px;
+    opacity: 0.45;
+    pointer-events: none;
+  }
+
+  .edges { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+
+  /* ================= карточки ================= */
+
+  .card {
+    position: absolute;
+    width: 176px;
+    height: 62px;
+    border-radius: 10px;
+    border: 1px solid var(--line-strong);
+    background: var(--panel);
+    color: var(--text);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+  }
+
+  .card.is-run { border: 3px solid var(--success); }
+  .card.is-done { border: 1px solid var(--line-strong); }
+
+  .card-clip {
+    position: absolute;
+    inset: 0;
+    border-radius: 10px;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .card-stripe { position: absolute; left: 0; top: 0; width: 4px; height: 100%; border-radius: 2px; }
+
+  .card-id {
+    position: absolute;
+    left: 14px;
+    top: 7px;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  .card-role {
+    position: absolute;
+    left: 14px;
+    right: 10px;
+    top: 23px;
+    font-size: 10.5px;
+    color: var(--tertiary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .card-state { position: absolute; left: 14px; top: 38px; font-size: 9.5px; font-weight: 600; color: var(--tertiary); }
+  .card-state.st-run { color: var(--success); }
+  .card-state.st-done { color: var(--accent); }
+
+  .card-run { position: absolute; left: 14px; top: 50px; font-size: 9px; color: var(--tertiary); }
+
+  .card-dot {
+    position: absolute;
+    right: 6px;
+    top: 6px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--success);
+    box-shadow: 0 0 0 1px var(--panel);
+  }
+
+  .card-more {
+    position: absolute;
+    right: -11px;
+    top: -11px;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border-radius: 50%;
+    border: 1px solid var(--line-strong);
+    background: var(--panel);
+    color: var(--muted);
+    font-size: 15px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.14);
+    cursor: pointer;
+    z-index: 2;
+  }
+
+  /* ================= меню и сноски-пометки ================= */
+
+  .cm {
+    position: absolute;
+    z-index: 3;
+    width: 272px;
+    padding: 6px;
+    border-radius: 10px;
+    border: 1px solid var(--line);
+    background: var(--panel);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.20);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .cm-item {
+    width: 100%;
+    text-align: left;
+    font: inherit;
+    font-size: 13px;
+    padding: 9px 12px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text);
+    cursor: pointer;
+  }
+
+  .cm-item.is-marked { border: 1.5px dashed var(--accent); }
+
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 10.5px;
+    font-weight: 600;
+    line-height: 1.2;
+    padding: 3px 9px;
+    border-radius: 999px;
+    background: var(--panel);
+    color: var(--accent);
+    border: 1px dashed var(--accent);
+    white-space: nowrap;
+  }
+
+  .pill-warn { color: var(--warn); border-color: var(--warn); }
+
+  .pill .n {
+    font-family: var(--mono);
+    font-size: 10px;
+    width: 14px;
+    height: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    border: 1px solid currentColor;
+  }
+
+  .pill-abs { position: absolute; z-index: 4; }
+
+  /* ================= нижняя панель: сейчас ================= */
+
+  .details {
+    flex: 0 0 250px;
+    position: relative;
+    overflow: hidden;
+    padding: 10px 12px 12px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--layer1);
+  }
+
+  .details-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 6px; }
+
+  .details-id { font-family: var(--mono); font-size: 13px; font-weight: 600; }
+  .details-sub { font-size: 11px; color: var(--tertiary); }
+
+  .rows { display: flex; flex-direction: column; gap: 5px; }
+
+  .row { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; font-size: 12px; }
+
+  .rlabel { flex: 0 0 112px; color: var(--tertiary); font-size: 11px; }
+
+  .rval { flex: 1 1 380px; min-width: 0; color: var(--text); }
+
+  .state-block { position: relative; padding: 8px 10px 10px; border-radius: 8px; }
+
+  .state-block.is-marked { outline: 1.5px dashed var(--warn); outline-offset: 2px; }
+
+  .state-block > .pill { position: absolute; right: 0; top: -13px; }
+
+  .st-run { color: var(--success); font-weight: 600; }
+
+  .fade {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 46px;
+    background: linear-gradient(transparent, var(--panel) 78%);
+    pointer-events: none;
+  }
+
+  /* ================= нижняя панель: стало ================= */
+
+  .strip {
+    flex: 0 0 56px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 12px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--layer1);
+  }
+
+  .strip-hint { margin-left: auto; font-size: 11px; color: var(--tertiary); }
+
+  .strip-note {
+    font-size: 10.5px;
+    color: var(--warn);
+    border: 1px dashed var(--warn);
+    border-radius: 999px;
+    padding: 2px 8px;
+    white-space: nowrap;
+  }
+
+  /* ================= окно узла ================= */
+
+  .dim { position: absolute; inset: 0; background: rgba(20, 22, 26, 0.24); z-index: 4; }
+
+  .win {
+    position: absolute;
+    z-index: 5;
+    left: 50%;
+    top: 112px;
+    transform: translateX(-50%);
+    width: 640px;
+    max-width: calc(100% - 40px);
+    display: flex;
+    flex-direction: column;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    box-shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
+    overflow: hidden;
+  }
+
+  .win.is-static {
+    position: relative;
+    left: auto;
+    top: auto;
+    transform: none;
+    width: 640px;
+    max-width: 100%;
+  }
+
+  .win-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 14px 11px 16px;
+    background: var(--layer1);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .win-title { font-size: 15px; font-weight: 600; white-space: nowrap; }
+
+  .win-close {
+    flex: 0 0 32px;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border-radius: 8px;
+    border: 1px solid var(--line-strong);
+    background: var(--panel);
+    color: var(--text);
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+  }
+
+  .tabs {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 0 12px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .tab {
+    font: inherit;
+    font-size: 12.5px;
+    padding: 10px 12px;
+    border: 0;
+    border-bottom: 2px solid transparent;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+  }
+
+  .tab.is-on { color: var(--text); border-bottom-color: var(--accent); font-weight: 600; }
+
+  .tabs-note { margin-left: auto; font-size: 10.5px; color: var(--tertiary); padding-right: 4px; }
+
+  .win-body { display: flex; flex-direction: column; gap: 7px; padding: 12px 16px 14px; }
+
+  .state-hero { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 2px 0 4px; }
+
+  .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--success); flex: 0 0 9px; }
+  .dot-idle { background: var(--tertiary); }
+
+  .state-word { font-size: 15px; font-weight: 600; color: var(--success); }
+  .state-sentence { font-size: 12px; color: var(--muted); }
+
+  .win-row { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; font-size: 13px; }
+
+  .win-label { flex: 0 0 128px; color: var(--tertiary); font-size: 11.5px; white-space: nowrap; }
+
+  .win-val { flex: 1 1 320px; min-width: 0; color: var(--text); font-size: 13px; }
+
+  .win-val .mini { margin-left: 6px; }
+
+  .win-foot {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border-top: 1px solid var(--line);
+    background: var(--layer1);
+  }
+
+  .win-foot .hint { font-size: 11px; color: var(--tertiary); }
+
+  .mono { font-family: var(--mono); font-size: 12px; }
+
+  /* ================= поля (вкладка «Настройки») ================= */
+
+  .field { display: flex; align-items: center; gap: 10px; }
+
+  .flabel { flex: 0 0 118px; color: var(--tertiary); font-size: 12px; }
+
+  .fcontrol { flex: 1 1 auto; min-width: 0; }
+
+  input.in, select.in {
+    width: 100%;
+    max-width: 320px;
+    font: inherit;
+    font-size: 12.5px;
+    padding: 4px 7px;
+    border: 1px solid var(--line-strong);
+    border-radius: 6px;
+    background: var(--layer2);
+    color: var(--text);
+  }
+
+  input.in[readonly] { border-style: dashed; background: transparent; color: var(--muted); }
+
+  .links { margin: 0; padding-left: 16px; font-size: 12px; color: var(--muted); line-height: 1.6; }
+
+  /* ================= вариант C: три вкладки ================= */
+
+  .win-c { top: 112px; }
+  .win-c .win-body { gap: 4px; padding: 10px 16px 10px; }
+  .win-c .win-foot { padding: 8px 16px; }
+
+  .sec-cap {
+    display: flex;
+    align-items: baseline;
+    gap: 7px;
+    margin: 0 0 1px;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--tertiary);
+  }
+
+  .sec-cap .fname {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    font-weight: 500;
+    letter-spacing: 0;
+    text-transform: none;
+    color: var(--muted);
+  }
+
+  .rel { display: block; font-size: 12.5px; line-height: 1.45; }
+  .rel + .rel { margin-top: 1px; }
+  .rel b {
+    font-weight: 600;
+    font-size: 10.5px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--tertiary);
+    margin-right: 5px;
+  }
+
+  .win-legend {
+    position: absolute;
+    z-index: 6;
+    left: 16px;
+    right: 16px;
+    bottom: 10px;
+    padding: 8px 12px 8px;
+    border: 1px dashed var(--accent);
+    border-radius: 10px;
+    background: var(--panel);
+    box-shadow: 0 8px 24px rgba(20, 20, 45, 0.10);
+  }
+
+  .lg-head {
+    margin: 0 0 6px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  .lg-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+
+  .lg-col {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    padding-left: 8px;
+    border-left: 2px solid var(--line);
+  }
+
+  .lg-col.is-on { border-left-color: var(--accent); }
+  .lg-t { font-size: 11.5px; font-weight: 700; }
+  .lg-col.is-on .lg-t { color: var(--accent); }
+  .lg-txt { font-size: 10.5px; line-height: 1.4; color: var(--muted); }
+  .lg-txt b { color: var(--text); font-weight: 600; }
+
+  .lg-note {
+    margin: 5px 0 0;
+    padding-top: 5px;
+    border-top: 1px solid var(--line);
+    font-size: 10.5px;
+    line-height: 1.4;
+    color: var(--muted);
+  }
+
+  .lg-note b { color: var(--accent); }
+
+  .c-extra { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; align-items: start; }
+
+  .fig-cap { margin: 8px 0 0; font-size: 0.79rem; line-height: 1.5; color: var(--muted); }
+  .fig-cap b { color: var(--text); }
+
+  .cmp-h { margin: 1.4rem 0 0.4rem; font-size: 1.02rem; }
+
+  @media (max-width: 1000px) {
+    .c-extra { grid-template-columns: 1fr; }
+  }
+
+  /* ================= панель под кнопкой «...» ================= */
+
+  .pop {
+    position: absolute;
+    z-index: 5;
+    left: 200px;
+    top: 126px;
+    width: 392px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.24);
+    overflow: hidden;
+  }
+
+  .pop-mark {
+    padding: 5px 12px;
+    font-size: 10.5px;
+    font-weight: 600;
+    color: var(--accent);
+    background: var(--accent-soft);
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .pop-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    background: var(--layer1);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .pop-id { font-family: var(--mono); font-size: 13px; font-weight: 600; }
+
+  .chip-state {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 10.5px;
+    font-weight: 600;
+    color: var(--success);
+    background: transparent;
+    border: 1px solid var(--line-strong);
+    border-radius: 999px;
+    padding: 2px 8px;
+  }
+
+  .chip-state .dot { width: 7px; height: 7px; flex: 0 0 7px; }
+
+  .pop-close {
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    border-radius: 6px;
+    border: 1px solid var(--line-strong);
+    background: var(--panel);
+    color: var(--text);
+    font-size: 15px;
+    line-height: 1;
+    cursor: pointer;
+  }
+
+  .pop-sec { padding: 7px 12px; border-bottom: 1px solid var(--line); }
+
+  .pop-sec-title {
+    margin: 0 0 6px;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--tertiary);
+  }
+
+  .pop-row { display: flex; gap: 8px; font-size: 11.5px; line-height: 1.4; margin-bottom: 2px; }
+
+  .pop-label { flex: 0 0 78px; color: var(--tertiary); font-size: 11px; }
+  .pop-val { flex: 1 1 auto; color: var(--text); }
+
+  .pop-field { display: flex; align-items: center; gap: 8px; margin-bottom: 3px; }
+
+  .pop-field .flabel { flex: 0 0 78px; font-size: 11px; }
+
+  .pop-field input, .pop-field select {
+    flex: 1 1 auto;
+    min-width: 0;
+    font: inherit;
+    font-size: 12px;
+    padding: 4px 6px;
+    border: 1px solid var(--line-strong);
+    border-radius: 6px;
+    background: var(--layer2);
+    color: var(--text);
+  }
+
+  .pop-field input[readonly] { border-style: dashed; background: transparent; color: var(--muted); }
+
+  .pop-foot { display: flex; align-items: center; gap: 8px; padding: 9px 12px; background: var(--layer1); }
+
+  .pop-hint { margin-left: auto; font-size: 10px; color: var(--tertiary); }
+
+  /* ================= лист: заметки, таблицы ================= */
+
+  .cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 12px; align-items: start; }
+
+  .card-note {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 10px 12px;
+  }
+
+  .card-note h3 { margin: 0 0 6px; font-size: 0.88rem; }
+  .card-note p, .card-note li { margin: 0 0 5px; font-size: 0.8rem; line-height: 1.5; color: var(--muted); }
+  .card-note ul { margin: 0; padding-left: 16px; }
+  .card-note.plus { border-left: 3px solid var(--success); }
+  .card-note.minus { border-left: 3px solid var(--danger); }
+
+  .recommend {
+    margin: 1.2rem 0 0;
+    padding: 12px 14px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--accent);
+    border-radius: 10px;
+  }
+
+  .recommend h2 { margin: 0 0 6px; font-size: 1rem; }
+  .recommend p { margin: 0 0 6px; font-size: 0.84rem; line-height: 1.55; color: var(--muted); }
+  .recommend p:last-child { margin-bottom: 0; }
+
+  table.spec {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12.5px;
+    margin: 0.4rem 0 1rem;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  table.spec th, table.spec td {
+    text-align: left;
+    padding: 7px 10px;
+    border-bottom: 1px solid var(--line);
+    vertical-align: top;
+  }
+
+  table.spec th {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--tertiary);
+    background: var(--layer1);
+    font-weight: 600;
+  }
+
+  table.spec tr:last-child td { border-bottom: 0; }
+
+  code {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    background: var(--layer1);
+    border-radius: 4px;
+    padding: 1px 4px;
+  }
+
+  .footnote { margin: 1.6rem 0 0; font-size: 0.76rem; color: var(--tertiary); }
+
+  /* ================= режим съёмки ================= */
+
+  body.is-shot { padding: 16px; }
+
+  body.is-shot .sheet { max-width: none; margin: 0; }
+  body.is-shot .sheet-head, body.is-shot .scene-nav, body.is-shot .scene-head,
+  body.is-shot .scene-notes, body.is-shot .scene-extra, body.is-shot .compare,
+  body.is-shot .recommend, body.is-shot .footnote { display: none; }
+  body.is-shot .scene { display: none; margin: 0; }
+  body.is-shot .scene .shot { margin: 0; width: 100%; }
+
+  body.is-shot.scene-before #scene-before,
+  body.is-shot.scene-a #scene-a,
+  body.is-shot.scene-b #scene-b,
+  body.is-shot.scene-c #scene-c { display: block; }
+
+  @media (max-width: 900px) {
+    .panel { height: auto; min-height: 640px; }
+    .details { flex-basis: auto; }
+  }
+</style>
+</head>
+<body>
+<div class="sheet">
+  <header class="sheet-head">
+    <p class="kicker">Макет · 2026-11-06 · панель Structure</p>
+    <h1>Окно узла: три вкладки — сведения, состояние, настройки</h1>
+    <p class="lead">
+      Сейчас состояние узла живёт в нижней панели, а настройки — в окне после правого клика:
+      одно и то же приходится искать в двух местах. Ниже — <b>как сейчас</b> (01) и три способа
+      свести состояние и настройки в одно место: <b>две вкладки</b> (02, A), <b>панель под
+      кнопкой «...»</b> (03, B) и <b>три вкладки</b> (04, C — рекомендуется). Заказчик спросил,
+      будет ли «Состояние» включать сведения об узле; ответ — нет: паспорт вынесен отдельной
+      вкладкой «Сведения». Показана только панель Structure, без оболочки DSH.
+    </p>
+    <div class="toolbar">
+      <div class="seg" role="group" aria-label="Экран макета">
+        <a href="#scene-before" data-scene-link="before">01 · как сейчас</a>
+        <a href="#scene-a" data-scene-link="a">02 · вариант A</a>
+        <a href="#scene-b" data-scene-link="b">03 · вариант B</a>
+        <a href="#scene-c" data-scene-link="c">04 · вариант C</a>
+      </div>
+      <button type="button" class="btn" id="themeBtn">Тёмная панель</button>
+      <span class="readout" id="readout">превью: ?scene=before | a | b | c · тема: ?theme=dark</span>
+    </div>
+  </header>
+
+  <!-- ============================================================ -->
+  <!-- 01. КАК СЕЙЧАС                                               -->
+  <!-- ============================================================ -->
+  <section class="scene" id="scene-before">
+    <div class="scene-head">
+      <span class="scene-no">01</span>
+      <span class="scene-name">Как сейчас</span>
+      <span class="scene-note">состояние — в нижней панели; настройки — отдельным окном после правой кнопки. Два места, два пути.</span>
+    </div>
+    <figure class="shot">
+      <div class="panel" role="group" aria-label="Панель Structure: как сейчас">
+        <div class="p-top">
+          <span class="p-title">Структура проекта</span>
+          <span class="chip">структура</span>
+          <span class="chip">сборка 06.11 14:03</span>
+          <span class="panel-badge">сейчас</span>
+          <span class="spacer"></span>
+          <button type="button" class="btn">Обновить</button>
+          <button type="button" class="btn">Собрать</button>
+          <button type="button" class="btn">Добавить узел</button>
+        </div>
+        <div class="p-main">
+          <div class="canvas-shell">
+            <div class="c-head">
+              <strong>Structure</strong>
+              <span class="chip">4 узла</span>
+              <span class="chip">4 связи</span>
+              <span class="chip">в работе: 2</span>
+            </div>
+            <div class="canvas">
+              <svg class="edges" aria-hidden="true">
+                <defs>
+                  <marker id="ar-del-b" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="#4176e6"/></marker>
+                  <marker id="ar-rev-b" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="#a86200"/></marker>
+                  <marker id="ar-rep-b" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="#8b8b96"/></marker>
+                </defs>
+                <path d="M216 87 H313" fill="none" stroke="#4176e6" stroke-width="1.5" marker-end="url(#ar-del-b)"/>
+                <path d="M128 118 V183" fill="none" stroke="#4176e6" stroke-width="1.5" marker-end="url(#ar-del-b)"/>
+                <path d="M408 118 V183" fill="none" stroke="#a86200" stroke-width="1.5" stroke-dasharray="6 5" marker-end="url(#ar-rev-b)"/>
+                <path d="M216 221 H313" fill="none" stroke="#8b8b96" stroke-width="1.5" stroke-dasharray="6 5" marker-end="url(#ar-rep-b)"/>
+              </svg>
+
+              <div class="card is-run" style="left:40px;top:56px">
+                <span class="card-clip"><span class="card-stripe" style="background:#4176e6"></span></span>
+                <span class="card-id">coordinator</span>
+                <span class="card-role">координатор · deepseek-v4.1-flash</span>
+                <span class="card-state st-run">работает</span>
+                <span class="card-run">◷ следующий запуск 07.11 09:00</span>
+                <span class="card-dot"></span>
+              </div>
+
+              <div class="card" style="left:300px;top:56px">
+                <span class="card-clip"><span class="card-stripe" style="background:#1f9d55"></span></span>
+                <span class="card-id">worker</span>
+                <span class="card-role">исполнитель · glm-5.3-flash</span>
+                <span class="card-state">свободен</span>
+              </div>
+
+              <div class="card is-run" style="left:40px;top:190px">
+                <span class="card-clip"><span class="card-stripe" style="background:#b26a00"></span></span>
+                <span class="card-id">judge</span>
+                <span class="card-role">приёмщик · deepseek-v4.1-flash</span>
+                <span class="card-state st-run">выполняется</span>
+                <span class="card-dot"></span>
+              </div>
+
+              <div class="card" style="left:300px;top:190px">
+                <span class="card-clip"><span class="card-stripe" style="background:#a855f7"></span></span>
+                <span class="card-id">critic</span>
+                <span class="card-role">критик · glm-5.3-flash</span>
+                <span class="card-state st-done">завершил</span>
+              </div>
+
+              <div class="cm" style="left:224px;top:126px" role="menu" aria-label="Меню узла coordinator">
+                <button type="button" class="cm-item" role="menuitem">Сведения об узле</button>
+                <button type="button" class="cm-item is-marked" role="menuitem">Редактировать узел</button>
+              </div>
+
+              <span class="pill pill-warn pill-abs" style="left:508px;top:146px"><span class="n">2</span>настройки — отдельным окном</span>
+            </div>
+          </div>
+
+          <div class="details">
+            <div class="details-head">
+              <span class="details-id">coordinator</span>
+              <span class="details-sub">координатор · deepseek-v4.1-flash · назначение: ведёт план и раздаёт работу</span>
+              <span class="pill pill-warn"><span class="n">1</span>состояние — здесь, в нижней панели</span>
+              <span class="spacer"></span>
+              <button type="button" class="btn">Связь</button>
+              <button type="button" class="btn btn-primary">Запустить</button>
+            </div>
+            <div class="state-block is-marked">
+              <div class="rows">
+                <div class="row"><span class="rlabel">Состояние</span><span class="rval"><b class="st-run">работает</b> — агент этого узла выполняет работу сейчас с 14:02</span></div>
+                <div class="row"><span class="rlabel">Источник активности</span><span class="rval">живой агент — служба агентов видит его запущенным</span></div>
+                <div class="row"><span class="rlabel">Отчёт</span><span class="rval">нет отчёта — запуск ещё идёт</span></div>
+                <div class="row"><span class="rlabel">Сессия-владелец</span><span class="rval">привязана: 6f1a2c8e · активна 2 мин назад · привязана автоматически по свежести<button type="button" class="btn-mini">Привязать текущую</button><button type="button" class="btn-mini">Отвязать</button></span></div>
+                <div class="row"><span class="rlabel">Расписание</span><span class="rval">ежедневно 09:00 (Europe/Moscow) — следующий запуск 07.11 09:00<button type="button" class="btn-mini">Сохранить время</button></span></div>
+                <div class="row"><span class="rlabel">Ветка</span><span class="rval">шагов 3: worker — завершил, judge — работает, critic — ожидает</span></div>
+              </div>
+            </div>
+            <div class="rows" style="margin-top:8px">
+              <div class="row"><span class="rlabel">Пресет</span><span class="rval">не задан — агент наследует пресет родителя</span></div>
+              <div class="row"><span class="rlabel">Объявлен</span><span class="rval">structure/graph.json — правки делаются в файле</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </figure>
+    <div class="scene-notes">
+      <div class="cols">
+        <div class="card-note">
+          <h3>Что видно на экране 01</h3>
+          <p>Нижняя панель — карточка <code>renderDetails()</code>: состояние, источник активности,
+            отчёт, сессия, расписание, ветка. Её надо найти глазами и дочитать до нужной строки.</p>
+        </div>
+        <div class="card-note">
+          <h3>Где настройки</h3>
+          <p>Правая кнопка по карточке даёт меню из двух пунктов; «Редактировать узел» открывает
+            отдельное модальное окно <code>renderNodeEditModal()</code>. Состояния там нет.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- 02. ВАРИАНТ A                                                -->
+  <!-- ============================================================ -->
+  <section class="scene" id="scene-a">
+    <div class="scene-head">
+      <span class="scene-no">02</span>
+      <span class="scene-name">Вариант A · одно окно, две вкладки</span>
+      <span class="scene-note">правая кнопка → окно узла: «Состояние» (только чтение) и «Настройки» (поля, расписание, связи). Паспортные строки растворены в состоянии — отсюда вариант C.</span>
+    </div>
+    <figure class="shot">
+      <div class="panel" role="group" aria-label="Панель Structure: вариант A">
+        <div class="p-top">
+          <span class="p-title">Структура проекта</span>
+          <span class="chip">структура</span>
+          <span class="chip">сборка 06.11 14:03</span>
+          <span class="panel-badge">вариант A</span>
+          <span class="spacer"></span>
+          <button type="button" class="btn">Обновить</button>
+          <button type="button" class="btn">Собрать</button>
+          <button type="button" class="btn">Добавить узел</button>
+        </div>
+        <div class="p-main">
+          <div class="canvas-shell">
+            <div class="c-head">
+              <strong>Structure</strong>
+              <span class="chip">4 узла</span>
+              <span class="chip">4 связи</span>
+              <span class="chip">в работе: 2</span>
+            </div>
+            <div class="canvas">
+              <svg class="edges" aria-hidden="true">
+                <defs>
+                  <marker id="ar-del-a" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="#4176e6"/></marker>
+                  <marker id="ar-rev-a" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="#a86200"/></marker>
+                  <marker id="ar-rep-a" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="#8b8b96"/></marker>
+                </defs>
+                <path d="M216 87 H313" fill="none" stroke="#4176e6" stroke-width="1.5" marker-end="url(#ar-del-a)"/>
+                <path d="M128 118 V183" fill="none" stroke="#4176e6" stroke-width="1.5" marker-end="url(#ar-del-a)"/>
+                <path d="M408 118 V183" fill="none" stroke="#a86200" stroke-width="1.5" stroke-dasharray="6 5" marker-end="url(#ar-rev-a)"/>
+                <path d="M216 221 H313" fill="none" stroke="#8b8b96" stroke-width="1.5" stroke-dasharray="6 5" marker-end="url(#ar-rep-a)"/>
+              </svg>
+
+              <div class="card is-run" style="left:40px;top:56px">
+                <span class="card-clip"><span class="card-stripe" style="background:#4176e6"></span></span>
+                <span class="card-id">coordinator</span>
+                <span class="card-role">координатор · deepseek-v4.1-flash</span>
+                <span class="card-state st-run">работает</span>
+                <span class="card-run">◷ следующий запуск 07.11 09:00</span>
+                <span class="card-dot"></span>
+              </div>
+
+              <div class="card" style="left:300px;top:56px">
+                <span class="card-clip"><span class="card-stripe" style="background:#1f9d55"></span></span>
+                <span class="card-id">worker</span>
+                <span class="card-role">исполнитель · glm-5.3-flash</span>
+                <span class="card-state">свободен</span>
+              </div>
+
+              <div class="card is-run" style="left:40px;top:190px">
+                <span class="card-clip"><span class="card-stripe" style="background:#b26a00"></span></span>
+                <span class="card-id">judge</span>
+                <span class="card-role">приёмщик · deepseek-v4.1-flash</span>
+                <span class="card-state st-run">выполняется</span>
+                <span class="card-dot"></span>
+              </div>
+
+              <div class="card" style="left:300px;top:190px">
+                <span class="card-clip"><span class="card-stripe" style="background:#a855f7"></span></span>
+                <span class="card-id">critic</span>
+                <span class="card-role">критик · glm-5.3-flash</span>
+                <span class="card-state st-done">завершил</span>
+              </div>
+
+              <div class="dim" aria-hidden="true"></div>
+
+              <div class="win" role="dialog" aria-modal="true" aria-label="Узел coordinator: вкладки «Состояние» и «Настройки»">
+                <div class="win-head">
+                  <span class="win-title">Узел coordinator</span>
+                  <span class="pill"><span class="n">1</span>правая кнопка → окно: состояние и настройки</span>
+                  <span class="spacer"></span>
+                  <button type="button" class="win-close" aria-label="Закрыть">×</button>
+                </div>
+                <div class="tabs" role="tablist" aria-label="Разделы окна узла">
+                  <button type="button" class="tab is-on" role="tab" aria-selected="true">Состояние</button>
+                  <button type="button" class="tab" role="tab" aria-selected="false">Настройки</button>
+                  <span class="tabs-note">поля, расписание и связи — на второй вкладке</span>
+                </div>
+                <div class="win-body">
+                  <div class="state-hero">
+                    <span class="dot"></span>
+                    <span class="state-word">работает</span>
+                    <span class="state-sentence">агент этого узла выполняет работу сейчас с 14:02</span>
+                  </div>
+                  <div class="win-row"><span class="win-label">Источник активности</span><span class="win-val">живой агент — служба агентов видит его запущенным</span></div>
+                  <div class="win-row"><span class="win-label">Отчёт</span><span class="win-val">нет отчёта — запуск ещё идёт</span></div>
+                  <div class="win-row"><span class="win-label">Сессия-владелец</span><span class="win-val">привязана: <span class="mono">6f1a2c8e</span> · активна 2 мин назад · автоматически по свежести<button type="button" class="btn-mini">Привязать текущую</button><button type="button" class="btn-mini">Отвязать</button></span></div>
+                  <div class="win-row"><span class="win-label">Расписание</span><span class="win-val">ежедневно 09:00 (Europe/Moscow) — следующий запуск 07.11 09:00</span></div>
+                  <div class="win-row"><span class="win-label">Ветка</span><span class="win-val">шагов 3: worker — завершил, judge — работает, critic — ожидает</span></div>
+                  <div class="win-row"><span class="win-label">Назначение</span><span class="win-val">ведёт план и раздаёт работу</span></div>
+                </div>
+                <div class="win-foot">
+                  <button type="button" class="btn btn-primary">Настройки →</button>
+                  <span class="hint">крестик или Esc — закрыть: правок в окне нет</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="strip">
+            <span class="details-id">coordinator</span>
+            <span class="details-sub">координатор · выбран</span>
+            <span class="spacer"></span>
+            <button type="button" class="btn">Связь</button>
+            <button type="button" class="btn btn-primary">Запустить</button>
+            <span class="strip-hint">состояние и настройки — правая кнопка по узлу</span>
+          </div>
+        </div>
+      </div>
+    </figure>
+
+    <div class="scene-extra">
+      <div class="cols">
+        <div>
+          <div class="win is-static" role="group" aria-label="Вкладка «Настройки» окна узла">
+            <div class="win-head">
+              <span class="win-title">Узел coordinator</span>
+              <span class="spacer"></span>
+              <button type="button" class="win-close" aria-label="Закрыть">×</button>
+            </div>
+            <div class="tabs">
+              <button type="button" class="tab" role="tab" aria-selected="false">Состояние</button>
+              <button type="button" class="tab is-on" role="tab" aria-selected="true">Настройки</button>
+              <span class="tabs-note">та же вкладка, что в окне 0018</span>
+            </div>
+            <div class="win-body">
+              <div class="field"><span class="flabel">id</span><span class="fcontrol"><input class="in" type="text" value="coordinator" readonly /></span></div>
+              <div class="field"><span class="flabel">Роль</span><span class="fcontrol"><input class="in" type="text" value="координатор" /></span></div>
+              <div class="field"><span class="flabel">Провайдер · модель</span><span class="fcontrol"><select class="in"><option>opencode / deepseek-v4.1-flash</option></select></span></div>
+              <div class="field"><span class="flabel">Назначение</span><span class="fcontrol"><input class="in" type="text" value="ведёт план и раздаёт работу" /></span></div>
+              <div class="field"><span class="flabel">Пресет</span><span class="fcontrol"><input class="in" type="text" value="не задан — наследует пресет родителя" readonly /></span></div>
+              <div class="field"><span class="flabel">Расписание</span><span class="fcontrol"><input class="in" type="text" value="ежедневно 09:00 · Europe/Moscow" /></span></div>
+              <div class="field"><span class="flabel">Связи</span><span class="fcontrol"><ul class="links"><li>coordinator → worker · delegate</li><li>coordinator → judge · delegate</li><li>worker → critic · review</li></ul></span></div>
+            </div>
+            <div class="win-foot">
+              <button type="button" class="btn btn-primary">Сохранить</button>
+              <button type="button" class="btn">Добавить связь</button>
+              <span class="hint">крестик при правках спросит подтверждение</span>
+            </div>
+          </div>
+        </div>
+        <div class="cols">
+          <div class="card-note plus">
+            <h3>Плюсы A</h3>
+            <ul>
+              <li>одно место и один путь: правая кнопка → окно узла;</li>
+              <li>состояние и настройки в одном окне, но на разных вкладках — длинное не мешает короткому;</li>
+              <li>та же форма окна, что утверждена в 0018: код и клавиатура (Esc, крестик, «изменено») меняются мало;</li>
+              <li>одна кнопка «Сохранить» — состояние нельзя случайно поправить, оно только для чтения.</li>
+            </ul>
+          </div>
+          <div class="card-note minus">
+            <h3>Минусы A</h3>
+            <ul>
+              <li>на один клик больше, чем сейчас: правая кнопка → пункт меню → вкладка;</li>
+              <li>состояние не видно «наведением»: пока окно закрыто, состояние читается только по слову на карточке;</li>
+              <li>окно закрывает канву — схему не видно, пока смотришь состояние.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- 03. ВАРИАНТ B                                                -->
+  <!-- ============================================================ -->
+  <section class="scene" id="scene-b">
+    <div class="scene-head">
+      <span class="scene-no">03</span>
+      <span class="scene-name">Вариант B · панель под кнопкой «...»</span>
+      <span class="scene-note">кнопка «...» на карточке открывает панель под собой: состояние сверху, поля настроек ниже, сохранение там же.</span>
+    </div>
+    <figure class="shot">
+      <div class="panel" role="group" aria-label="Панель Structure: вариант B">
+        <div class="p-top">
+          <span class="p-title">Структура проекта</span>
+          <span class="chip">структура</span>
+          <span class="chip">сборка 06.11 14:03</span>
+          <span class="panel-badge">вариант B</span>
+          <span class="spacer"></span>
+          <button type="button" class="btn">Обновить</button>
+          <button type="button" class="btn">Собрать</button>
+          <button type="button" class="btn">Добавить узел</button>
+        </div>
+        <div class="p-main">
+          <div class="canvas-shell">
+            <div class="c-head">
+              <strong>Structure</strong>
+              <span class="chip">4 узла</span>
+              <span class="chip">4 связи</span>
+              <span class="chip">в работе: 2</span>
+            </div>
+            <div class="canvas">
+              <svg class="edges" aria-hidden="true">
+                <defs>
+                  <marker id="ar-del-c" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="#4176e6"/></marker>
+                  <marker id="ar-rev-c" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="#a86200"/></marker>
+                  <marker id="ar-rep-c" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="#8b8b96"/></marker>
+                </defs>
+                <path d="M216 87 H313" fill="none" stroke="#4176e6" stroke-width="1.5" marker-end="url(#ar-del-c)"/>
+                <path d="M128 118 V183" fill="none" stroke="#4176e6" stroke-width="1.5" marker-end="url(#ar-del-c)"/>
+                <path d="M408 118 V183" fill="none" stroke="#a86200" stroke-width="1.5" stroke-dasharray="6 5" marker-end="url(#ar-rev-c)"/>
+                <path d="M216 221 H313" fill="none" stroke="#8b8b96" stroke-width="1.5" stroke-dasharray="6 5" marker-end="url(#ar-rep-c)"/>
+              </svg>
+
+              <div class="card is-run" style="left:40px;top:56px">
+                <span class="card-clip"><span class="card-stripe" style="background:#4176e6"></span></span>
+                <span class="card-id">coordinator</span>
+                <span class="card-role">координатор · deepseek-v4.1-flash</span>
+                <span class="card-state st-run">работает</span>
+                <span class="card-run">◷ следующий запуск 07.11 09:00</span>
+                <button type="button" class="card-more" aria-label="Меню узла coordinator">⋯</button>
+              </div>
+
+              <div class="card" style="left:300px;top:56px">
+                <span class="card-clip"><span class="card-stripe" style="background:#1f9d55"></span></span>
+                <span class="card-id">worker</span>
+                <span class="card-role">исполнитель · glm-5.3-flash</span>
+                <span class="card-state">свободен</span>
+              </div>
+
+              <div class="card is-run" style="left:40px;top:190px">
+                <span class="card-clip"><span class="card-stripe" style="background:#b26a00"></span></span>
+                <span class="card-id">judge</span>
+                <span class="card-role">приёмщик · deepseek-v4.1-flash</span>
+                <span class="card-state st-run">выполняется</span>
+                <span class="card-dot"></span>
+              </div>
+
+              <div class="card" style="left:300px;top:190px">
+                <span class="card-clip"><span class="card-stripe" style="background:#a855f7"></span></span>
+                <span class="card-id">critic</span>
+                <span class="card-role">критик · glm-5.3-flash</span>
+                <span class="card-state st-done">завершил</span>
+              </div>
+
+              <span class="pill pill-abs" style="left:236px;top:22px"><span class="n">2</span>кнопка «...» на карточке</span>
+
+              <div class="pop" role="dialog" aria-label="Узел coordinator: состояние и настройки">
+                <div class="pop-mark"><span class="n" style="display:inline-flex;width:14px;height:14px;align-items:center;justify-content:center;border:1px solid currentColor;border-radius:50%;font-family:var(--mono);font-size:10px">1</span>состояние и настройки — здесь</div>
+                <div class="pop-head">
+                  <span class="pop-id">coordinator</span>
+                  <span class="chip-state"><span class="dot"></span>работает</span>
+                  <span class="spacer"></span>
+                  <button type="button" class="pop-close" aria-label="Закрыть">×</button>
+                </div>
+                <div class="pop-sec">
+                  <p class="pop-sec-title">Состояние</p>
+                  <div class="pop-row"><span class="pop-label">Источник</span><span class="pop-val">живой агент · с 14:02</span></div>
+                  <div class="pop-row"><span class="pop-label">Отчёт</span><span class="pop-val">нет — запуск ещё идёт</span></div>
+                  <div class="pop-row"><span class="pop-label">Сессия</span><span class="pop-val"><span class="mono">6f1a2c8e</span> · активна 2 мин назад</span></div>
+                  <div class="pop-row"><span class="pop-label">Расписание</span><span class="pop-val">09:00 · следующий 07.11 09:00</span></div>
+                  <div class="pop-row"><span class="pop-label">Ветка</span><span class="pop-val">3 шага: worker — завершил, judge — работает, critic — ждёт</span></div>
+                </div>
+                <div class="pop-sec">
+                  <p class="pop-sec-title">Настройки</p>
+                  <div class="pop-field"><span class="flabel">id</span><input type="text" value="coordinator" readonly /></div>
+                  <div class="pop-field"><span class="flabel">Роль</span><input type="text" value="координатор" /></div>
+                  <div class="pop-field"><span class="flabel">Модель</span><select><option>opencode / deepseek-v4.1-flash</option></select></div>
+                  <div class="pop-field"><span class="flabel">Назначение</span><input type="text" value="ведёт план и раздаёт работу" /></div>
+                  <div class="pop-field"><span class="flabel">Пресет</span><input type="text" value="не задан — наследует родителя" readonly /></div>
+                </div>
+                <div class="pop-foot">
+                  <button type="button" class="btn btn-primary">Сохранить</button>
+                  <button type="button" class="btn">Связи…</button>
+                  <span class="pop-hint">расписание и связи — в полном окне</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="strip">
+            <span class="details-id">coordinator</span>
+            <span class="details-sub">координатор · выбран</span>
+            <span class="spacer"></span>
+            <button type="button" class="btn">Связь</button>
+            <button type="button" class="btn btn-primary">Запустить</button>
+            <span class="strip-hint">состояние и настройки — кнопка «...» или правая кнопка</span>
+          </div>
+        </div>
+      </div>
+    </figure>
+
+    <div class="scene-extra">
+      <div class="cols">
+        <div class="card-note plus">
+          <h3>Плюсы B</h3>
+          <ul>
+            <li>один клик: состояние и поля под кнопкой, канва и соседние карточки остаются на месте;</li>
+            <li>не модальное окно — можно смотреть состояние и тут же тянуть узел;</li>
+            <li>кнопка «...» видна на карточке: путь не надо помнить (сейчас меню только по правой кнопке).</li>
+          </ul>
+        </div>
+        <div class="card-note minus">
+          <h3>Минусы B</h3>
+          <ul>
+            <li>второй редактор и второй путь записи рядом с полным окном — легко получить две правды и потерять «изменено · не сохранено»;</li>
+            <li>392 px не вмещают связи и расписание: они всё равно остаются в полном окне — «одно место» получается неполным;</li>
+            <li>панель закрывает соседние карточки; на узком окне её надо двигать и ограничивать по высоте;</li>
+            <li>кнопка на каждой карточке спорит с точкой активности в правом верхнем углу.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- 04. ВАРИАНТ C                                                -->
+  <!-- ============================================================ -->
+  <section class="scene" id="scene-c">
+    <div class="scene-head">
+      <span class="scene-no">04</span>
+      <span class="scene-name">Вариант C · одно окно, три вкладки</span>
+      <span class="badge-rec">рекомендуется</span>
+      <span class="scene-note">«Сведения» — паспорт узла, «Состояние» — что он делает сейчас, «Настройки» — что можно изменить. Паспорт больше не растворён в состоянии.</span>
+    </div>
+    <figure class="shot">
+      <div class="panel" role="group" aria-label="Панель Structure: вариант C">
+        <div class="p-top">
+          <span class="p-title">Структура проекта</span>
+          <span class="chip">структура</span>
+          <span class="chip">сборка 06.11 14:03</span>
+          <span class="panel-badge">вариант C</span>
+          <span class="spacer"></span>
+          <button type="button" class="btn">Обновить</button>
+          <button type="button" class="btn">Собрать</button>
+          <button type="button" class="btn">Добавить узел</button>
+        </div>
+        <div class="p-main">
+          <div class="canvas-shell">
+            <div class="c-head">
+              <strong>Structure</strong>
+              <span class="chip">4 узла</span>
+              <span class="chip">4 связи</span>
+              <span class="chip">в работе: 2</span>
+            </div>
+            <div class="canvas">
+              <svg class="edges" aria-hidden="true">
+                <defs>
+                  <marker id="ar-del-d" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="#4176e6"/></marker>
+                  <marker id="ar-rev-d" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="#a86200"/></marker>
+                  <marker id="ar-rep-d" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="#8b8b96"/></marker>
+                </defs>
+                <path d="M216 87 H313" fill="none" stroke="#4176e6" stroke-width="1.5" marker-end="url(#ar-del-d)"/>
+                <path d="M128 118 V183" fill="none" stroke="#4176e6" stroke-width="1.5" marker-end="url(#ar-del-d)"/>
+                <path d="M408 118 V183" fill="none" stroke="#a86200" stroke-width="1.5" stroke-dasharray="6 5" marker-end="url(#ar-rev-d)"/>
+                <path d="M216 221 H313" fill="none" stroke="#8b8b96" stroke-width="1.5" stroke-dasharray="6 5" marker-end="url(#ar-rep-d)"/>
+              </svg>
+
+              <div class="card is-run" style="left:40px;top:56px">
+                <span class="card-clip"><span class="card-stripe" style="background:#4176e6"></span></span>
+                <span class="card-id">coordinator</span>
+                <span class="card-role">координатор · deepseek-v4.1-flash</span>
+                <span class="card-state st-run">работает</span>
+                <span class="card-run">◷ следующий запуск 07.11 09:00</span>
+                <span class="card-dot"></span>
+              </div>
+
+              <div class="card" style="left:300px;top:56px">
+                <span class="card-clip"><span class="card-stripe" style="background:#1f9d55"></span></span>
+                <span class="card-id">worker</span>
+                <span class="card-role">исполнитель · glm-5.3-flash</span>
+                <span class="card-state">свободен</span>
+              </div>
+
+              <div class="card is-run" style="left:40px;top:190px">
+                <span class="card-clip"><span class="card-stripe" style="background:#b26a00"></span></span>
+                <span class="card-id">judge</span>
+                <span class="card-role">приёмщик · deepseek-v4.1-flash</span>
+                <span class="card-state st-run">выполняется</span>
+                <span class="card-dot"></span>
+              </div>
+
+              <div class="card" style="left:300px;top:190px">
+                <span class="card-clip"><span class="card-stripe" style="background:#a855f7"></span></span>
+                <span class="card-id">critic</span>
+                <span class="card-role">критик · glm-5.3-flash</span>
+                <span class="card-state st-done">завершил</span>
+              </div>
+
+              <div class="dim" aria-hidden="true"></div>
+
+              <div class="win win-c" role="dialog" aria-modal="true" aria-label="Узел coordinator: вкладки «Сведения», «Состояние», «Настройки»">
+                <div class="win-head">
+                  <span class="win-title">Узел coordinator</span>
+                  <span class="pill">три вкладки · одна форма окна</span>
+                  <span class="spacer"></span>
+                  <button type="button" class="win-close" aria-label="Закрыть">×</button>
+                </div>
+                <div class="tabs" role="tablist" aria-label="Разделы окна узла">
+                  <button type="button" class="tab is-on" role="tab" aria-selected="true">Сведения</button>
+                  <button type="button" class="tab" role="tab" aria-selected="false">Состояние</button>
+                  <button type="button" class="tab" role="tab" aria-selected="false">Настройки</button>
+                  <span class="tabs-note">только чтение · правка — на «Настройках»</span>
+                </div>
+                <div class="win-body">
+                  <p class="sec-cap">Паспорт узла · только чтение</p>
+                  <div class="win-row"><span class="win-label">id</span><span class="win-val mono">coordinator</span></div>
+                  <div class="win-row"><span class="win-label">Роль</span><span class="win-val">координатор</span></div>
+                  <div class="win-row"><span class="win-label">Модель</span><span class="win-val"><span class="mono">opencode-go</span> · deepseek-v4.1-flash</span></div>
+                  <div class="win-row"><span class="win-label">Назначение</span><span class="win-val">ведёт план и раздаёт работу</span></div>
+                  <div class="win-row"><span class="win-label">Пресет</span><span class="win-val">не задан — наследует пресет родителя</span></div>
+                  <div class="win-row"><span class="win-label">Файл объявления</span><span class="win-val"><span class="mono">structure/graph.json</span> · узел <span class="mono">coordinator</span></span></div>
+                  <div class="win-row"><span class="win-label">Связи</span><span class="win-val">
+                    <span class="rel"><b>исходящие</b>worker — задание · judge — приёмка</span>
+                    <span class="rel"><b>входящие</b>нет — узел корневой</span>
+                  </span></div>
+                </div>
+                <div class="win-foot">
+                  <button type="button" class="btn btn-primary">Изменить в «Настройках» →</button>
+                  <span class="pill">вкладка только для чтения</span>
+                  <span class="spacer"></span>
+                  <span class="hint">Esc — закрыть</span>
+                </div>
+              </div>
+
+              <div class="win-legend" role="note" aria-label="Что в какой вкладке">
+                <p class="lg-head">Что в какой вкладке</p>
+                <div class="lg-grid">
+                  <div class="lg-col">
+                    <span class="lg-t">Сведения</span>
+                    <span class="lg-txt">id, роль, модель, назначение, пресет, файл объявления, связи — <b>только чтение</b></span>
+                  </div>
+                  <div class="lg-col">
+                    <span class="lg-t">Состояние</span>
+                    <span class="lg-txt">фраза состояния, источник, отчёт, сессия, расписание, ветка — <b>только чтение</b></span>
+                  </div>
+                  <div class="lg-col">
+                    <span class="lg-t">Настройки</span>
+                    <span class="lg-txt">те же поля + расписание и связи — <b>правка</b>, одно «Сохранить»</span>
+                  </div>
+                </div>
+                <p class="lg-note"><b>Из «Состояния» паспорт убран целиком:</b> в A роль, модель, назначение и пресет стояли его же строками.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="strip">
+            <span class="details-id">coordinator</span>
+            <span class="details-sub">координатор · выбран</span>
+            <span class="spacer"></span>
+            <button type="button" class="btn">Связь</button>
+            <button type="button" class="btn btn-primary">Запустить</button>
+            <span class="strip-hint">три вкладки — правая кнопка по узлу</span>
+          </div>
+        </div>
+      </div>
+    </figure>
+
+    <div class="scene-extra">
+      <div class="c-extra">
+        <div>
+          <div class="win is-static" role="group" aria-label="Вкладка «Состояние» окна узла">
+            <div class="win-head">
+              <span class="win-title">Узел coordinator</span>
+              <span class="spacer"></span>
+              <button type="button" class="win-close" aria-label="Закрыть">×</button>
+            </div>
+            <div class="tabs">
+              <button type="button" class="tab" role="tab" aria-selected="false">Сведения</button>
+              <button type="button" class="tab is-on" role="tab" aria-selected="true">Состояние</button>
+              <button type="button" class="tab" role="tab" aria-selected="false">Настройки</button>
+              <span class="tabs-note">паспорта здесь нет</span>
+            </div>
+            <div class="win-body">
+              <div class="state-hero">
+                <span class="dot"></span>
+                <span class="state-word">работает</span>
+                <span class="state-sentence">агент этого узла выполняет работу сейчас с 14:02</span>
+              </div>
+              <div class="win-row"><span class="win-label">Источник активности</span><span class="win-val">живой агент — служба агентов видит его запущенным</span></div>
+              <div class="win-row"><span class="win-label">Отчёт</span><span class="win-val">нет отчёта — запуск ещё идёт</span></div>
+              <div class="win-row"><span class="win-label">Сессия-владелец</span><span class="win-val">привязана: <span class="mono">6f1a2c8e</span> · активна 2 мин назад · автоматически по свежести<button type="button" class="btn-mini">Привязать текущую</button><button type="button" class="btn-mini">Отвязать</button></span></div>
+              <div class="win-row"><span class="win-label">Расписание</span><span class="win-val">ежедневно 09:00 (Europe/Moscow) — следующий запуск 07.11 09:00</span></div>
+              <div class="win-row"><span class="win-label">Ветка</span><span class="win-val">шагов 3: worker — завершил, judge — работает, critic — ожидает</span></div>
+            </div>
+            <div class="win-foot">
+              <span class="hint">вкладка только для чтения; «Привязать текущую» и «Отвязать» действуют сразу</span>
+            </div>
+          </div>
+          <p class="fig-cap"><b>«Состояние» — шесть живых строк.</b> Роли, модели, назначения, пресета,
+            файла объявления и связей здесь нет: они на вкладке «Сведения».</p>
+        </div>
+        <div>
+          <div class="win is-static" role="group" aria-label="Вкладка «Настройки» окна узла">
+            <div class="win-head">
+              <span class="win-title">Узел coordinator</span>
+              <span class="spacer"></span>
+              <button type="button" class="win-close" aria-label="Закрыть">×</button>
+            </div>
+            <div class="tabs">
+              <button type="button" class="tab" role="tab" aria-selected="false">Сведения</button>
+              <button type="button" class="tab" role="tab" aria-selected="false">Состояние</button>
+              <button type="button" class="tab is-on" role="tab" aria-selected="true">Настройки</button>
+              <span class="tabs-note">единственное место записи</span>
+            </div>
+            <div class="win-body">
+              <div class="field"><span class="flabel">id</span><span class="fcontrol"><input class="in" type="text" value="coordinator" readonly /></span></div>
+              <div class="field"><span class="flabel">Роль</span><span class="fcontrol"><input class="in" type="text" value="координатор" /></span></div>
+              <div class="field"><span class="flabel">Провайдер · модель</span><span class="fcontrol"><select class="in"><option>opencode-go / deepseek-v4.1-flash</option></select></span></div>
+              <div class="field"><span class="flabel">Назначение</span><span class="fcontrol"><input class="in" type="text" value="ведёт план и раздаёт работу" /></span></div>
+              <div class="field"><span class="flabel">Пресет</span><span class="fcontrol"><input class="in" type="text" value="не задан — наследует пресет родителя" readonly /></span></div>
+              <div class="field"><span class="flabel">Расписание</span><span class="fcontrol"><input class="in" type="text" value="ежедневно 09:00 · Europe/Moscow" /></span></div>
+              <div class="field"><span class="flabel">Связи</span><span class="fcontrol"><ul class="links"><li>coordinator → worker · delegate</li><li>coordinator → judge · delegate</li><li>нет входящих связей</li></ul></span></div>
+            </div>
+            <div class="win-foot">
+              <button type="button" class="btn btn-primary">Сохранить</button>
+              <button type="button" class="btn">Добавить связь</button>
+              <span class="hint">крестик при правках спросит подтверждение</span>
+            </div>
+          </div>
+          <p class="fig-cap"><b>«Настройки» — единственное место записи.</b> Поля те же, что в
+            «Сведениях», но здесь они пишутся: одно «Сохранить» и один диалог «изменено · не сохранено».</p>
+        </div>
+      </div>
+
+      <div class="cols" style="margin-top:12px">
+        <div class="card-note plus">
+          <h3>Плюсы C</h3>
+          <ul>
+            <li>у каждой вкладки один вопрос: что это за узел → что он делает сейчас → что можно изменить;</li>
+            <li>паспорт читается целиком и подряд, не смешиваясь с меняющимся состоянием;</li>
+            <li>правка начинается с «Настроек», а не с чтения статуса; запись по-прежнему одна;</li>
+            <li>форма окна и «Сохранить» — как в A и в 0018: код меняется на одну вкладку и один блок строк.</li>
+          </ul>
+        </div>
+        <div class="card-note minus">
+          <h3>Минусы C</h3>
+          <ul>
+            <li>три вкладки вместо двух: на узком окне подписи и подчёркивание активной вкладки теснее;</li>
+            <li>одни и те же поля видны дважды — в «Сведениях» и формой в «Настройках»; источник один, но это надо помнить;</li>
+            <li>на один клик больше, чем в A, если человек шёл за состоянием;</li>
+            <li>состояние закрыто окном от канвы, как и в A.</li>
+          </ul>
+        </div>
+        <div class="card-note">
+          <h3>Чем C лучше A</h3>
+          <p>В A сведения об узле были растворены в «Состоянии»: роль, модель, назначение, пресет
+            и объявление стояли строками живого статуса. В C паспорт вынесен отдельной первой
+            вкладкой, поэтому состояние отвечает только на «что сейчас», а сведения — на
+            «что это за узел».</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="compare">
+    <div class="recommend">
+      <h2>Рекомендация: вариант C — три вкладки</h2>
+      <p>Вопрос заказчика — «состояние будет включать сведения об узле или всё же три вкладки?» —
+        решается тремя вкладками. В A роль, модель, назначение и пресет стояли строками внутри
+        «Состояния»: паспортные сведения были растворены в живых, и чтобы поправить модель,
+        человек сначала читал состояние.</p>
+      <p>В C у каждой вкладки один вопрос: <b>что это за узел</b> («Сведения»), <b>что он делает
+        сейчас</b> («Состояние»), <b>что можно изменить</b> («Настройки»). Пишется только
+        третья; первые две — только для чтения, поэтому случайно ничего не поменять. Форма
+        окна, один «Сохранить» и диалог «изменено · не сохранено» — те же, что в A и в
+        утверждённом 0018.</p>
+      <p><b>Что остаётся внизу:</b> узкая полоса 56 px с «Связь» и «Запустить» — действия,
+        которым нужна канва. Слово состояния, точка запуска и строка следующего запуска
+        остаются на карточке: быстрый взгляд без открытия окна.</p>
+    </div>
+
+    <h2 class="cmp-h">Три вкладки варианта C — что внутри</h2>
+    <table class="spec">
+      <thead>
+        <tr><th>Вкладка</th><th>Что внутри</th><th>Можно менять</th><th>Зачем отдельно</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><b>Сведения</b></td><td>id · роль · модель (провайдер · семейство) · назначение (brief) · пресет, если задан · файл объявления <code>structure/graph.json</code> · связи словами (исходящие/входящие)</td><td>нет</td><td>паспорт: «что это за узел», не меняется от запуска к запуску</td></tr>
+        <tr><td><b>Состояние</b></td><td>слово состояния и фраза · источник активности · отчёт последнего запуска · сессия-владелец и «Привязать текущую»/«Отвязать» · расписание и следующий запуск · ветка</td><td>нет; привязка сессии действует сразу</td><td>живое: меняется само, читается глазами, не требует «Сохранить»</td></tr>
+        <tr><td><b>Настройки</b></td><td>id (чтение) · роль · модель · назначение · пресет · расписание · связи · «Сохранить»</td><td>да, одна кнопка</td><td>правка: одно место записи и один диалог «изменено · не сохранено»</td></tr>
+      </tbody>
+    </table>
+
+    <h2 class="cmp-h">Какой пункт в какой вкладке</h2>
+    <table class="spec">
+      <thead>
+        <tr><th>Пункт</th><th>Сейчас</th><th>В A (2 вкладки)</th><th>В C (3 вкладки)</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Состояние и фраза-пояснение</td><td>нижняя панель, <code>renderDetails()</code></td><td>«Состояние»</td><td>«Состояние»</td></tr>
+        <tr><td>Источник активности</td><td>нижняя панель</td><td>«Состояние»</td><td>«Состояние»</td></tr>
+        <tr><td>Отчёт последнего запуска</td><td>нижняя панель</td><td>«Состояние»</td><td>«Состояние»</td></tr>
+        <tr><td>Сессия-владелец и привязка</td><td>нижняя панель</td><td>«Состояние»</td><td>«Состояние»</td></tr>
+        <tr><td>Расписание и следующий запуск</td><td>нижняя панель</td><td>«Состояние» (время — в «Настройках»)</td><td>«Состояние» (время — в «Настройках»)</td></tr>
+        <tr><td>Ветка запуска</td><td>нижняя панель</td><td>«Состояние»</td><td>«Состояние»</td></tr>
+        <tr><td>id</td><td>окно <code>renderNodeEditModal()</code></td><td>«Настройки», только чтение</td><td>«Сведения» и «Настройки», только чтение</td></tr>
+        <tr><td>Роль, модель</td><td>окно редактирования</td><td>«Настройки»</td><td>«Сведения» (чтение) + «Настройки»</td></tr>
+        <tr><td>Назначение (brief)</td><td>окно редактирования</td><td>строка внизу «Состояния» + поле «Настроек»</td><td>«Сведения» (чтение) + «Настройки»</td></tr>
+        <tr><td>Пресет</td><td>нижняя панель</td><td>«Настройки», только чтение</td><td>«Сведения» (чтение) + «Настройки»</td></tr>
+        <tr><td>Файл объявления</td><td>нижняя панель, строка «Объявлен»</td><td>«Настройки», только чтение</td><td>«Сведения», только чтение</td></tr>
+        <tr><td>Связи</td><td>окно «Сведения об узле»</td><td>«Настройки» (формой)</td><td>«Сведения» словами + «Настройки» формой</td></tr>
+        <tr><td>«Связь» и «Запустить»</td><td>нижняя панель</td><td>полоса 56 px</td><td>полоса 56 px</td></tr>
+      </tbody>
+    </table>
+
+    <h2 class="cmp-h">Что убрано из A (и куда ушло)</h2>
+    <table class="spec">
+      <thead>
+        <tr><th>Что</th><th>Было в A</th><th>Стало в C</th><th>Почему</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Назначение (brief)</td><td>строка внизу «Состояния» и поле «Настроек»</td><td>«Сведения» отдельной строкой</td><td>не добирается чтением живого статуса</td></tr>
+        <tr><td>Роль, модель</td><td>только поля «Настроек»</td><td>«Сведения» первой группой</td><td>паспорт читается, не заходя в форму</td></tr>
+        <tr><td>Пресет</td><td>«Настройки», только чтение</td><td>«Сведения»</td><td>свойство узла, а не настройка запуска</td></tr>
+        <tr><td>Строка «Объявлен»</td><td>«Настройки», только чтение</td><td>«Сведения» рядом с id</td><td>где объявлен узел — часть паспорта</td></tr>
+        <tr><td>Связи</td><td>только формой в «Настройках»</td><td>«Сведения» словами + форма</td><td>видно, куда идут связи, никого не правя</td></tr>
+        <tr><td>Правило вкладки</td><td>«Состояние» смешивало паспорт и живое</td><td>паспорт, живое и правка — по своей вкладке</td><td>одна вкладка отвечает на один вопрос</td></tr>
+      </tbody>
+    </table>
+
+    <h2 class="cmp-h">A / B / C одной строкой</h2>
+    <table class="spec">
+      <thead>
+        <tr><th>Вариант</th><th>Путь</th><th>Паспорт</th><th>Живое</th><th>Правка</th><th>Цена</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><b>A</b></td><td>правая кнопка → окно, 2 вкладки</td><td>растворён в «Состоянии» и в «Настройках»</td><td>«Состояние»</td><td>«Настройки»</td><td>паспорт приходится искать в форме</td></tr>
+        <tr><td><b>B</b></td><td>«...» на карточке → панель 392 px</td><td>в полях панели</td><td>верх панели</td><td>поля панели</td><td>второй редактор; связи и расписание всё равно в окне</td></tr>
+        <tr><td><b>C</b> (рекомендуется)</td><td>правая кнопка → окно, 3 вкладки</td><td>«Сведения», только чтение</td><td>«Состояние», только чтение</td><td>«Настройки», одно «Сохранить»</td><td>+1 вкладка; паспорт виден дважды (чтение и форма), но источник один</td></tr>
+      </tbody>
+    </table>
+
+    <h2 style="margin:1.4rem 0 .4rem;font-size:1.02rem">Что не меняется</h2>
+    <div class="cols">
+      <div class="card-note">
+        <h3>Поведение</h3>
+        <ul>
+          <li>правая кнопка по карточке; пункты меню — «Сведения», «Состояние», «Настройки», все три открывают одно окно на своей вкладке;</li>
+          <li>«Сохранить» пишет и закрывает; крестик при правках спрашивает подтверждение;</li>
+          <li>id не редактируется; ошибка говорит тремя частями: что, почему, что сделать;</li>
+          <li>у папки обмена — свой редактор и «только сообщения»; вкладок «Сведения» и «Состояние» у неё нет.</li>
+        </ul>
+      </div>
+      <div class="card-note">
+        <h3>Внешний вид</h3>
+        <ul>
+          <li>карточки 176 × 62, id — моноширинным, слово состояния — цветом состояния;</li>
+          <li>точка запуска и зелёная рамка остаются на карточке;</li>
+          <li>вкладки — одной строкой, активная подчёркнута цветом accent; форма окна — как в 0018;</li>
+          <li>светлая и тёмная панель — кнопкой вверху листа (в превью — светлая);</li>
+          <li>все значения — из токенов <code>--dsw-alias-*</code>, как в <code>lib/client.js</code>.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <p class="footnote">
+    Макет один файл, без сети и внешних файлов: открывается двойным щелчком. Превью 1280 × 800
+    снимаются с этого же файла параметром <code>?scene=before</code>, <code>?scene=a</code>,
+    <code>?scene=b</code>, <code>?scene=c</code>; панель в кадре — 1248 × 768. Числа и
+    подписи — числа макета; в живой панели ширина канвы своя. Файлы, размеры и таблица
+    «пункт → вкладка» — в <code>notes.md</code>.
+  </p>
+</div>
+
+<script>
+  (function () {
+    "use strict";
+    var params = new URLSearchParams(window.location.search);
+    var scene = params.get("scene");
+    if (scene === "before" || scene === "a" || scene === "b" || scene === "c") {
+      document.body.classList.add("is-shot", "scene-" + scene);
+    }
+    if (params.get("theme") === "dark") {
+      document.documentElement.setAttribute("data-theme", "dark");
+    }
+    var themeBtn = document.getElementById("themeBtn");
+    if (themeBtn) {
+      themeBtn.addEventListener("click", function () {
+        var dark = document.documentElement.getAttribute("data-theme") === "dark";
+        document.documentElement.setAttribute("data-theme", dark ? "light" : "dark");
+        themeBtn.textContent = dark ? "Тёмная панель" : "Светлая панель";
+      });
+    }
+    var readout = document.getElementById("readout");
+    if (readout) {
+      var parts = [];
+      if (scene) parts.push("scene=" + scene);
+      if (params.get("theme") === "dark") parts.push("theme=dark");
+      if (parts.length) readout.textContent = "превью: ?" + parts.join("&");
+    }
+    var links = document.querySelectorAll("[data-scene-link]");
+    for (var i = 0; i < links.length; i += 1) {
+      links[i].addEventListener("click", function (event) {
+        event.preventDefault();
+        var target = event.currentTarget.getAttribute("data-scene-link");
+        document.body.classList.remove("scene-before", "scene-a", "scene-b", "scene-c");
+        document.body.classList.add("scene-" + target);
+        var id = target === "before" ? "scene-before"
+          : target === "a" ? "scene-a"
+          : target === "b" ? "scene-b"
+          : "scene-c";
+        var element = document.getElementById(id);
+        if (element) element.scrollIntoView({ behavior: "smooth", block: "start" });
+        var all = document.querySelectorAll("[data-scene-link]");
+        for (var j = 0; j < all.length; j += 1) all[j].classList.toggle("is-on", all[j] === event.currentTarget);
+      });
+    }
+    var first = document.querySelector("[data-scene-link='before']");
+    if (first) first.classList.add("is-on");
+  })();
+</script>
+</body>
+</html>
