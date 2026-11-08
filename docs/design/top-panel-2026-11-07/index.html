@@ -1,0 +1,767 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Компактный верх панели — макет 2026-11-07</title>
+<!--
+  МАКЕТ, а не рабочий экран. Один файл, без сети и внешних файлов.
+
+  Что показывает. Только панель Structure: верх (шапка и блок workflow), палитра,
+  канва с четырьмя карточками и папкой, низ. Экран 01 — как сейчас (1.0.29):
+  блок «Workflow» с плагином, движком, структурой и двумя кнопками обновления,
+  плюс отдельный чип «сборка» в шапке. Экраны 02–04 — три компактных верха:
+  A — строка названия и статуса + поповер с версиями; B — две строки: заголовок
+  и тонкая строка версий; C — одна строка, статус точкой, версии в «⋯».
+
+  Как снимать превью (1280 x 800, панель 1248 x 768):
+    msedge --headless=new --hide-scrollbars --window-size=1280,800 --virtual-time-budget=2000 ^
+      --screenshot=01-before.png "file:///.../index.html?scene=before"
+    (так же scene=a, scene=b, scene=c).
+-->
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  :root {
+    --text: #1b1b1f; --muted: #5b5b66; --tertiary: #6f6f7a; --caption: #8b8b96;
+    --line: #e2e3e9; --line-strong: #c9ccd4; --accent: #4176e6; --accent-soft: #eef2ff;
+    --success: #1f9d55; --warn: #a86200; --danger: #c92626;
+    --panel: #ffffff; --canvas: #f4f5f8; --bg: #eef0f5;
+    --layer1: rgba(127, 127, 127, 0.06); --layer2: rgba(127, 127, 127, 0.10);
+    --shadow: 0 10px 26px rgba(20, 20, 45, 0.08);
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  html, body { margin: 0; }
+  body { padding: 20px; background: var(--bg); color: var(--text); font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; font-size: 15px; line-height: 1.4; }
+  .sheet { max-width: 1288px; margin: 0 auto; }
+  .kicker { margin: 0 0 0.25rem; font-size: 0.74rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+  h1 { margin: 0 0 0.35rem; font-size: 1.45rem; letter-spacing: -0.01em; }
+  .lead { margin: 0 0 0.8rem; max-width: 84rem; color: var(--muted); font-size: 0.92rem; line-height: 1.55; }
+  .lead b { color: var(--text); }
+  .quote { margin: 0 0 6px; padding: 7px 12px; border-left: 3px solid var(--line-strong); background: #fff; border-radius: 0 8px 8px 0; font-size: 0.86rem; color: var(--muted); }
+  .quote b { color: var(--text); }
+  .quote .qn { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.06em; color: var(--accent); text-transform: uppercase; margin-right: 6px; }
+  .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 12px 0 0.4rem; }
+  .seg { display: inline-flex; border: 1px solid var(--line-strong); border-radius: 8px; overflow: hidden; background: #fff; }
+  .seg a { font-size: 12px; padding: 6px 11px; border-right: 1px solid var(--line); color: var(--muted); text-decoration: none; white-space: nowrap; }
+  .seg a:last-child { border-right: 0; }
+  .seg a.is-on { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+  .readout { margin-left: auto; font-family: var(--mono); font-size: 11px; color: var(--muted); background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; white-space: nowrap; }
+  .scene { margin: 0 0 1.4rem; }
+  .scene-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin: 1.2rem 0 0.5rem; }
+  .scene-no { font-family: var(--mono); font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); }
+  .scene-name { font-size: 1.02rem; font-weight: 700; }
+  .badge-rec { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #fff; background: var(--accent); border-radius: 999px; padding: 2px 8px; }
+  .scene-note { color: var(--muted); font-size: 0.82rem; }
+  .shot { margin: 0; width: min(1248px, 100%); }
+  .panel { position: relative; width: 100%; height: 768px; display: flex; flex-direction: column; overflow: hidden; background: var(--panel); color: var(--text); font-size: 13px; border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); }
+  .p-top { flex: 0 0 46px; display: flex; align-items: center; gap: 8px; padding: 0 14px; border-bottom: 1px solid var(--line); }
+  .p-title { font-size: 15px; font-weight: 600; }
+  .chip { font-size: 11px; color: var(--muted); background: var(--layer2); border-radius: 999px; padding: 2px 8px; white-space: nowrap; }
+  .chip.unread { color: var(--danger); font-weight: 600; background: transparent; border: 1px solid var(--danger); }
+  .panel-badge { margin-left: 2px; font-size: 10.5px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--accent); border: 1px dashed var(--accent); border-radius: 999px; padding: 2px 9px; white-space: nowrap; }
+  .spacer { flex: 1 1 auto; }
+  .btn { font: inherit; font-size: 12px; padding: 3px 10px; border-radius: 6px; border: 1px solid var(--line-strong); background: var(--layer1); color: var(--text); cursor: pointer; }
+  .btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+  .p-main { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; gap: 10px; padding: 10px 12px 12px; }
+  .p-rid { flex: 1 1 auto; min-height: 0; display: flex; gap: 10px; min-width: 0; }
+  .lib { position: relative; flex: 0 0 250px; min-width: 0; min-height: 0; display: flex; flex-direction: column; gap: 8px; padding: 12px 12px 10px; border-radius: 16px; background: #fff; box-shadow: 0 8px 22px rgba(20, 20, 45, 0.06); border: 1px solid var(--line); }
+  .lib-head { display: flex; align-items: center; gap: 3px; flex-wrap: nowrap; min-width: 0; }
+  .lib-title { font-weight: 700; font-size: 15px; white-space: nowrap; }
+  .lib-count { position: relative; margin-left: auto; flex: 0 0 auto; padding: 1px 5px; border: 1px solid var(--line-strong); border-radius: 999px; font-size: 9.5px; color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .lib-count.is-broken { flex: 0 0 50px; white-space: normal; text-align: center; line-height: 1.25; font-size: 9px; padding: 2px 2px; border-radius: 8px; }
+  .lib-collapse { flex: 0 0 auto; font: inherit; font-size: 10.5px; padding: 2px 8px; border-radius: 6px; border: 1px solid var(--line-strong); background: transparent; color: var(--muted); cursor: pointer; }
+  .lib-collapse.is-icon { width: 21px; height: 21px; padding: 0; font-size: 13px; line-height: 1; display: flex; align-items: center; justify-content: center; }
+  .lib-card { display: flex; gap: 8px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 10px; background: #fff; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04); }
+  .lib-ico { flex: 0 0 26px; height: 26px; border-radius: 8px; background: var(--layer2); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; }
+  .lib-body { display: flex; flex-direction: column; min-width: 0; }
+  .lib-name { font-size: 11.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .lib-role { font-size: 9.5px; color: var(--tertiary); margin-top: 1px; }
+  .lib-link { font-size: 9px; font-weight: 600; color: var(--muted); margin-top: 1px; }
+  .lib-hint { margin-top: auto; font-size: 9px; line-height: 1.4; color: var(--muted); overflow: hidden; }
+  .lib-tip { position: absolute; z-index: 8; background: #1b1b1f; color: #fff; font-size: 9.5px; padding: 4px 7px; border-radius: 6px; white-space: nowrap; box-shadow: 0 6px 16px rgba(0, 0, 0, 0.22); }
+  .canvas-shell { flex: 1 1 auto; min-height: 0; min-width: 0; display: flex; flex-direction: column; }
+  .c-head { flex: 0 0 34px; display: flex; align-items: center; gap: 8px; padding: 0 12px; border: 1px solid var(--line); border-bottom: 0; border-radius: 10px 10px 0 0; background: var(--layer1); font-size: 12px; color: var(--muted); }
+  .c-head strong { font-size: 13px; color: var(--text); }
+  .c-head .chip { font-size: 10.5px; }
+  .canvas { position: relative; flex: 1 1 auto; min-height: 0; border: 1px solid var(--line); border-radius: 0 0 10px 10px; background: var(--canvas); overflow: hidden; }
+  .canvas::before { content: ""; position: absolute; inset: 0; background-image: radial-gradient(var(--line-strong) 1px, transparent 1px); background-size: 16px 16px; opacity: 0.45; pointer-events: none; }
+  .edges { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+  .card { position: absolute; width: 176px; height: 62px; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--panel); color: var(--text); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06); }
+  .card.is-hot { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft), 0 2px 6px rgba(65, 118, 230, 0.18); }
+  .card.has-gear .card-role { right: 28px; }
+  .card-clip { position: absolute; inset: 0; border-radius: 10px; overflow: hidden; pointer-events: none; }
+  .card-stripe { position: absolute; left: 0; top: 0; width: 4px; height: 100%; border-radius: 2px; }
+  .card-id { position: absolute; left: 14px; top: 7px; font-family: var(--mono); font-size: 12.5px; font-weight: 600; letter-spacing: -0.01em; }
+  .card-role { position: absolute; left: 14px; right: 10px; top: 23px; font-size: 10.5px; color: var(--tertiary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .card-role.is-link { color: var(--accent); text-decoration: underline dotted; text-underline-offset: 2px; }
+  .card-state { position: absolute; left: 14px; top: 38px; font-size: 9.5px; font-weight: 600; color: var(--tertiary); }
+  .card-state.st-run { color: var(--success); }
+  .card-state.st-done { color: var(--accent); }
+  .card-run { position: absolute; left: 14px; top: 50px; font-size: 9px; color: var(--tertiary); }
+  .card-dot { position: absolute; right: 6px; top: 6px; width: 8px; height: 8px; border-radius: 50%; background: var(--success); box-shadow: 0 0 0 1px var(--panel); }
+  .card-dot.is-warn { background: var(--warn); }
+  .gear { width: 13px; height: 13px; display: block; }
+  .card-gear { position: absolute; right: 5px; top: 20px; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; color: var(--caption); border-radius: 5px; }
+  .card-gear.is-hot { color: var(--accent); background: var(--accent-soft); }
+  .card-more { position: absolute; right: -11px; top: -11px; width: 24px; height: 24px; border-radius: 50%; border: 1px solid var(--line-strong); background: var(--panel); color: var(--muted); display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.14); z-index: 2; }
+  .card-more.is-hot { color: var(--accent); border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft), 0 2px 8px rgba(0, 0, 0, 0.14); }
+  .portal { position: absolute; width: 204px; height: 116px; border: 1.2px dashed var(--line-strong); border-radius: 12px; background: var(--panel); }
+  .portal::after { content: ""; position: absolute; inset: 5px; border: 1px dashed var(--line); border-radius: 9px; pointer-events: none; }
+  .portal-head { position: absolute; left: 12px; top: 7px; font-size: 12px; font-weight: 600; }
+  .portal-sub { font-size: 9px; font-weight: 400; color: var(--caption); }
+  .portal-rule { position: absolute; left: 12px; right: 12px; top: 24px; height: 1px; background: var(--line); }
+  .portal-rule.is-dash { top: 80px; height: 0; background: none; border-top: 1px dashed var(--line); }
+  .portal-row { position: absolute; left: 12px; top: 29px; font-size: 11.5px; }
+  .portal-count { position: absolute; left: 12px; top: 47px; font-size: 9.5px; color: var(--muted); }
+  .portal-dates { position: absolute; left: 12px; top: 61px; font-size: 9px; color: var(--caption); }
+  .portal-foot { position: absolute; left: 12px; top: 84px; font-size: 9px; color: var(--caption); }
+  .portal-foot.is-warn { top: 96px; color: var(--danger); font-weight: 600; }
+  .portal-hint { position: absolute; left: 2px; top: 120px; width: 214px; font-size: 9.5px; color: var(--muted); }
+  .portal-gear { position: absolute; right: 5px; top: 4px; width: 22px; height: 22px; border-radius: 50%; background: #fff; border: 1px solid var(--line-strong); display: flex; align-items: center; justify-content: center; color: var(--muted); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12); z-index: 2; }
+  .portal-gear.is-float { right: -11px; top: -11px; width: 24px; height: 24px; }
+  .portal-gear.is-hot { color: var(--accent); border-color: var(--accent); }
+  .portal-part { position: absolute; left: 12px; top: 84px; font-size: 9px; font-weight: 600; color: var(--accent); border-bottom: 1px dotted var(--accent); }
+  .portal:has(.portal-part) .portal-foot:not(.is-warn) { display: none; }
+  .cm { position: absolute; z-index: 6; width: 224px; padding: 6px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); box-shadow: 0 12px 32px rgba(0, 0, 0, 0.20); display: flex; flex-direction: column; gap: 2px; }
+  .cm-item { width: 100%; text-align: left; font: inherit; font-size: 13px; padding: 9px 12px; border: 1px solid transparent; border-radius: 8px; background: transparent; color: var(--text); }
+  .cursor { position: absolute; z-index: 7; width: 18px; height: 18px; }
+  .win { position: absolute; z-index: 5; display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--line-strong); border-radius: 14px; background: var(--panel); box-shadow: 0 16px 38px rgba(20, 20, 45, 0.16); }
+  .win-head { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-bottom: 1px solid var(--line); }
+  .win-title { font-size: 13px; font-weight: 700; white-space: nowrap; }
+  .win-close { margin-left: auto; width: 22px; height: 22px; border: 0; background: transparent; color: var(--muted); font-size: 16px; line-height: 1; border-radius: 6px; }
+  .pill { display: inline-flex; align-items: center; gap: 5px; font-size: 10px; font-weight: 600; line-height: 1.2; padding: 2px 8px; border-radius: 999px; background: #fff; color: var(--accent); border: 1px dashed var(--accent); white-space: nowrap; }
+  .tabs { display: flex; align-items: center; gap: 2px; padding: 0 10px; border-bottom: 1px solid var(--line); background: var(--layer1); }
+  .tab { font: inherit; font-size: 11.5px; padding: 7px 10px; border: 0; border-bottom: 2px solid transparent; background: transparent; color: var(--muted); }
+  .tab.is-on { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+  .tabs-note { margin-left: auto; font-size: 9.5px; color: var(--caption); }
+  .win-body { padding: 8px 12px 6px; display: flex; flex-direction: column; gap: 3px; }
+  .field { display: flex; align-items: center; gap: 8px; }
+  .flabel { flex: 0 0 104px; font-size: 10.5px; color: var(--tertiary); white-space: nowrap; }
+  .fcontrol { flex: 1 1 auto; min-width: 0; }
+  .in { width: 100%; font: inherit; font-size: 11px; padding: 4px 6px; border: 1px solid var(--line-strong); border-radius: 6px; background: #fff; color: var(--text); }
+  .in[readonly] { background: var(--layer1); color: var(--muted); }
+  .links { margin: 0; padding-left: 14px; font-size: 10.5px; color: var(--muted); line-height: 1.45; }
+  .win-foot { margin-top: auto; display: flex; align-items: center; flex-wrap: nowrap; gap: 7px; padding: 7px 12px; border-top: 1px solid var(--line); }
+  .win-foot .btn { padding: 3px 8px; }
+  .win-hint { margin-left: auto; font-size: 9.5px; color: var(--caption); }
+  .link-danger { font: inherit; font-size: 10.5px; color: var(--danger); background: none; border: 0; padding: 0; text-decoration: underline; }
+  .mark { position: absolute; z-index: 9; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; background: var(--warn); color: #fff; font-size: 10.5px; font-weight: 700; display: flex; align-items: center; justify-content: center; border: 2px solid #fff; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18); }
+  .mark.is-info { background: var(--accent); }
+  .note { position: absolute; z-index: 8; font-size: 10.5px; font-weight: 600; line-height: 1.25; padding: 4px 9px; border-radius: 999px; color: var(--accent); background: #fff; border: 1px dashed var(--accent); white-space: nowrap; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06); }
+  .note.is-warn { color: var(--warn); border-color: var(--warn); }
+  .note.is-danger { color: var(--danger); border-color: var(--danger); }
+  .note.is-ok { color: var(--success); border-color: var(--success); }
+  .note.is-plain { color: var(--muted); border-color: var(--line-strong); }
+  .tip { position: absolute; z-index: 8; background: #1b1b1f; color: #fff; font-size: 10px; line-height: 1.35; padding: 5px 8px; border-radius: 7px; box-shadow: 0 8px 20px rgba(0, 0, 0, 0.22); }
+  .tip::after { content: ""; position: absolute; left: 14px; top: -4px; border: 4px solid transparent; border-bottom-color: #1b1b1f; border-top: 0; }
+  .exchange { position: relative; flex: 0 0 auto; display: flex; flex-direction: column; gap: 5px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--layer1); }
+  .exchange-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .exchange-title { font-weight: 600; font-size: 12px; }
+  .exchange-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 12px; }
+  .legend { flex: 0 0 auto; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; font-size: 10.5px; color: var(--muted); padding: 0 2px; }
+  .legend b { font-weight: 700; }
+  .strip { flex: 0 0 56px; display: flex; align-items: center; gap: 10px; padding: 0 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--layer1); }
+  .details-id { font-family: var(--mono); font-size: 13px; font-weight: 600; }
+  .details-sub { font-size: 11px; color: var(--tertiary); }
+  .strip-hint { font-size: 11px; color: var(--tertiary); }
+  .scene-notes { margin: 0.7rem 0 0; }
+  .cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+  .card-note { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 9px 13px; font-size: 0.84rem; }
+  .card-note h3 { margin: 0 0 5px; font-size: 0.86rem; }
+  .card-note ul { margin: 0; padding-left: 1.1rem; color: var(--muted); line-height: 1.5; }
+  .card-note p { margin: 0; color: var(--muted); line-height: 1.5; }
+  .card-note.plus { border-top: 3px solid var(--success); }
+  .card-note.minus { border-top: 3px solid var(--danger); }
+  .card-note b { color: var(--text); }
+  table.spec { width: 100%; border-collapse: collapse; font-size: 0.82rem; background: #fff; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; margin: 0.3rem 0 0.6rem; }
+  table.spec th, table.spec td { text-align: left; padding: 6px 9px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  table.spec th { background: var(--layer1); font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.03em; color: var(--tertiary); }
+  table.spec tr:last-child td { border-bottom: 0; }
+  table.spec code { font-family: var(--mono); font-size: 0.94em; background: var(--layer1); border-radius: 4px; padding: 0 3px; }
+  .compare { margin-top: 1.2rem; }
+  .compare h2.cmp-h { margin: 1.2rem 0 0.35rem; font-size: 1rem; }
+  .recommend { background: var(--accent-soft); border: 1px solid #c9d6ff; border-radius: 12px; padding: 12px 16px; margin: 1rem 0 0.6rem; }
+  .recommend h2 { margin: 0 0 6px; font-size: 1.02rem; color: var(--accent); }
+  .recommend p { margin: 0 0 6px; font-size: 0.86rem; color: var(--muted); line-height: 1.55; }
+  .recommend b { color: var(--text); }
+  .footnote { margin-top: 1rem; font-size: 0.76rem; color: var(--tertiary); line-height: 1.5; }
+  .footnote code { font-family: var(--mono); }
+  #scene-before .lib-title { font-size: 14px; }
+  #scene-before .lib-collapse { font-size: 9px; padding: 2px 3px; }
+
+  body.is-shot { padding: 16px; }
+  body.is-shot .sheet { max-width: none; margin: 0; }
+  body.is-shot .sheet-head, body.is-shot .scene-head, body.is-shot .scene-notes, body.is-shot .compare, body.is-shot .footnote { display: none; }
+  body.is-shot .scene { display: none; margin: 0; }
+  body.is-shot .scene .shot { margin: 0; width: 100%; }
+  body.is-shot.scene-before #scene-before, body.is-shot.scene-a #scene-a, body.is-shot.scene-b #scene-b, body.is-shot.scene-c #scene-c { display: block; }
+
+  /* ===== верх панели ===== */
+  .p-top { gap: 7px; }
+  .status { display: inline-flex; align-items: center; gap: 6px; font: inherit; font-size: 11px; font-weight: 600; line-height: 1.2; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--line-strong); background: #fff; cursor: pointer; white-space: nowrap; }
+  .status .sdot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+  .status.ok { color: #16794a; border-color: #b9e2ca; background: #f3fbf6; }
+  .status.warn { color: #94580a; border-color: #eed6b4; background: #fffaf2; }
+  .status.err { color: #b21f24; border-color: #f0c2c2; background: #fff6f6; }
+  .dot-only { position: relative; width: 20px; height: 20px; border-radius: 50%; border: 1px solid #b9e2ca; background: #f3fbf6; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
+  .dot-only i { width: 8px; height: 8px; border-radius: 50%; background: #16794a; display: block; }
+  .dot-only.is-warn { border-color: #eed6b4; background: #fffaf2; }
+  .dot-only.is-warn i { background: #94580a; }
+  .dot-only.is-err { border-color: #f0c2c2; background: #fff6f6; }
+  .dot-only.is-err i { background: #b21f24; }
+  .p-sub { flex: 0 0 28px; display: flex; align-items: center; gap: 8px; padding: 0 14px; font-size: 10.5px; color: var(--tertiary); white-space: nowrap; }
+  .p-sub .mono { font-family: var(--mono); font-size: 10px; color: var(--muted); }
+  .p-sub .sep { color: var(--line-strong); }
+  .wf-card { position: relative; flex: 0 0 auto; margin: 10px 12px 0; display: flex; flex-direction: column; gap: 5px; padding: 8px 12px 9px; border: 1px solid var(--line); border-radius: 10px; background: var(--layer1); }
+  .wf-head { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+  .wf-title { font-size: 12px; font-weight: 700; }
+  .wf-hint { font-size: 10px; color: var(--tertiary); line-height: 1.35; }
+  .pop { position: absolute; z-index: 20; width: 332px; padding: 10px 12px 11px; border: 1px solid var(--line-strong); border-radius: 12px; background: #fff; box-shadow: 0 16px 38px rgba(20, 20, 45, 0.18); }
+  .pop-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-size: 12px; font-weight: 700; }
+  .pop-head .pill { margin-left: auto; }
+  .prow { display: flex; gap: 8px; align-items: baseline; font-size: 10.5px; padding: 3px 0; border-bottom: 1px dashed var(--line); }
+  .prow .pl { flex: 0 0 128px; color: var(--tertiary); }
+  .prow .pv { flex: 1 1 auto; min-width: 0; }
+  .prow .pv .mono { font-family: var(--mono); font-size: 10px; }
+  .pfoot { display: flex; align-items: center; flex-wrap: nowrap; gap: 8px; margin-top: 8px; }
+  .pfoot .hint { font-size: 9.5px; color: var(--caption); }
+  .pop .btn { font-size: 11px; padding: 3px 8px; white-space: nowrap; }
+  .callout { position: absolute; z-index: 21; font-size: 9.5px; color: var(--muted); background: #fff; border: 1px dashed var(--line-strong); border-radius: 8px; padding: 4px 8px; }
+</style>
+</head>
+<body>
+<div class="sheet">
+  <header class="sheet-head">
+    <p class="kicker">Макет · к утверждению · 2026-11-07</p>
+    <h1>Компактный верх: статус и название вместо блока версий</h1>
+    <p class="lead">Верх панели занимает информации больше, чем сама схема: блок «Workflow» с плагином,
+      движком, структурой и двумя кнопками обновления, отдельный чип «сборка» и ещё одна кнопка
+      «Обновить». <b>Код не менялся</b> — в папке этот лист и четыре превью. Ниже — что ломается
+      сейчас и три компактных верха.</p>
+    <p class="quote"><span class="qn">бриф</span>«Очень много места занимает информация о воркфлоу + версия,
+      путаница версий; предложить компактный верх на 1–2 строки: статус (всё актуально / есть обновление /
+      ошибка) и название; версии структуры и движка — компактно и в одной точке обновления; детали
+      в поповер; на виду только то, что требует действия.»</p>
+    <div class="toolbar">
+      <span class="seg">
+        <a href="#scene-before" data-scene-link="before">01 · как сейчас</a>
+        <a href="#scene-a" data-scene-link="a">02 · вариант A</a>
+        <a href="#scene-b" data-scene-link="b">03 · вариант B</a>
+        <a href="#scene-c" data-scene-link="c">04 · вариант C</a>
+      </span>
+      <span class="readout" id="readout">лист целиком: четыре экрана, плюсы и минусы, рекомендация</span>
+    </div>
+  </header>
+
+  <section class="scene" id="scene-before">
+    <div class="scene-head">
+      <span class="scene-no">01</span>
+      <span class="scene-name">Как сейчас (1.0.29)</span>
+      <span class="scene-note">Блок «Workflow» на 3 строки, три версии подряд, четвёртая версия — чипом в шапке, две кнопки обновления.</span>
+    </div>
+    <figure class="shot"><div class="panel">
+  <div class="p-top"><span class="p-title">Структура проекта</span><span class="chip">структура</span><span class="chip unread">требуют хода: 2</span><span class="chip">сборка 07.11 18:40</span><span class="spacer"></span><button class="btn">Обновить</button><button class="btn">Собрать</button><button class="btn">Добавить узел</button></div>
+  <div class="wf-card">
+  <div class="wf-head"><span class="wf-title">Workflow</span><span class="chip">плагин 0.7.0</span><span class="chip">движок 2.6.30</span><span class="chip">структура 1.0.29</span><span class="spacer"></span><button class="btn">Проверить актуальность</button><button class="btn">Обновить плагин</button><span class="mark" style="left:-8px;top:-9px">1</span></div>
+  <div class="wf-hint">сборка актуальна: плагин 0.7.0, движок 2.6.30 · движок обновляется в репозитории движка: C:/Users/Goryachev/Documents/deepseek-harness/dsh-workflow</div>
+  <div class="wf-hint">структура 1.0.29 · актуальна — версия сборки панели берётся из package.json плагина</div>
+</div>
+  <div class="p-main">
+    <div class="p-rid">
+      <aside class="lib"><div class="lib-head"><span class="lib-title">Библиотека узлов</span><span class="lib-count" title="6 элементов в библиотеке">6 элементов</span><button class="lib-collapse is-icon" aria-label="Свернуть библиотеку узлов">−</button></div><div class="lib-card"><span class="lib-ico" style="color:#4176e6">К</span><span class="lib-body"><span class="lib-name">Координатор</span><span class="lib-role">ведёт план и раздаёт работу</span><span class="lib-link">delegate → исполнитель</span></span></div>
+<div class="lib-card"><span class="lib-ico" style="color:#1f9d55">И</span><span class="lib-body"><span class="lib-name">Исполнитель</span><span class="lib-role">делает порученное</span><span class="lib-link">report → координатор</span></span></div>
+<div class="lib-card"><span class="lib-ico" style="color:#b26a00">П</span><span class="lib-body"><span class="lib-name">Приёмщик</span><span class="lib-role">проверяет работу</span><span class="lib-link">review ← координатор</span></span></div>
+<div class="lib-card"><span class="lib-ico" style="color:#a855f7">Кр</span><span class="lib-body"><span class="lib-name">Критик</span><span class="lib-role">разбирает прогон</span><span class="lib-link">report → координатор</span></span></div>
+<div class="lib-card"><span class="lib-ico" style="color:#0f9b8e">Д</span><span class="lib-body"><span class="lib-name">Дизайнер</span><span class="lib-role">макеты до кода</span><span class="lib-link">delegate ← координатор</span></span></div>
+<div class="lib-card"><span class="lib-ico" style="color:#8b8b96">⇄</span><span class="lib-body"><span class="lib-name">Папка обмена</span><span class="lib-role">папка, не агент</span><span class="lib-link">обмен с workflow</span></span></div></aside>
+      <div class="canvas-shell">
+        <div class="c-head"><strong>Structure</strong><span class="chip">4 узла</span><span class="chip">4 связи</span><span class="chip">в работе: 2</span></div>
+        <div class="canvas"><svg class="edges" aria-hidden="true">
+  <defs>
+    <marker id="ar-del" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="#4176e6"/></marker>
+    <marker id="ar-rev" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="#a86200"/></marker>
+    <marker id="ar-rep" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="#8b8b96"/></marker>
+  </defs>
+  <path d="M216 55 H280" fill="none" stroke="#4176e6" stroke-width="1.5" marker-end="url(#ar-del)"/>
+  <path d="M128 86 V132" fill="none" stroke="#4176e6" stroke-width="1.5" marker-end="url(#ar-del)"/>
+  <path d="M368 86 V132" fill="none" stroke="#a86200" stroke-width="1.5" stroke-dasharray="6 5" marker-end="url(#ar-rev)"/>
+  <path d="M280 163 H216" fill="none" stroke="#8b8b96" stroke-width="1.5" stroke-dasharray="6 5" marker-end="url(#ar-rep)"/>
+</svg><div class="card" style="left:40px;top:24px">
+  <span class="card-clip"><span class="card-stripe" style="background:#4176e6"></span></span>
+  <span class="card-id">coordinator</span>
+  <span class="card-role">координатор · deepseek-v4.1-flash</span>
+  <span class="card-state st-run">работает</span>
+  <span class="card-run">◷ следующий запуск 07.11 09:00</span>
+  <span class="card-dot"></span>
+</div><div class="card" style="left:280px;top:24px">
+  <span class="card-clip"><span class="card-stripe" style="background:#1f9d55"></span></span>
+  <span class="card-id">worker</span>
+  <span class="card-role">исполнитель · glm-5.3-flash</span>
+  <span class="card-state ">свободен</span>
+  
+  
+</div><div class="card" style="left:40px;top:132px">
+  <span class="card-clip"><span class="card-stripe" style="background:#b26a00"></span></span>
+  <span class="card-id">judge</span>
+  <span class="card-role">приёмщик · deepseek-v4.1-flash</span>
+  <span class="card-state st-run">выполняется</span>
+  
+  <span class="card-dot"></span>
+</div><div class="card" style="left:280px;top:132px">
+  <span class="card-clip"><span class="card-stripe" style="background:#a855f7"></span></span>
+  <span class="card-id">critic</span>
+  <span class="card-role">критик · glm-5.3-flash</span>
+  <span class="card-state st-done">завершил</span>
+  
+  
+</div><div class="portal" style="left:40px;top:300px">
+  <span class="portal-head">Выход вне<span class="portal-sub"> · folder-1 · принята</span></span>
+  <span class="portal-rule"></span>
+  <span class="portal-row"><b>workflow</b></span>
+  <span class="portal-count">↗ 3 исходящих · ↙ 2 входящих</span>
+  <span class="portal-dates">вх. 07.11 14:20 · исх. 07.11 09:05</span>
+  <span class="portal-rule is-dash"></span>
+  <span class="portal-foot">path coordination/threads</span>
+  <span class="portal-foot is-warn">требуют хода: 2</span>
+  <span class="portal-hint">клик или Enter — окно папки: ящик, участники, контракт</span>
+</div></div>
+      </div>
+    </div>
+    <div class="legend"><span><b style="color:#4176e6">—</b> delegate: поручение</span><span><b style="color:#a86200">—</b> review: проверка</span><span><b style="color:#8b8b96">—</b> report: возврат</span><span><b style="color:#6f6f7a">—</b> peer: равные</span></div>
+    <div class="strip"><span class="details-id">coordinator</span><span class="details-sub">координатор · выбран</span><span class="spacer"></span><span class="strip-hint">окно узла — из узла: ⚙ у карточки</span><button class="btn">Связь</button><button class="btn btn-primary">Запустить</button></div>
+  </div>
+  
+</div></figure>
+    <div class="scene-notes"><div class="cols">
+      <div class="card-note minus"><h3><span style="color:#a86200">1</span> · Место</h3>
+        <ul><li>блок «Workflow» — три строки, ~120 px высоты, под шапкой;</li>
+          <li>в нём две кнопки: «Проверить актуальность» и «Обновить плагин»;</li>
+          <li>схема получает на 130 px меньше канвы, чем могла бы;</li>
+          <li>всё это видно всегда — и когда ничего не требует действия.</li></ul></div>
+      <div class="card-note minus"><h3>Путаница версий</h3>
+        <ul><li>в блоке три числа подряд: плагин <code>0.7.0</code>, движок <code>2.6.30</code>, структура <code>1.0.29</code>;</li>
+          <li>в шапке четвёртое: чип «сборка 07.11 18:40»;</li>
+          <li>какая из них обновляется кнопкой в блоке — не сказано;</li>
+          <li>«актуально» повторяется дважды: в блоке и в чипе сборки.</li></ul></div>
+      <div class="card-note minus"><h3>Что требует действия</h3>
+        <ul><li>на виду три действия обновления/проверки, но какое нужно сейчас — не видно;</li>
+          <li>«Обновить» (перечитать структуру) и «Обновить плагин» — разные вещи с похожими словами;</li>
+          <li>нет единого ответа «всё хорошо» или «есть обновление»;</li>
+          <li>требующие хода письма обмена уже вынесены чипом — а версии нет.</li></ul></div>
+    </div></div>
+  </section>
+
+  <section class="scene" id="scene-a">
+    <div class="scene-head">
+      <span class="scene-no">02</span>
+      <span class="scene-name">Вариант A · строка названия и статуса + поповер</span>
+      <span class="badge-rec">рекомендуется</span>
+      <span class="scene-note">46 px: название, чип «всё актуально», действия. Версии — в поповере по чипу, там же единственная кнопка обновления.</span>
+    </div>
+    <figure class="shot"><div class="panel">
+  <div class="p-top"><span class="p-title">Структура проекта</span><button class="status ok"><span class="sdot"></span>всё актуально</button><span class="spacer"></span><button class="btn">Обновить</button><button class="btn">Собрать</button><button class="btn">Добавить узел</button></div>
+  
+  <div class="p-main">
+    <div class="p-rid">
+      <aside class="lib"><div class="lib-head"><span class="lib-title">Библиотека узлов</span><span class="lib-count" title="6 элементов в библиотеке">6 элементов</span><button class="lib-collapse is-icon" aria-label="Свернуть библиотеку узлов">−</button></div><div class="lib-card"><span class="lib-ico" style="color:#4176e6">К</span><span class="lib-body"><span class="lib-name">Координатор</span><span class="lib-role">ведёт план и раздаёт работу</span><span class="lib-link">delegate → исполнитель</span></span></div>
+<div class="lib-card"><span class="lib-ico" style="color:#1f9d55">И</span><span class="lib-body"><span class="lib-name">Исполнитель</span><span class="lib-role">делает порученное</span><span class="lib-link">report → координатор</span></span></div>
+<div class="lib-card"><span class="lib-ico" style="color:#b26a00">П</span><span class="lib-body"><span class="lib-name">Приёмщик</span><span class="lib-role">проверяет работу</span><span class="lib-link">review ← координатор</span></span></div>
+<div class="lib-card"><span class="lib-ico" style="color:#a855f7">Кр</span><span class="lib-body"><span class="lib-name">Критик</span><span class="lib-role">разбирает прогон</span><span class="lib-link">report → координатор</span></span></div>
+<div class="lib-card"><span class="lib-ico" style="color:#0f9b8e">Д</span><span class="lib-body"><span class="lib-name">Дизайнер</span><span class="lib-role">макеты до кода</span><span class="lib-link">delegate ← координатор</span></span></div>
+<div class="lib-card"><span class="lib-ico" style="color:#8b8b96">⇄</span><span class="lib-body"><span class="lib-name">Папка обмена</span><span class="lib-role">папка, не агент</span><span class="lib-link">обмен с workflow</span></span></div></aside>
+      <div class="canvas-shell">
+        <div class="c-head"><strong>Structure</strong><span class="chip">4 узла</span><span class="chip">4 связи</span><span class="chip">в работе: 2</span></div>
+        <div class="canvas"><svg class="edges" aria-hidden="true">
+  <defs>
+    <marker id="ar-del" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="#4176e6"/></marker>
+    <marker id="ar-rev" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="#a86200"/></marker>
+    <marker id="ar-rep" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="#8b8b96"/></marker>
+  </defs>
+  <path d="M216 55 H280" fill="none" stroke="#4176e6" stroke-width="1.5" marker-end="url(#ar-del)"/>
+  <path d="M128 86 V132" fill="none" stroke="#4176e6" stroke-width="1.5" marker-end="url(#ar-del)"/>
+  <path d="M368 86 V132" fill="none" stroke="#a86200" stroke-width="1.5" stroke-dasharray="6 5" marker-end="url(#ar-rev)"/>
+  <path d="M280 163 H216" fill="none" stroke="#8b8b96" stroke-width="1.5" stroke-dasharray="6 5" marker-end="url(#ar-rep)"/>
+</svg><div class="card" style="left:40px;top:24px">
+  <span class="card-clip"><span class="card-stripe" style="background:#4176e6"></span></span>
+  <span class="card-id">coordinator</span>
+  <span class="card-role">координатор · deepseek-v4.1-flash</span>
+  <span class="card-state st-run">работает</span>
+  <span class="card-run">◷ следующий запуск 07.11 09:00</span>
+  <span class="card-dot"></span>
+</div><div class="card" style="left:280px;top:24px">
+  <span class="card-clip"><span class="card-stripe" style="background:#1f9d55"></span></span>
+  <span class="card-id">worker</span>
+  <span class="card-role">исполнитель · glm-5.3-flash</span>
+  <span class="card-state ">свободен</span>
+  
+  
+</div><div class="card" style="left:40px;top:132px">
+  <span class="card-clip"><span class="card-stripe" style="background:#b26a00"></span></span>
+  <span class="card-id">judge</span>
+  <span class="card-role">приёмщик · deepseek-v4.1-flash</span>
+  <span class="card-state st-run">выполняется</span>
+  
+  <span class="card-dot"></span>
+</div><div class="card" style="left:280px;top:132px">
+  <span class="card-clip"><span class="card-stripe" style="background:#a855f7"></span></span>
+  <span class="card-id">critic</span>
+  <span class="card-role">критик · glm-5.3-flash</span>
+  <span class="card-state st-done">завершил</span>
+  
+  
+</div><div class="portal" style="left:40px;top:300px">
+  <span class="portal-head">Выход вне<span class="portal-sub"> · folder-1 · принята</span></span>
+  <span class="portal-rule"></span>
+  <span class="portal-row"><b>workflow</b></span>
+  <span class="portal-count">↗ 3 исходящих · ↙ 2 входящих</span>
+  <span class="portal-dates">вх. 07.11 14:20 · исх. 07.11 09:05</span>
+  <span class="portal-rule is-dash"></span>
+  <span class="portal-foot">path coordination/threads</span>
+  <span class="portal-foot is-warn">требуют хода: 2</span>
+  <span class="portal-hint">клик или Enter — окно папки: ящик, участники, контракт</span>
+</div></div>
+      </div>
+    </div>
+    <div class="legend"><span><b style="color:#4176e6">—</b> delegate: поручение</span><span><b style="color:#a86200">—</b> review: проверка</span><span><b style="color:#8b8b96">—</b> report: возврат</span><span><b style="color:#6f6f7a">—</b> peer: равные</span></div>
+    <div class="strip"><span class="details-id">coordinator</span><span class="details-sub">координатор · выбран</span><span class="spacer"></span><span class="strip-hint">окно узла — из узла: ⚙ у карточки</span><button class="btn">Связь</button><button class="btn btn-primary">Запустить</button></div>
+  </div>
+  <div class="pop" style="left:30px;top:212px;width:300px" role="dialog" aria-label="Сборка и версии">
+  <div class="pop-head">Сборка<span class="pill">актуально</span></div>
+  <div class="prow"><span class="pl">структура</span><span class="pv"><span class="mono">1.0.29</span> · актуальна</span></div>
+  <div class="prow"><span class="pl">плагин workflow</span><span class="pv"><span class="mono">0.7.0</span> · установлен</span></div>
+  <div class="prow"><span class="pl">движок workflow</span><span class="pv"><span class="mono">2.6.30</span> · здесь, в этом репозитории</span></div>
+  <div class="prow" style="border-bottom:0"><span class="pl">проверено</span><span class="pv">07.11, 18:40</span></div>
+  <div class="pfoot"><button class="btn btn-primary">Проверить</button><span class="hint">обновление — здесь же</span></div>
+</div>
+</div></figure>
+    <div class="scene-notes"><div class="cols">
+      <div class="card-note"><h3>Как выглядит</h3>
+        <ul><li>одна строка шапки 46 px — как сейчас, без второго блока;</li>
+          <li>статус словом и цветом: «всё актуально» / «есть обновление» / «ошибка проверки»;</li>
+          <li>справа — три привычные кнопки: «Обновить», «Собрать», «Добавить узел»;</li>
+          <li>чип статуса — кнопка: открывает поповер «Сборка».</li></ul></div>
+      <div class="card-note plus"><h3>Плюсы</h3>
+        <ul><li>возвращает канве 120 px — второй блок исчезает;</li>
+          <li>на виду ровно один факт о сборке — статус; версии по запросу;</li>
+          <li>одна точка обновления: кнопка в поповере, рядом с версиями;</li>
+          <li>статус читается словом, а не цветом — доступно и без цвета;</li>
+          <li>при обновлении чип сам становится жёлтым и зовёт в поповер.</li></ul></div>
+      <div class="card-note minus"><h3>Минусы</h3>
+        <ul><li>статус занимает место в шапке рядом с названием;</li>
+          <li>версии не видны без клика — если заказчику нужно «видно всегда», это B;</li>
+          <li>поповер перекрывает канву (как и любой поповер);</li>
+          <li>три состояния надо описать словами и цветом — работа для копирайта.</li></ul></div>
+    </div></div>
+  </section>
+
+  <section class="scene" id="scene-b">
+    <div class="scene-head">
+      <span class="scene-no">03</span>
+      <span class="scene-name">Вариант B · две строки: заголовок и тонкая строка версий</span>
+      <span class="scene-note">46 + 28 px: шапка с действиями и вторая строка «структура · плагин · движок — обновлений нет».</span>
+    </div>
+    <figure class="shot"><div class="panel">
+  <div class="p-top"><span class="p-title">Структура проекта</span><span class="spacer"></span><button class="btn">Обновить</button><button class="btn">Собрать</button><button class="btn">Добавить узел</button></div>
+  <div class="p-sub"><span>структура <span class="mono">1.0.29</span></span><span class="sep">·</span><span>плагин <span class="mono">0.7.0</span></span><span class="sep">·</span><span>движок <span class="mono">2.6.30</span></span><span class="sep">·</span><span>обновлений нет</span><span class="spacer"></span><button class="btn-mini">Проверить</button></div>
+  <div class="p-main">
+    <div class="p-rid">
+      <aside class="lib"><div class="lib-head"><span class="lib-title">Библиотека узлов</span><span class="lib-count" title="6 элементов в библиотеке">6 элементов</span><button class="lib-collapse is-icon" aria-label="Свернуть библиотеку узлов">−</button></div><div class="lib-card"><span class="lib-ico" style="color:#4176e6">К</span><span class="lib-body"><span class="lib-name">Координатор</span><span class="lib-role">ведёт план и раздаёт работу</span><span class="lib-link">delegate → исполнитель</span></span></div>
+<div class="lib-card"><span class="lib-ico" style="color:#1f9d55">И</span><span class="lib-body"><span class="lib-name">Исполнитель</span><span class="lib-role">делает порученное</span><span class="lib-link">report → координатор</span></span></div>
+<div class="lib-card"><span class="lib-ico" style="color:#b26a00">П</span><span class="lib-body"><span class="lib-name">Приёмщик</span><span class="lib-role">проверяет работу</span><span class="lib-link">review ← координатор</span></span></div>
+<div class="lib-card"><span class="lib-ico" style="color:#a855f7">Кр</span><span class="lib-body"><span class="lib-name">Критик</span><span class="lib-role">разбирает прогон</span><span class="lib-link">report → координатор</span></span></div>
+<div class="lib-card"><span class="lib-ico" style="color:#0f9b8e">Д</span><span class="lib-body"><span class="lib-name">Дизайнер</span><span class="lib-role">макеты до кода</span><span class="lib-link">delegate ← координатор</span></span></div>
+<div class="lib-card"><span class="lib-ico" style="color:#8b8b96">⇄</span><span class="lib-body"><span class="lib-name">Папка обмена</span><span class="lib-role">папка, не агент</span><span class="lib-link">обмен с workflow</span></span></div></aside>
+      <div class="canvas-shell">
+        <div class="c-head"><strong>Structure</strong><span class="chip">4 узла</span><span class="chip">4 связи</span><span class="chip">в работе: 2</span></div>
+        <div class="canvas"><svg class="edges" aria-hidden="true">
+  <defs>
+    <marker id="ar-del" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="#4176e6"/></marker>
+    <marker id="ar-rev" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="#a86200"/></marker>
+    <marker id="ar-rep" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="#8b8b96"/></marker>
+  </defs>
+  <path d="M216 55 H280" fill="none" stroke="#4176e6" stroke-width="1.5" marker-end="url(#ar-del)"/>
+  <path d="M128 86 V132" fill="none" stroke="#4176e6" stroke-width="1.5" marker-end="url(#ar-del)"/>
+  <path d="M368 86 V132" fill="none" stroke="#a86200" stroke-width="1.5" stroke-dasharray="6 5" marker-end="url(#ar-rev)"/>
+  <path d="M280 163 H216" fill="none" stroke="#8b8b96" stroke-width="1.5" stroke-dasharray="6 5" marker-end="url(#ar-rep)"/>
+</svg><div class="card" style="left:40px;top:24px">
+  <span class="card-clip"><span class="card-stripe" style="background:#4176e6"></span></span>
+  <span class="card-id">coordinator</span>
+  <span class="card-role">координатор · deepseek-v4.1-flash</span>
+  <span class="card-state st-run">работает</span>
+  <span class="card-run">◷ следующий запуск 07.11 09:00</span>
+  <span class="card-dot"></span>
+</div><div class="card" style="left:280px;top:24px">
+  <span class="card-clip"><span class="card-stripe" style="background:#1f9d55"></span></span>
+  <span class="card-id">worker</span>
+  <span class="card-role">исполнитель · glm-5.3-flash</span>
+  <span class="card-state ">свободен</span>
+  
+  
+</div><div class="card" style="left:40px;top:132px">
+  <span class="card-clip"><span class="card-stripe" style="background:#b26a00"></span></span>
+  <span class="card-id">judge</span>
+  <span class="card-role">приёмщик · deepseek-v4.1-flash</span>
+  <span class="card-state st-run">выполняется</span>
+  
+  <span class="card-dot"></span>
+</div><div class="card" style="left:280px;top:132px">
+  <span class="card-clip"><span class="card-stripe" style="background:#a855f7"></span></span>
+  <span class="card-id">critic</span>
+  <span class="card-role">критик · glm-5.3-flash</span>
+  <span class="card-state st-done">завершил</span>
+  
+  
+</div><div class="portal" style="left:40px;top:300px">
+  <span class="portal-head">Выход вне<span class="portal-sub"> · folder-1 · принята</span></span>
+  <span class="portal-rule"></span>
+  <span class="portal-row"><b>workflow</b></span>
+  <span class="portal-count">↗ 3 исходящих · ↙ 2 входящих</span>
+  <span class="portal-dates">вх. 07.11 14:20 · исх. 07.11 09:05</span>
+  <span class="portal-rule is-dash"></span>
+  <span class="portal-foot">path coordination/threads</span>
+  <span class="portal-foot is-warn">требуют хода: 2</span>
+  <span class="portal-hint">клик или Enter — окно папки: ящик, участники, контракт</span>
+</div></div>
+      </div>
+    </div>
+    <div class="legend"><span><b style="color:#4176e6">—</b> delegate: поручение</span><span><b style="color:#a86200">—</b> review: проверка</span><span><b style="color:#8b8b96">—</b> report: возврат</span><span><b style="color:#6f6f7a">—</b> peer: равные</span></div>
+    <div class="strip"><span class="details-id">coordinator</span><span class="details-sub">координатор · выбран</span><span class="spacer"></span><span class="strip-hint">окно узла — из узла: ⚙ у карточки</span><button class="btn">Связь</button><button class="btn btn-primary">Запустить</button></div>
+  </div>
+  
+</div></figure>
+    <div class="scene-notes"><div class="cols">
+      <div class="card-note"><h3>Как выглядит</h3>
+        <ul><li>первая строка — название и действия, без статуса;</li>
+          <li>вторая, тонкая: три версии моноширинным и вывод «обновлений нет»;</li>
+          <li>справа «Проверить» — единственное действие по версиям;</li>
+          <li>при обновлении строка меняется на «0.7.0 → 0.7.1 · движок 2.6.30 → 2.6.31».</li></ul></div>
+      <div class="card-note plus"><h3>Плюсы</h3>
+        <ul><li>версии видны всегда и в одном месте — без кликов;</li>
+          <li>статус не нужен словом: вывод «обновлений нет» и есть статус;</li>
+          <li>всего +28 px против 120 — почти вся канва возвращается;</li>
+          <li>проще всего: существующие строки сводятся в одну.</li></ul></div>
+      <div class="card-note minus"><h3>Минусы</h3>
+        <ul><li>две строки — брифинг разрешает 1–2, но это всё-таки второй ряд;</li>
+          <li>числа на виду всегда, хотя действия не требуют;</li>
+          <li>длинные версии и статус не влезают на узкой панели — нужна обрезка;</li>
+          <li>ошибка проверки в такой строке читается хуже, чем цветной чип.</li></ul></div>
+    </div></div>
+  </section>
+
+  <section class="scene" id="scene-c">
+    <div class="scene-head">
+      <span class="scene-no">04</span>
+      <span class="scene-name">Вариант C · одна строка, статус точкой, версии в «⋯»</span>
+      <span class="scene-note">46 px и ни пикселя больше: точка статуса с тултипом, действия, «⋯» — версии и обновление в одном поповере.</span>
+    </div>
+    <figure class="shot"><div class="panel">
+  <div class="p-top"><span class="p-title">Структура проекта</span><button class="dot-only" title="всё актуально"><i></i></button><span class="spacer"></span><button class="btn">Обновить</button><button class="btn">Собрать</button><button class="btn">Добавить узел</button><button class="btn" title="версии и обновления">⋯</button></div>
+  
+  <div class="p-main">
+    <div class="p-rid">
+      <aside class="lib"><div class="lib-head"><span class="lib-title">Библиотека узлов</span><span class="lib-count" title="6 элементов в библиотеке">6 элементов</span><button class="lib-collapse is-icon" aria-label="Свернуть библиотеку узлов">−</button></div><div class="lib-card"><span class="lib-ico" style="color:#4176e6">К</span><span class="lib-body"><span class="lib-name">Координатор</span><span class="lib-role">ведёт план и раздаёт работу</span><span class="lib-link">delegate → исполнитель</span></span></div>
+<div class="lib-card"><span class="lib-ico" style="color:#1f9d55">И</span><span class="lib-body"><span class="lib-name">Исполнитель</span><span class="lib-role">делает порученное</span><span class="lib-link">report → координатор</span></span></div>
+<div class="lib-card"><span class="lib-ico" style="color:#b26a00">П</span><span class="lib-body"><span class="lib-name">Приёмщик</span><span class="lib-role">проверяет работу</span><span class="lib-link">review ← координатор</span></span></div>
+<div class="lib-card"><span class="lib-ico" style="color:#a855f7">Кр</span><span class="lib-body"><span class="lib-name">Критик</span><span class="lib-role">разбирает прогон</span><span class="lib-link">report → координатор</span></span></div>
+<div class="lib-card"><span class="lib-ico" style="color:#0f9b8e">Д</span><span class="lib-body"><span class="lib-name">Дизайнер</span><span class="lib-role">макеты до кода</span><span class="lib-link">delegate ← координатор</span></span></div>
+<div class="lib-card"><span class="lib-ico" style="color:#8b8b96">⇄</span><span class="lib-body"><span class="lib-name">Папка обмена</span><span class="lib-role">папка, не агент</span><span class="lib-link">обмен с workflow</span></span></div></aside>
+      <div class="canvas-shell">
+        <div class="c-head"><strong>Structure</strong><span class="chip">4 узла</span><span class="chip">4 связи</span><span class="chip">в работе: 2</span></div>
+        <div class="canvas"><svg class="edges" aria-hidden="true">
+  <defs>
+    <marker id="ar-del" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="#4176e6"/></marker>
+    <marker id="ar-rev" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="#a86200"/></marker>
+    <marker id="ar-rep" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="#8b8b96"/></marker>
+  </defs>
+  <path d="M216 55 H280" fill="none" stroke="#4176e6" stroke-width="1.5" marker-end="url(#ar-del)"/>
+  <path d="M128 86 V132" fill="none" stroke="#4176e6" stroke-width="1.5" marker-end="url(#ar-del)"/>
+  <path d="M368 86 V132" fill="none" stroke="#a86200" stroke-width="1.5" stroke-dasharray="6 5" marker-end="url(#ar-rev)"/>
+  <path d="M280 163 H216" fill="none" stroke="#8b8b96" stroke-width="1.5" stroke-dasharray="6 5" marker-end="url(#ar-rep)"/>
+</svg><div class="card" style="left:40px;top:24px">
+  <span class="card-clip"><span class="card-stripe" style="background:#4176e6"></span></span>
+  <span class="card-id">coordinator</span>
+  <span class="card-role">координатор · deepseek-v4.1-flash</span>
+  <span class="card-state st-run">работает</span>
+  <span class="card-run">◷ следующий запуск 07.11 09:00</span>
+  <span class="card-dot"></span>
+</div><div class="card" style="left:280px;top:24px">
+  <span class="card-clip"><span class="card-stripe" style="background:#1f9d55"></span></span>
+  <span class="card-id">worker</span>
+  <span class="card-role">исполнитель · glm-5.3-flash</span>
+  <span class="card-state ">свободен</span>
+  
+  
+</div><div class="card" style="left:40px;top:132px">
+  <span class="card-clip"><span class="card-stripe" style="background:#b26a00"></span></span>
+  <span class="card-id">judge</span>
+  <span class="card-role">приёмщик · deepseek-v4.1-flash</span>
+  <span class="card-state st-run">выполняется</span>
+  
+  <span class="card-dot"></span>
+</div><div class="card" style="left:280px;top:132px">
+  <span class="card-clip"><span class="card-stripe" style="background:#a855f7"></span></span>
+  <span class="card-id">critic</span>
+  <span class="card-role">критик · glm-5.3-flash</span>
+  <span class="card-state st-done">завершил</span>
+  
+  
+</div><div class="portal" style="left:40px;top:300px">
+  <span class="portal-head">Выход вне<span class="portal-sub"> · folder-1 · принята</span></span>
+  <span class="portal-rule"></span>
+  <span class="portal-row"><b>workflow</b></span>
+  <span class="portal-count">↗ 3 исходящих · ↙ 2 входящих</span>
+  <span class="portal-dates">вх. 07.11 14:20 · исх. 07.11 09:05</span>
+  <span class="portal-rule is-dash"></span>
+  <span class="portal-foot">path coordination/threads</span>
+  <span class="portal-foot is-warn">требуют хода: 2</span>
+  <span class="portal-hint">клик или Enter — окно папки: ящик, участники, контракт</span>
+</div></div>
+      </div>
+    </div>
+    <div class="legend"><span><b style="color:#4176e6">—</b> delegate: поручение</span><span><b style="color:#a86200">—</b> review: проверка</span><span><b style="color:#8b8b96">—</b> report: возврат</span><span><b style="color:#6f6f7a">—</b> peer: равные</span></div>
+    <div class="strip"><span class="details-id">coordinator</span><span class="details-sub">координатор · выбран</span><span class="spacer"></span><span class="strip-hint">окно узла — из узла: ⚙ у карточки</span><button class="btn">Связь</button><button class="btn btn-primary">Запустить</button></div>
+  </div>
+  <div class="tip" style="left:150px;top:50px;width:104px">всё актуально</div><div class="pop" style="left:780px;top:54px" role="dialog" aria-label="Версии и обновления">
+  <div class="pop-head">Версии и обновления<span class="pill">актуально</span></div>
+  <div class="prow"><span class="pl">структура</span><span class="pv"><span class="mono">1.0.29</span> · актуальна</span></div>
+  <div class="prow"><span class="pl">плагин workflow</span><span class="pv"><span class="mono">0.7.0</span></span></div>
+  <div class="prow"><span class="pl">движок</span><span class="pv"><span class="mono">2.6.30</span> · здесь</span></div>
+  <div class="pfoot"><button class="btn btn-primary">Обновить</button><span class="hint">одна точка обновления</span></div>
+</div>
+</div></figure>
+    <div class="scene-notes"><div class="cols">
+      <div class="card-note"><h3>Как выглядит</h3>
+        <ul><li>точка 8 px рядом с названием: зелёная / жёлтая / красная;</li>
+          <li>слово — в тултипе при наведении, не в шапке;</li>
+          <li>«⋯» справа открывает поповер «Версии и обновления»;</li>
+          <li>кнопка «Обновить» внутри поповера — единственная.</li></ul></div>
+      <div class="card-note plus"><h3>Плюсы</h3>
+        <ul><li>самый компактный верх: ни одного лишнего слова;</li>
+          <li>на виду только то, что требует действия: жёлтая точка — и всё;</li>
+          <li>одна точка обновления и одна точка деталей — «⋯»;</li>
+          <li>канва получает максимум места.</li></ul></div>
+      <div class="card-note minus"><h3>Минусы</h3>
+        <ul><li>статус без слова: цвет — единственный носитель смысла (плохо для дальтоников);</li>
+          <li>«⋯» рядом с действиями читается как «ещё действия», а не «версии»;</li>
+          <li>ошибку проверки легко не заметить;</li>
+          <li>лишний клик до любого ответа про сборку.</li></ul></div>
+    </div></div>
+  </section>
+
+  <div class="compare">
+    <h2 class="cmp-h">Требование брифа → что делает вариант</h2>
+    <table class="spec">
+      <thead><tr><th style="width:24%">Требование</th><th>A</th><th>B</th><th>C</th></tr></thead>
+      <tbody>
+        <tr><td>Верх на 1–2 строки</td><td>1 строка (46 px)</td><td>2 строки (46 + 28 px)</td><td>1 строка (46 px)</td></tr>
+        <tr><td>Статус: актуально / обновление / ошибка</td><td>чип словом и цветом</td><td>вывод в строке версий</td><td>точка цветом, слово в тултипе</td></tr>
+        <tr><td>Название на виду</td><td>да</td><td>да</td><td>да</td></tr>
+        <tr><td>Версии компактно и в одной точке</td><td>поповер по чипу</td><td>тонкая строка всегда</td><td>поповер «⋯»</td></tr>
+        <tr><td>Детали в поповер</td><td>да: сборка целиком</td><td>нет поповера — всё в строке</td><td>да: версии и обновление</td></tr>
+        <tr><td>На виду только то, что требует действия</td><td>да, если всё актуально — только «актуально»</td><td>частично: версии видны всегда</td><td>да: только цветная точка</td></tr>
+      </tbody>
+    </table>
+
+    <h2 class="cmp-h">Три состояния статуса</h2>
+    <table class="spec">
+      <thead><tr><th>Состояние</th><th>Чип A</th><th>Строка B</th><th>Точка C</th><th>Что делает человек</th></tr></thead>
+      <tbody>
+        <tr><td>Всё актуально</td><td><span class="status ok" style="pointer-events:none"><span class="sdot"></span>всё актуально</span></td><td>«… — обновлений нет»</td><td><span class="dot-only" style="pointer-events:none"><i></i></span></td><td>ничего: верх не мешает</td></tr>
+        <tr><td>Есть обновление</td><td><span class="status warn" style="pointer-events:none"><span class="sdot"></span>есть обновление</span></td><td>«0.7.0 → 0.7.1 · движок 2.6.31»</td><td><span class="dot-only is-warn" style="pointer-events:none"><i></i></span></td><td>открыть поповер → «Обновить»</td></tr>
+        <tr><td>Ошибка проверки</td><td><span class="status err" style="pointer-events:none"><span class="sdot"></span>ошибка проверки</span></td><td>«проверка не ответила»</td><td><span class="dot-only is-err" style="pointer-events:none"><i></i></span></td><td>открыть поповер → причина и «Повторить»</td></tr>
+      </tbody>
+    </table>
+
+    <h2 class="cmp-h">A / B / C одной строкой</h2>
+    <table class="spec">
+      <thead><tr><th>Вариант</th><th>Высота верха</th><th>Статус</th><th>Версии</th><th>Обновление</th><th>Цена</th></tr></thead>
+      <tbody>
+        <tr><td><b>A</b> (рекомендуется)</td><td>46 px</td><td>словом и цветом</td><td>поповер по чипу</td><td>кнопка в поповере</td><td>статус занимает место в строке</td></tr>
+        <tr><td><b>B</b></td><td>46 + 28 px</td><td>выводом в строке версий</td><td>всегда на виду</td><td>«Проверить» в строке</td><td>второй ряд; числа всегда на виду</td></tr>
+        <tr><td><b>C</b></td><td>46 px</td><td>только цветом</td><td>поповер «⋯»</td><td>кнопка в поповере</td><td>цвет без слова; «⋯» не про версии</td></tr>
+      </tbody>
+    </table>
+
+    <div class="recommend">
+      <h2>Рекомендация: вариант A</h2>
+      <p><b>1 · Место.</b> Блок «Workflow» исчезает целиком: шапка остаётся 46 px, канва получает
+        обратно ~120 px. Второго ряда нет — верх ровно на одну строку.</p>
+      <p><b>2 · Статус словом.</b> «Всё актуально» / «есть обновление» / «ошибка проверки» — это
+        единственный факт о сборке, который нужен без клика. Слово, а не только цвет: понятно
+        и без цветового зрения. Когда всё хорошо, чип спокойный и не зовёт.</p>
+      <p><b>3 · Версии — в одной точке.</b> Три числа (структура, плагин, движок) живут в поповере
+        по чипу, рядом с ними — единственная кнопка «Проверить снова»/«Обновить». Больше в панели
+        нет ни «Обновить плагин», ни чипа «сборка»: одна точка, один глагол.</p>
+      <p><b>4 · Детали — в поповер.</b> Там же путь движка, время проверки и что именно обновится.
+        Шапка показывает только то, что требует действия, — как чип «требуют хода» у писем обмена.</p>
+    </div>
+
+    <h2 class="cmp-h">Что не меняется</h2>
+    <div class="cols">
+      <div class="card-note"><h3>Шапка</h3>
+        <ul><li>высота 46 px, название «Структура проекта»;</li>
+          <li>чип непрочитанных писем остаётся;</li>
+          <li>«Обновить» (перечитать данные), «Собрать», «Добавить узел» — на месте;</li>
+          <li>светлая панель, тот же визуальный язык.</li></ul></div>
+      <div class="card-note"><h3>Поведение</h3>
+        <ul><li>проверка сборки — по-прежнему явное действие, не автозапуск;</li>
+          <li>обновление — одна кнопка в поповере, с подтверждением, если есть правки;</li>
+          <li>ошибка говорит тремя частями: что, почему, что сделать;</li>
+          <li>Esc и клик мимо закрывают поповер.</li></ul></div>
+      <div class="card-note"><h3>Что убрано</h3>
+        <ul><li>блок «Workflow» под шапкой (три строки);</li>
+          <li>чип «сборка 07.11 18:40» из шапки;</li>
+          <li>кнопка «Обновить плагин» из верха;</li>
+          <li>повтор «актуально» в двух местах.</li></ul></div>
+    </div>
+
+    <h2 class="cmp-h">Вопросы заказчику</h2>
+    <table class="spec">
+      <thead><tr><th style="width:36%">Вопрос</th><th>Почему спрашиваю</th></tr></thead>
+      <tbody>
+        <tr><td>Нужно ли видеть версии всегда (B) или по клику (A)?</td>
+          <td>Бриф говорит «компактно и в одной точке», но «видно всегда» — тоже законное требование. B отвечает на него ценой второго ряда 28 px.</td></tr>
+        <tr><td>Куда девать кнопку «Обновить» (перечитать структуру)?</td>
+          <td>Сейчас рядом живут «Обновить», «Обновить плагин» и «Проверить актуальность». В A в шапке остаётся только «Обновить»; обновление сборки — в поповере.</td></tr>
+        <tr><td>Показывать ли статус словом постоянно (A) или только цветом (C)?</td>
+          <td>Слово занимает ~120 px строки, зато читается без цвета. Цвет — компактнее, но один в поле зрения не годится.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p class="footnote">
+    Макет — один файл, без сети и внешних файлов. Превью 1280 × 800 снимаются с этого же файла
+    параметром <code>?scene=before</code>, <code>?scene=a</code>, <code>?scene=b</code>,
+    <code>?scene=c</code>; панель в кадре — 1248 × 768. Числа и подписи — числа макета.
+    Файлы, размеры превью и таблица «требование → вариант» — в <code>notes.md</code>.
+  </p>
+</div>
+<script>
+  (function () {
+    "use strict";
+    var params = new URLSearchParams(window.location.search);
+    var scene = params.get("scene");
+    if (scene === "before" || scene === "a" || scene === "b" || scene === "c") {
+      document.body.classList.add("is-shot", "scene-" + scene);
+    }
+    var readout = document.getElementById("readout");
+    if (readout && scene) readout.textContent = "превью: ?scene=" + scene;
+    var links = document.querySelectorAll("[data-scene-link]");
+    for (var i = 0; i < links.length; i += 1) {
+      links[i].addEventListener("click", function (event) {
+        event.preventDefault();
+        var target = event.currentTarget.getAttribute("data-scene-link");
+        document.body.classList.remove("scene-before", "scene-a", "scene-b", "scene-c");
+        document.body.classList.add("scene-" + target);
+        var element = document.getElementById("scene-" + target);
+        if (element) element.scrollIntoView({ behavior: "smooth", block: "start" });
+        var all = document.querySelectorAll("[data-scene-link]");
+        for (var j = 0; j < all.length; j += 1) all[j].classList.toggle("is-on", all[j] === event.currentTarget);
+      });
+    }
+    var first = document.querySelector("[data-scene-link='before']");
+    if (first) first.classList.add("is-on");
+  })();
+</script>
+</body>
+</html>
