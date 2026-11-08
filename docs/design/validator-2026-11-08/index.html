@@ -1,0 +1,1304 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Валидатор структуры: выступ справа от блока координатора — макет 2026-11-08</title>
+<!--
+  МАКЕТ, а не рабочий экран. Один файл, без сети и внешних файлов: открывается двойным щелчком.
+
+  Что показывает. Только панель Structure (не весь DSH): палитра слева, канва с четырьмя
+  карточками, папка обмена, низ панели. Экран 01 — свёрнутый выступ валидатора (14 x 62)
+  справа от блока координатора. 02 — выступ выдвинут по наведению (180 px). 03 — раскрытая
+  панель находок: код, что не так, что сделать, «Исправить безопасное» и «Показать diff»,
+  задания заблокированы. 04 — окно блока по шестерёнке: «Сведения» и «Настройки».
+  05 — окно узла, вкладка «Настройки»: шапка и линейка кнопок закреплены, середина
+  прокручивается. 06 — то же окно, на «Удалить узел» нажато, подтверждение поверх.
+
+  Как снимать превью (1280 x 800, панель 1248 x 768):
+    msedge --headless=new --hide-scrollbars --window-size=1280,800 --virtual-time-budget=2000 ^
+      --screenshot=01-collapsed.png "file:///.../index.html?scene=01"
+    (так же scene=02, 03, 04, 05, 06). Без параметра открывается лист целиком.
+-->
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  :root {
+    --text: #1b1b1f; --muted: #5b5b66; --tertiary: #6f6f7a; --caption: #8b8b96;
+    --line: #e2e3e9; --line-strong: #c9ccd4; --accent: #4176e6; --accent-soft: #eef2ff;
+    --success: #1f9d55; --warn: #a86200; --danger: #c92626;
+    --panel: #ffffff; --canvas: #f4f5f8; --bg: #eef0f5;
+    --layer1: rgba(127, 127, 127, 0.06); --layer2: rgba(127, 127, 127, 0.10);
+    --shadow: 0 10px 26px rgba(20, 20, 45, 0.08);
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  html, body { margin: 0; }
+  body { padding: 20px; background: var(--bg); color: var(--text); font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; font-size: 15px; line-height: 1.4; }
+  .sheet { max-width: 1288px; margin: 0 auto; }
+  .kicker { margin: 0 0 0.25rem; font-size: 0.74rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+  h1 { margin: 0 0 0.35rem; font-size: 1.45rem; letter-spacing: -0.01em; }
+  .lead { margin: 0 0 0.8rem; max-width: 84rem; color: var(--muted); font-size: 0.92rem; line-height: 1.55; }
+  .lead b { color: var(--text); }
+  .quote { margin: 0 0 6px; padding: 7px 12px; border-left: 3px solid var(--line-strong); background: #fff; border-radius: 0 8px 8px 0; font-size: 0.86rem; color: var(--muted); }
+  .quote b { color: var(--text); }
+  .quote .qn { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.06em; color: var(--accent); text-transform: uppercase; margin-right: 6px; }
+  .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 12px 0 0.4rem; }
+  .seg { display: inline-flex; flex-wrap: wrap; border: 1px solid var(--line-strong); border-radius: 8px; overflow: hidden; background: #fff; }
+  .seg a { font-size: 12px; padding: 6px 11px; border-right: 1px solid var(--line); color: var(--muted); text-decoration: none; white-space: nowrap; }
+  .seg a:last-child { border-right: 0; }
+  .seg a.is-on { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+  .readout { margin-left: auto; font-family: var(--mono); font-size: 11px; color: var(--muted); background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; white-space: nowrap; }
+  .scene { margin: 0 0 1.4rem; }
+  .scene-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin: 1.2rem 0 0.5rem; }
+  .scene-no { font-family: var(--mono); font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); }
+  .scene-name { font-size: 1.02rem; font-weight: 700; }
+  .badge-rec { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #fff; background: var(--accent); border-radius: 999px; padding: 2px 8px; }
+  .badge-new { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #fff; background: var(--success); border-radius: 999px; padding: 2px 8px; }
+  .scene-note { color: var(--muted); font-size: 0.82rem; }
+  .shot { margin: 0; width: min(1248px, 100%); }
+  .panel { position: relative; width: 100%; height: 768px; display: flex; flex-direction: column; overflow: hidden; background: var(--panel); color: var(--text); font-size: 13px; border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); }
+  .p-top { flex: 0 0 46px; display: flex; align-items: center; gap: 8px; padding: 0 14px; border-bottom: 1px solid var(--line); }
+  .p-title { font-size: 15px; font-weight: 600; }
+  .chip { font-size: 11px; color: var(--muted); background: var(--layer2); border-radius: 999px; padding: 2px 8px; white-space: nowrap; }
+  .chip.unread { color: var(--danger); font-weight: 600; background: transparent; border: 1px solid var(--danger); }
+  .chip.is-blocked { color: var(--danger); font-weight: 600; background: #fdeceb; border: 1px solid #f0c4c0; }
+  .panel-badge { margin-left: 2px; font-size: 10.5px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--accent); border: 1px dashed var(--accent); border-radius: 999px; padding: 2px 9px; white-space: nowrap; }
+  .spacer { flex: 1 1 auto; }
+  .btn { font: inherit; font-size: 12px; padding: 3px 10px; border-radius: 6px; border: 1px solid var(--line-strong); background: var(--layer1); color: var(--text); cursor: pointer; }
+  .btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+  .btn[disabled] { opacity: 0.42; cursor: not-allowed; }
+  .btn-danger { background: var(--danger); border-color: var(--danger); color: #fff; font-weight: 600; }
+  .p-main { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; gap: 10px; padding: 10px 12px 12px; }
+  .p-rid { flex: 1 1 auto; min-height: 0; display: flex; gap: 10px; min-width: 0; }
+  .lib { position: relative; flex: 0 0 250px; min-width: 0; min-height: 0; display: flex; flex-direction: column; gap: 8px; padding: 12px 12px 10px; border-radius: 16px; background: #fff; box-shadow: 0 8px 22px rgba(20, 20, 45, 0.06); border: 1px solid var(--line); }
+  .lib-head { display: flex; align-items: center; gap: 3px; flex-wrap: nowrap; min-width: 0; }
+  .lib-title { font-weight: 700; font-size: 15px; white-space: nowrap; }
+  .lib-count { position: relative; margin-left: auto; flex: 0 0 auto; padding: 1px 5px; border: 1px solid var(--line-strong); border-radius: 999px; font-size: 9.5px; color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .lib-collapse { flex: 0 0 auto; font: inherit; font-size: 10.5px; padding: 2px 8px; border-radius: 6px; border: 1px solid var(--line-strong); background: transparent; color: var(--muted); cursor: pointer; }
+  .lib-collapse.is-icon { width: 21px; height: 21px; padding: 0; font-size: 13px; line-height: 1; display: flex; align-items: center; justify-content: center; }
+  .lib-card { display: flex; gap: 8px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 10px; background: #fff; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04); }
+  .lib-ico { flex: 0 0 26px; height: 26px; border-radius: 8px; background: var(--layer2); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; }
+  .lib-body { display: flex; flex-direction: column; min-width: 0; }
+  .lib-name { font-size: 11.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .lib-role { font-size: 9.5px; color: var(--tertiary); margin-top: 1px; }
+  .lib-link { font-size: 9px; font-weight: 600; color: var(--muted); margin-top: 1px; }
+  .lib-hint { margin-top: auto; font-size: 9px; line-height: 1.4; color: var(--muted); overflow: hidden; }
+  .canvas-shell { flex: 1 1 auto; min-height: 0; min-width: 0; display: flex; flex-direction: column; }
+  .c-head { flex: 0 0 34px; display: flex; align-items: center; gap: 8px; padding: 0 12px; border: 1px solid var(--line); border-bottom: 0; border-radius: 10px 10px 0 0; background: var(--layer1); font-size: 12px; color: var(--muted); }
+  .c-head strong { font-size: 13px; color: var(--text); }
+  .c-head .chip { font-size: 10.5px; }
+  .canvas { position: relative; flex: 1 1 auto; min-height: 0; border: 1px solid var(--line); border-radius: 0 0 10px 10px; background: var(--canvas); overflow: hidden; }
+  .canvas::before { content: ""; position: absolute; inset: 0; background-image: radial-gradient(var(--line-strong) 1px, transparent 1px); background-size: 16px 16px; opacity: 0.45; pointer-events: none; }
+  .edges { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+  .card { position: absolute; width: 176px; height: 62px; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--panel); color: var(--text); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06); }
+  .card.is-hot { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft), 0 2px 6px rgba(65, 118, 230, 0.18); }
+  .card.is-blocked { border-color: #f0c4c0; }
+  .card-clip { position: absolute; inset: 0; border-radius: 10px; overflow: hidden; pointer-events: none; }
+  .card-stripe { position: absolute; left: 0; top: 0; width: 4px; height: 100%; border-radius: 2px; }
+  .card-id { position: absolute; left: 14px; top: 7px; font-family: var(--mono); font-size: 12.5px; font-weight: 600; letter-spacing: -0.01em; }
+  .card-role { position: absolute; left: 14px; right: 10px; top: 23px; font-size: 10.5px; color: var(--tertiary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .card-state { position: absolute; left: 14px; top: 38px; font-size: 9.5px; font-weight: 600; color: var(--tertiary); }
+  .card-state.st-run { color: var(--success); }
+  .card-state.st-done { color: var(--accent); }
+  .card-run { position: absolute; left: 14px; top: 50px; font-size: 9px; color: var(--tertiary); }
+  .card-dot { position: absolute; right: 6px; top: 6px; width: 8px; height: 8px; border-radius: 50%; background: var(--success); box-shadow: 0 0 0 1px var(--panel); }
+  .card-dot.is-warn { background: var(--warn); }
+  .card-lock { position: absolute; right: 5px; top: 20px; font-size: 9px; color: var(--danger); font-weight: 700; }
+  .portal { position: absolute; width: 204px; height: 116px; border: 1.2px dashed var(--line-strong); border-radius: 12px; background: var(--panel); }
+  .portal::after { content: ""; position: absolute; inset: 5px; border: 1px dashed var(--line); border-radius: 9px; pointer-events: none; }
+  .portal-head { position: absolute; left: 12px; top: 7px; font-size: 12px; font-weight: 600; }
+  .portal-sub { font-size: 9px; font-weight: 400; color: var(--caption); }
+  .portal-rule { position: absolute; left: 12px; right: 12px; top: 24px; height: 1px; background: var(--line); }
+  .portal-rule.is-dash { top: 80px; height: 0; background: none; border-top: 1px dashed var(--line); }
+  .portal-row { position: absolute; left: 12px; top: 29px; font-size: 11.5px; }
+  .portal-count { position: absolute; left: 12px; top: 47px; font-size: 9.5px; color: var(--muted); }
+  .portal-dates { position: absolute; left: 12px; top: 61px; font-size: 9px; color: var(--caption); }
+  .portal-foot { position: absolute; left: 12px; top: 84px; font-size: 9px; color: var(--caption); }
+  .portal-hint { position: absolute; left: 2px; top: 120px; width: 214px; font-size: 9.5px; color: var(--muted); }
+
+  /* ===================== выступ валидатора ===================== */
+  .vtab { position: absolute; z-index: 4; display: flex; flex-direction: column; background: var(--panel); border: 1px solid var(--line-strong); border-left: 0; box-shadow: 1px 1px 3px rgba(20, 20, 45, 0.07); }
+  .vtab.is-collapsed { width: 14px; height: 62px; border-radius: 0 6px 6px 0; border-right-width: 3px; border-right-color: var(--success); }
+  .vtab.is-collapsed.is-warn { border-right-color: var(--warn); }
+  .vtab-glyph { position: absolute; left: 0; right: 0; top: 50%; height: 9px; margin-top: -4.5px; display: flex; align-items: center; justify-content: center; color: var(--success); }
+  .vtab.is-warn .vtab-glyph { color: var(--warn); }
+  .vtab-glyph svg { width: 8px; height: 8px; display: block; }
+  .vtab-badge { position: absolute; right: -6px; top: -6px; min-width: 13px; height: 13px; padding: 0 3px; border-radius: 999px; background: var(--warn); color: #fff; font-size: 8px; font-weight: 700; display: flex; align-items: center; justify-content: center; border: 1.5px solid #fff; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2); font-variant-numeric: tabular-nums; }
+  .vtab.is-open { width: 180px; height: 104px; border-radius: 0 10px 10px 0; padding: 6px 9px 6px 9px; box-shadow: 0 8px 22px rgba(20, 20, 45, 0.14); z-index: 5; }
+  .vhead { display: flex; align-items: baseline; gap: 5px; }
+  .vtitle { font-size: 10px; font-weight: 700; white-space: nowrap; }
+  .vwhen { margin-left: auto; font-family: var(--mono); font-size: 8px; color: var(--caption); }
+  .vstatus { margin-top: 2px; display: flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 700; color: var(--warn); }
+  .vstatus svg { width: 9px; height: 9px; flex: 0 0 auto; }
+  .vlist { margin: 4px 0 0; padding: 4px 0 0; border-top: 1px solid var(--line); list-style: none; display: flex; flex-direction: column; gap: 2px; min-height: 0; }
+  .vlist li { display: flex; align-items: center; gap: 4px; font-size: 8.2px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .vlist b { font-family: var(--mono); font-size: 8px; font-weight: 600; color: var(--text); }
+  .vfoot { margin-top: auto; padding-top: 3px; font-size: 8px; color: var(--accent); font-weight: 600; }
+
+  /* ===================== панель находок ===================== */
+  .vpanel { position: absolute; z-index: 5; display: flex; flex-direction: column; border: 1px solid var(--line-strong); border-left: 0; border-radius: 0 12px 12px 0; background: var(--panel); box-shadow: 16px 12px 36px rgba(20, 20, 45, 0.16); }
+  .vp-head { flex: 0 0 auto; display: flex; align-items: center; gap: 6px; padding: 8px 8px 7px 9px; border-bottom: 1px solid var(--line); }
+  .vp-ico { flex: 0 0 auto; width: 15px; height: 15px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; background: var(--warn); }
+  .vp-ico svg { width: 9px; height: 9px; }
+  .vp-title { font-size: 12px; font-weight: 700; white-space: nowrap; }
+  .vp-chip { font-size: 9px; font-weight: 700; color: var(--warn); background: #fdf7ee; border: 1px solid #ecd3b0; border-radius: 999px; padding: 1px 7px; white-space: nowrap; }
+  .vp-gear { width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; color: var(--caption); border-radius: 5px; }
+  .vp-gear.is-hot { color: var(--accent); background: var(--accent-soft); }
+  .win-close { margin-left: 0; width: 22px; height: 22px; border: 0; background: transparent; color: var(--muted); font-size: 16px; line-height: 1; border-radius: 6px; }
+  .vp-block { display: flex; gap: 5px; align-items: flex-start; margin: 8px 10px 0; padding: 6px 8px; border-radius: 8px; background: #fdeceb; border: 1px solid #f0c4c0; color: #8f1d1d; font-size: 9.5px; line-height: 1.35; }
+  .vp-block b { font-weight: 700; }
+  .vp-list { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; margin-top: 6px; border-top: 1px solid var(--line); }
+  .vfind { padding: 6px 12px 7px; border-bottom: 1px solid var(--line); }
+  .vfind-top { display: flex; align-items: center; gap: 5px; }
+  .vdot { flex: 0 0 auto; width: 5px; height: 5px; border-radius: 50%; background: var(--danger); }
+  .vfind-code { font-family: var(--mono); font-size: 9.5px; font-weight: 700; color: var(--text); }
+  .vtag { font-size: 7.5px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; padding: 1px 4px; border-radius: 999px; border: 1px solid; white-space: nowrap; }
+  .vtag.is-safe { color: var(--success); border-color: #bfe3cd; background: #f1fbf5; }
+  .vtag.is-choice { color: var(--warn); border-color: #e7cba2; background: #fdf7ee; }
+  .vfind-loc { margin-left: auto; font-family: var(--mono); font-size: 8.5px; color: var(--caption); white-space: nowrap; }
+  .vfind-what { margin: 4px 0 0; font-size: 9.8px; line-height: 1.35; color: var(--text); }
+  .vfind-fix { margin: 3px 0 0; font-size: 9.2px; line-height: 1.35; color: var(--muted); }
+  .vfind-fix b { color: var(--text); font-weight: 600; }
+  .vp-foot { flex: 0 0 auto; display: flex; align-items: center; gap: 6px; padding: 8px 10px; border-top: 1px solid var(--line); background: var(--layer1); }
+  .vp-foot .btn { padding: 4px 9px; }
+  .vp-foot-hint { margin-left: auto; font-family: var(--mono); font-size: 8.5px; color: var(--caption); }
+
+  /* ===================== окно блока: две панели ===================== */
+  .win { position: absolute; z-index: 6; display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--line-strong); border-radius: 14px; background: var(--panel); box-shadow: 0 18px 44px rgba(20, 20, 45, 0.18); }
+  .win-head { flex: 0 0 auto; display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-bottom: 1px solid var(--line); }
+  .win-title { font-size: 13px; font-weight: 700; white-space: nowrap; }
+  .pill { display: inline-flex; align-items: center; gap: 5px; font-size: 10px; font-weight: 600; line-height: 1.2; padding: 2px 8px; border-radius: 999px; background: #fff; color: var(--accent); border: 1px dashed var(--accent); white-space: nowrap; }
+  .tabs { flex: 0 0 auto; display: flex; align-items: center; gap: 2px; padding: 0 10px; border-bottom: 1px solid var(--line); background: var(--layer1); }
+  .tab { font: inherit; font-size: 11.5px; padding: 7px 10px; border: 0; border-bottom: 2px solid transparent; background: transparent; color: var(--muted); }
+  .tab.is-on { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+  .tabs-note { margin-left: auto; font-size: 9.5px; color: var(--caption); white-space: nowrap; }
+  .win-body { padding: 8px 12px 6px; display: flex; flex-direction: column; gap: 3px; }
+  .win-body.is-two { flex: 1 1 auto; min-height: 0; flex-direction: row; gap: 0; padding: 0; }
+  .field { display: flex; align-items: center; gap: 8px; }
+  .flabel { flex: 0 0 104px; font-size: 10.5px; color: var(--tertiary); white-space: nowrap; }
+  .fcontrol { flex: 1 1 auto; min-width: 0; }
+  .in { width: 100%; font: inherit; font-size: 11px; padding: 4px 6px; border: 1px solid var(--line-strong); border-radius: 6px; background: #fff; color: var(--text); }
+  .in[readonly] { background: var(--layer1); color: var(--muted); }
+  .links { margin: 0; padding-left: 14px; font-size: 10.5px; color: var(--muted); line-height: 1.45; }
+  .win-foot { flex: 0 0 auto; margin-top: auto; display: flex; align-items: center; gap: 7px; padding: 7px 12px; border-top: 1px solid var(--line); }
+  .win-hint { margin-left: auto; font-size: 9.5px; color: var(--caption); }
+  .link-danger { font: inherit; font-size: 10.5px; color: var(--danger); background: none; border: 0; padding: 0; text-decoration: underline; }
+
+  .vpane { flex: 1 1 auto; min-width: 0; min-height: 0; display: flex; flex-direction: column; gap: 5px; padding: 9px 12px 8px; }
+  .vpane.is-narrow { flex: 0 0 226px; border-left: 1px solid var(--line); background: var(--layer1); }
+  .vpane-h { font-size: 8.5px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--accent); margin: 0 0 1px; }
+  .vlabel { flex: 0 0 66px; font-size: 9.5px; color: var(--tertiary); white-space: nowrap; }
+  .vtext { flex: 1 1 auto; min-width: 0; font-size: 9.6px; line-height: 1.4; color: var(--text); }
+  .vlist2 { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 2px; }
+  .vlist2 li { position: relative; padding-left: 9px; font-size: 9.4px; line-height: 1.35; color: var(--muted); }
+  .vlist2 li::before { content: "·"; position: absolute; left: 2px; color: var(--caption); }
+  .vlist2 li.is-ok::before { content: "✓"; left: 0; font-size: 8px; color: var(--success); }
+  .vlog { display: flex; flex-direction: column; gap: 3px; }
+  .vlog-row { display: flex; align-items: baseline; gap: 6px; font-size: 9px; color: var(--muted); }
+  .vlog-time { font-family: var(--mono); font-size: 8.5px; color: var(--caption); }
+  .vlog-row b { color: var(--text); font-weight: 600; }
+  .vlog-diff { margin-left: auto; font-size: 8.5px; color: var(--accent); }
+  .set { display: flex; gap: 8px; align-items: flex-start; padding: 5px 0; border-top: 1px solid var(--line); }
+  .set.is-first { border-top: 0; padding-top: 0; }
+  .set-body { flex: 1 1 auto; min-width: 0; }
+  .set-name { font-size: 9.6px; font-weight: 600; line-height: 1.3; }
+  .set-desc { margin-top: 1px; font-size: 8.5px; line-height: 1.35; color: var(--muted); }
+  .sw { flex: 0 0 auto; position: relative; width: 24px; height: 14px; margin-top: 1px; border-radius: 999px; background: var(--accent); }
+  .sw i { position: absolute; top: 2px; right: 2px; width: 10px; height: 10px; border-radius: 50%; background: #fff; }
+  .sw.is-off { background: var(--line-strong); }
+  .sw.is-off i { right: auto; left: 2px; }
+  .sched { display: flex; flex-direction: column; gap: 3px; }
+  .sched-row { display: flex; align-items: center; gap: 6px; font-size: 9px; color: var(--muted); }
+  .sched-row b { font-size: 9px; font-weight: 600; color: var(--text); }
+  .pill-sm { font-size: 8px; font-weight: 700; padding: 1px 6px; border-radius: 999px; border: 1px solid var(--line-strong); color: var(--muted); background: #fff; white-space: nowrap; }
+  .pill-sm.is-on { color: var(--accent); border-color: #c9d6ff; background: var(--accent-soft); }
+
+  /* ===================== окно узла: закреплённые шапка и линейка ===================== */
+  .nwin { overflow: hidden; }
+  .nbody { position: relative; flex: 1 1 auto; min-height: 0; }
+  .nscroll { position: absolute; inset: 0; padding: 7px 14px 4px 12px; overflow: hidden; }
+  .nbody::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 20px; background: linear-gradient(rgba(255, 255, 255, 0), #fff 92%); pointer-events: none; }
+  .nbar { position: absolute; right: 4px; top: 6px; bottom: 6px; width: 3px; border-radius: 2px; background: var(--layer2); }
+  .nbar i { position: absolute; left: 0; top: 0; width: 3px; height: 92px; border-radius: 2px; background: var(--line-strong); }
+  .nfoot { position: relative; flex: 0 0 44px; display: flex; align-items: center; gap: 8px; padding: 0 12px; border-top: 1px solid var(--line); background: var(--panel); box-shadow: 0 -7px 14px rgba(20, 20, 45, 0.07); z-index: 2; }
+  .nfoot .btn { padding: 4px 11px; }
+  .nfoot-hint { font-size: 9px; color: var(--caption); }
+  .nfoot-hint.is-dirty { color: var(--warn); }
+  .nfoot.is-error .nfoot-hint { color: var(--danger); font-weight: 600; }
+  .tabs.is-pinned { box-shadow: 0 5px 10px rgba(20, 20, 45, 0.05); z-index: 3; }
+  .dirty-dot { display: inline-block; width: 5px; height: 5px; border-radius: 50%; background: var(--warn); margin-right: 4px; vertical-align: middle; }
+  .selwrap { position: relative; }
+  .selwrap .in { padding-right: 18px; }
+  .selwrap::after { content: "▾"; position: absolute; right: 6px; top: 50%; transform: translateY(-50%); font-size: 8px; color: var(--caption); }
+  .in.ta { height: 54px; padding: 4px 6px; font-size: 10px; line-height: 1.4; white-space: normal; overflow: hidden; }
+  .nf { display: flex; gap: 8px; padding: 3px 0; }
+  .nf.is-wide { flex-direction: column; align-items: stretch; gap: 3px; }
+  .nf.is-wide .flabel { flex: 0 0 auto; }
+  .nfield-note { margin: 1px 0 0; font-size: 8.5px; color: var(--caption); }
+
+  /* подтверждение удаления */
+  .nscrim { position: absolute; z-index: 4; inset: 0; background: rgba(238, 240, 246, 0.72); }
+  .confirm { position: absolute; z-index: 5; width: 276px; padding: 10px 12px 11px; border: 1px solid var(--line-strong); border-radius: 12px; background: var(--panel); box-shadow: 0 16px 34px rgba(20, 20, 45, 0.22); }
+  .confirm::after { content: ""; position: absolute; right: 26px; bottom: -6px; width: 10px; height: 10px; background: var(--panel); border-right: 1px solid var(--line-strong); border-bottom: 1px solid var(--line-strong); transform: rotate(45deg); }
+  .confirm-title { font-size: 11.5px; font-weight: 700; }
+  .confirm-text { margin: 4px 0 0; font-size: 9.4px; line-height: 1.4; color: var(--muted); }
+  .confirm-text b { color: var(--text); }
+  .confirm-row { display: flex; align-items: center; gap: 6px; margin-top: 8px; }
+  .confirm-row .btn { padding: 3px 9px; }
+
+  /* аннотации макета */
+  .note { position: absolute; z-index: 8; font-size: 10.5px; font-weight: 600; line-height: 1.25; padding: 4px 9px; border-radius: 999px; color: var(--accent); background: #fff; border: 1px dashed var(--accent); white-space: nowrap; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06); }
+  .note.is-warn { color: var(--warn); border-color: var(--warn); }
+  .note.is-danger { color: var(--danger); border-color: var(--danger); }
+  .note.is-ok { color: var(--success); border-color: var(--success); }
+  .note.is-plain { color: var(--muted); border-color: var(--line-strong); }
+  .dim { position: absolute; z-index: 8; font-family: var(--mono); font-size: 8px; font-weight: 700; color: var(--accent); background: #fff; border-radius: 3px; padding: 0 3px; }
+  .brk-h { position: absolute; z-index: 7; border-top: 1px dashed var(--accent); border-left: 1px dashed var(--accent); border-right: 1px dashed var(--accent); }
+  .brk-v { position: absolute; z-index: 7; border-left: 1px dashed var(--accent); border-top: 1px dashed var(--accent); border-bottom: 1px dashed var(--accent); }
+  .demo { position: absolute; z-index: 8; padding: 8px 10px 9px; border: 1px dashed var(--accent); border-radius: 10px; background: rgba(255, 255, 255, 0.95); box-shadow: 0 4px 14px rgba(20, 20, 45, 0.06); }
+  .demo-title { font-size: 8.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); }
+  .demo-row { display: flex; gap: 20px; margin-top: 8px; align-items: flex-start; }
+  .demo-item { display: flex; gap: 6px; align-items: flex-start; }
+  .demo-cap { font-size: 8.3px; line-height: 1.3; color: var(--muted); }
+  .demo-cap b { display: block; margin-bottom: 1px; font-size: 8.8px; color: var(--text); }
+  .demo-note { margin-top: 7px; max-width: 268px; font-size: 8.4px; line-height: 1.35; color: var(--caption); }
+  .vtab.is-static { position: relative; left: auto; top: auto; flex: 0 0 auto; }
+  .minibar { display: flex; align-items: center; gap: 5px; padding: 0 6px; height: 34px; width: 232px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); box-shadow: 0 2px 6px rgba(20, 20, 45, 0.05); }
+  .minibar .btn { padding: 3px 8px; font-size: 10px; }
+  .minibar .mini-hint { margin-left: auto; font-size: 8px; color: var(--caption); }
+
+  .legend { flex: 0 0 auto; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; font-size: 10.5px; color: var(--muted); padding: 0 2px; }
+  .legend b { font-weight: 700; }
+  .strip { flex: 0 0 56px; display: flex; align-items: center; gap: 10px; padding: 0 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--layer1); }
+  .details-id { font-family: var(--mono); font-size: 13px; font-weight: 600; }
+  .details-sub { font-size: 11px; color: var(--tertiary); }
+  .strip-hint { font-size: 11px; color: var(--tertiary); }
+  .card-state.st-block { color: var(--danger); }
+
+  /* лист */
+  .scene-notes { margin: 0.7rem 0 0; }
+  .cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+  .card-note { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 9px 13px; font-size: 0.84rem; }
+  .card-note h3 { margin: 0 0 5px; font-size: 0.86rem; }
+  .card-note ul { margin: 0; padding-left: 1.1rem; color: var(--muted); line-height: 1.5; }
+  .card-note p { margin: 0; color: var(--muted); line-height: 1.5; }
+  .card-note.plus { border-top: 3px solid var(--success); }
+  .card-note.minus { border-top: 3px solid var(--danger); }
+  .card-note b { color: var(--text); }
+  table.spec { width: 100%; border-collapse: collapse; font-size: 0.82rem; background: #fff; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; margin: 0.3rem 0 0.6rem; }
+  table.spec th, table.spec td { text-align: left; padding: 6px 9px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  table.spec th { background: var(--layer1); font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.03em; color: var(--tertiary); }
+  table.spec tr:last-child td { border-bottom: 0; }
+  table.spec code { font-family: var(--mono); font-size: 0.94em; background: var(--layer1); border-radius: 4px; padding: 0 3px; }
+  .compare { margin-top: 1.2rem; }
+  .compare h2.cmp-h { margin: 1.2rem 0 0.35rem; font-size: 1rem; }
+  .footnote { margin-top: 1rem; font-size: 0.76rem; color: var(--tertiary); line-height: 1.5; }
+  .footnote code { font-family: var(--mono); }
+
+  body.is-shot { padding: 16px; }
+  body.is-shot .sheet { max-width: none; margin: 0; }
+  body.is-shot .sheet-head, body.is-shot .scene-head, body.is-shot .scene-notes, body.is-shot .compare, body.is-shot .footnote { display: none; }
+  body.is-shot .scene { display: none; margin: 0; }
+  body.is-shot .scene .shot { margin: 0; width: 100%; }
+  body.is-shot.scene-01 #scene-01, body.is-shot.scene-02 #scene-02, body.is-shot.scene-03 #scene-03,
+  body.is-shot.scene-04 #scene-04, body.is-shot.scene-05 #scene-05, body.is-shot.scene-06 #scene-06 { display: block; }
+  #scene-04 .portal, #scene-05 .portal, #scene-06 .portal { display: none; }
+  .nbody::after { height: 24px; }
+  .nfoot { box-shadow: 0 -8px 16px rgba(20, 20, 45, 0.09); }
+</style>
+</head>
+<body>
+<div class="sheet">
+  <header class="sheet-head">
+    <p class="kicker">Макет · к утверждению · 2026-11-08</p>
+    <h1>Валидатор структуры: выступ справа от блока координатора</h1>
+    <p class="lead">Валидатор — не узел и не карточка на канве: это проверка всей структуры, а запуск
+      заданий идёт через координатора. Поэтому его вход — <b>узкий выступ у правого края блока
+      координатора</b>: 14 × 62 px в покое, 180 px по наведению, 424 × 452 — раскрытая панель находок.
+      Экраны 05–06 отвечают на отдельный дефект: в окне узла <b>шапка и линейка кнопок закреплены</b>,
+      прокручивается только середина. <b>Код не менялся</b>: в папке только этот лист, шесть превью
+      и <code>notes.md</code>; кнопки на картинках не нажимаются.</p>
+    <p class="quote"><span class="qn">бриф</span>«Новый блок «Валидатор структуры» — выступ справа от блока
+      координатора на схеме панели: свёрнуто 14 px, по наведению 180 px со статусом и первыми находками,
+      раскрытая панель с кодом, что не так и что сделать, «Исправить безопасное» и «Показать diff»;
+      задания заблокированы, пока находки не устранены; окно по шестерёнке — сведения и настройки,
+      включая принудительную проверку подключаемых моделей».</p>
+    <p class="quote"><span class="qn">дополнение</span>«Кнопки «Сохранить» и «Удалить узел» скрыты внизу
+      вкладки «Настройки» — до них надо доскроллить. Шапка фиксирована, середина прокручивается,
+      внизу — постоянная линейка кнопок; и второй кадр — подтверждение удаления поверх, линейка на месте».</p>
+    <div class="toolbar">
+      <span class="seg">
+        <a href="#scene-01" data-scene-link="01">01 · свёрнуто</a>
+        <a href="#scene-02" data-scene-link="02">02 · наведение</a>
+        <a href="#scene-03" data-scene-link="03">03 · находки</a>
+        <a href="#scene-04" data-scene-link="04">04 · окно блока</a>
+        <a href="#scene-05" data-scene-link="05">05 · окно узла</a>
+        <a href="#scene-06" data-scene-link="06">06 · удаление</a>
+      </span>
+      <span class="readout" id="readout">лист целиком: шесть экранов, таблицы размеров и поведения</span>
+    </div>
+  </header>
+
+  <section class="scene" id="scene-01">
+    <div class="scene-head">
+      <span class="scene-no">01</span>
+      <span class="scene-name">Свёрнуто · выступ 14 × 62</span>
+      <span class="badge-rec">основное состояние</span>
+      <span class="scene-note">Виден всегда, справа от блока координатора; схема не сдвигается ни на пиксель, структура исправна.</span>
+    </div>
+    <figure class="shot"><div class="panel">
+  <div class="p-top">
+    <span class="p-title">Структура проекта</span>
+    <span class="chip">структура</span>
+    <span class="chip">сборка 08.11 15:04</span>
+    <span class="panel-badge">01 · свёрнуто</span>
+    <span class="spacer"></span>
+    <button class="btn">Обновить</button>
+    <button class="btn">Собрать</button>
+    <button class="btn">Добавить узел</button>
+  </div>
+  <div class="p-main">
+    <div class="p-rid">
+      <aside class="lib"><div class="lib-head"><span class="lib-title">Библиотека узлов</span><span class="lib-count" title="6 элементов в библиотеке">6 элементов</span><button class="lib-collapse is-icon" aria-label="Свернуть библиотеку узлов">−</button></div><div class="lib-card"><span class="lib-ico" style="color:#4176e6">К</span><span class="lib-body"><span class="lib-name">Координатор</span><span class="lib-role">ведёт план и раздаёт работу</span><span class="lib-link">delegate → исполнитель</span></span></div>
+<div class="lib-card"><span class="lib-ico" style="color:#1f9d55">И</span><span class="lib-body"><span class="lib-name">Исполнитель</span><span class="lib-role">делает порученное</span><span class="lib-link">report → координатор</span></span></div>
+<div class="lib-card"><span class="lib-ico" style="color:#b26a00">П</span><span class="lib-body"><span class="lib-name">Приёмщик</span><span class="lib-role">проверяет работу</span><span class="lib-link">review ← координатор</span></span></div>
+<div class="lib-card"><span class="lib-ico" style="color:#a855f7">Кр</span><span class="lib-body"><span class="lib-name">Критик</span><span class="lib-role">разбирает прогон</span><span class="lib-link">report → координатор</span></span></div>
+<div class="lib-card"><span class="lib-ico" style="color:#0f9b8e">Д</span><span class="lib-body"><span class="lib-name">Дизайнер</span><span class="lib-role">макеты до кода</span><span class="lib-link">delegate ← координатор</span></span></div>
+<div class="lib-card"><span class="lib-ico" style="color:#8b8b96">⇄</span><span class="lib-body"><span class="lib-name">Папка обмена</span><span class="lib-role">папка, не агент</span><span class="lib-link">обмен с workflow</span></span></div><div class="lib-hint">Выступ у координатора — вход в валидатор: он проверяет всю структуру, но зовётся от того блока, который запускает задания.</div></aside>
+      <div class="canvas-shell">
+        <div class="c-head"><strong>Structure</strong><span class="chip">4 узла</span><span class="chip">4 связи</span><span class="chip">в работе: 1</span><span class="chip" style="color:#1f9d55;background:#f1fbf5;border:1px solid #bfe3cd">структура исправна</span></div>
+        <div class="canvas"><svg class="edges" aria-hidden="true">
+  <defs>
+    <marker id="ar-del" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="#4176e6"/></marker>
+    <marker id="ar-rev" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="#a86200"/></marker>
+    <marker id="ar-rep" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="#8b8b96"/></marker>
+  </defs>
+  <path d="M230 55 H414" fill="none" stroke="#4176e6" stroke-width="1.5" marker-end="url(#ar-del)"/>
+  <path d="M128 86 V126" fill="none" stroke="#4176e6" stroke-width="1.5" marker-end="url(#ar-del)"/>
+  <path d="M508 86 V126" fill="none" stroke="#a86200" stroke-width="1.5" stroke-dasharray="6 5" marker-end="url(#ar-rev)"/>
+  <path d="M216 163 H414" fill="none" stroke="#8b8b96" stroke-width="1.5" stroke-dasharray="6 5" marker-end="url(#ar-rep)"/>
+</svg><div class="card" style="left:40px;top:24px">
+  <span class="card-clip"><span class="card-stripe" style="background:#4176e6"></span></span>
+  <span class="card-id">coordinator</span>
+  <span class="card-role">координатор · deepseek-v4.1-flash</span>
+  <span class="card-state st-run">работает</span>
+  <span class="card-run">◷ следующий запуск 08.11 15:30</span>
+  <span class="card-dot"></span>
+</div><div class="card" style="left:420px;top:24px">
+  <span class="card-clip"><span class="card-stripe" style="background:#1f9d55"></span></span>
+  <span class="card-id">worker</span>
+  <span class="card-role">исполнитель · deepseek-v4.1-flash</span>
+  <span class="card-state">свободен</span>
+</div><div class="card" style="left:40px;top:132px">
+  <span class="card-clip"><span class="card-stripe" style="background:#b26a00"></span></span>
+  <span class="card-id">judge</span>
+  <span class="card-role">приёмщик · glm-5.3-flash</span>
+  <span class="card-state st-run">выполняется</span>
+  <span class="card-dot"></span>
+</div><div class="card" style="left:420px;top:132px">
+  <span class="card-clip"><span class="card-stripe" style="background:#a855f7"></span></span>
+  <span class="card-id">critic</span>
+  <span class="card-role">критик · glm-5.3-flash</span>
+  <span class="card-state st-done">завершил</span>
+</div><div class="portal" style="left:700px;top:24px">
+  <span class="portal-head">Выход вне<span class="portal-sub"> · folder-1 · принята</span></span>
+  <span class="portal-rule"></span>
+  <span class="portal-row"><b>workflow</b></span>
+  <span class="portal-count">↗ 3 исходящих · ↙ 2 входящих</span>
+  <span class="portal-dates">вх. 08.11 14:20 · исх. 08.11 09:05</span>
+  <span class="portal-rule is-dash"></span>
+  <span class="portal-foot">path coordination/threads</span>
+  <span class="portal-hint">папка проверяется валидатором: ящик, участники, оркестратор</span>
+</div>
+<div class="vtab is-collapsed" style="left:216px;top:24px" role="button" aria-label="Валидатор структуры: структура исправна">
+  <span class="vtab-glyph"><svg viewBox="0 0 10 10" aria-hidden="true"><path d="M1.6 5.3 L3.9 7.6 L8.4 2.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+</div>
+<div class="brk-h" style="left:216px;top:10px;width:14px;height:11px"></div>
+<span class="dim" style="left:232px;top:6px">14</span>
+<svg class="edges" aria-hidden="true" style="opacity:.85"><path d="M223 88 V200 H238" fill="none" stroke="#4176e6" stroke-width="1.2" stroke-dasharray="4 4"/></svg>
+<span class="note is-ok" style="left:246px;top:202px">выступ 14 × 62: высота блока, ширина 14</span>
+<span class="note is-plain" style="left:246px;top:230px">рёбра начинаются от 230, а не от 216</span>
+<div class="demo" style="left:40px;top:300px;width:322px">
+  <div class="demo-title">Выступ в двух состояниях</div>
+  <div class="demo-row">
+    <div class="demo-item" style="gap:16px">
+      <span class="vtab is-collapsed is-static"><span class="vtab-glyph"><svg viewBox="0 0 10 10" aria-hidden="true"><path d="M1.6 5.3 L3.9 7.6 L8.4 2.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span></span>
+      <span class="demo-cap"><b>исправна</b>✓, полоса зелёная,<br>счётчика нет</span>
+    </div>
+    <div class="demo-item" style="gap:16px">
+      <span class="vtab is-collapsed is-warn is-static"><span class="vtab-glyph"><svg viewBox="0 0 10 10" aria-hidden="true"><path d="M5 1.7 L5 5.9" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="5" cy="8.2" r="0.95" fill="currentColor"/></svg></span><span class="vtab-badge">4</span></span>
+      <span class="demo-cap"><b>есть находки</b>!, полоса янтарная,<br>бейдж с числом</span>
+    </div>
+  </div>
+  <div class="demo-note">Форма знака различается (✓ и !), поэтому статус читается и без цвета. Счёт виден без наведения — цена 13 px на краю канвы.</div>
+</div>
+</div>
+      </div>
+    </div>
+    <div class="legend">
+      <span><b style="color:#4176e6">—</b> delegate: поручение</span>
+      <span><b style="color:#a86200">—</b> review: проверка</span>
+      <span><b style="color:#8b8b96">—</b> report: возврат</span>
+      <span><b style="color:#6f6f7a">—</b> peer: равные</span>
+    </div>
+    <div class="strip"><span class="details-id">coordinator</span><span class="details-sub">координатор · выбран</span><span class="spacer"></span><span class="strip-hint">валидатор: структура исправна</span><button class="btn">Связь</button><button class="btn btn-primary">Запустить</button></div>
+  </div>
+</div></figure>
+    <div class="scene-notes"><div class="cols">
+      <div class="card-note"><h3>Что нажато / что показано</h3>
+        <ul><li>ничего не нажато: это состояние покоя;</li>
+          <li>справа от карточки координатора стоит выступ 14 × 62 — высота блока, ширина 14 px;</li>
+          <li>он занимает 14 px из зазора 204 px между координатором (216) и исполнителем (420) и не трогает карточки;</li>
+          <li>структура исправна: ✓ и зелёная полоса, счётчика нет, запуск доступен.</li></ul></div>
+      <div class="card-note"><h3>Размеры и отступы</h3>
+        <ul><li>выступ 14 × 62, прижат к правому краю блока (x 216), радиус справа 6 px;</li>
+          <li>полоса статуса — правый бордюр 3 px, знак 8 px по центру;</li>
+          <li>рёбра считаются от 230 (216 + 14), а не от 216;</li>
+          <li>сдвиг карточек и пересчёт раскладки — 0 px.</li></ul></div>
+      <div class="card-note"><h3>Почему выступ, а не карточка</h3>
+        <ul><li>валидатор проверяет всю структуру, а не один узел: отдельная карточка на канве врала бы;</li>
+          <li>вход привязан к координатору — он запускает задания, а блокировка касается именно запуска;</li>
+          <li>узкая полоса не спорит с точкой активности и строкой запуска на карточке.</li></ul></div>
+    </div></div>
+  </section>
+  <section class="scene" id="scene-02">
+    <div class="scene-head">
+      <span class="scene-no">02</span>
+      <span class="scene-name">Наведение · выступ выдвинут на 180 px</span>
+      <span class="scene-note">Статус словом и цветом, первые три находки, «все 4 и diff». Карточки под ним не двигаются.</span>
+    </div>
+    <figure class="shot"><div class="panel">
+  <div class="p-top">
+    <span class="p-title">Структура проекта</span>
+    <span class="chip">структура</span>
+    <span class="chip">сборка 08.11 15:04</span>
+    <span class="panel-badge">02 · наведение</span>
+    <span class="spacer"></span>
+    <button class="btn">Обновить</button>
+    <button class="btn">Собрать</button>
+    <button class="btn">Добавить узел</button>
+  </div>
+  <div class="p-main">
+    <div class="p-rid">
+      <aside class="lib"><div class="lib-head"><span class="lib-title">Библиотека узлов</span><span class="lib-count" title="6 элементов в библиотеке">6 элементов</span><button class="lib-collapse is-icon" aria-label="Свернуть библиотеку узлов">−</button></div><div class="lib-card"><span class="lib-ico" style="color:#4176e6">К</span><span class="lib-body"><span class="lib-name">Координатор</span><span class="lib-role">ведёт план и раздаёт работу</span><span class="lib-link">delegate → исполнитель</span></span></div>
+<div class="lib-card"><span class="lib-ico" style="color:#1f9d55">И</span><span class="lib-body"><span class="lib-name">Исполнитель</span><span class="lib-role">делает порученное</span><span class="lib-link">report → координатор</span></span></div>
+<div class="lib-card"><span class="lib-ico" style="color:#b26a00">П</span><span class="lib-body"><span class="lib-name">Приёмщик</span><span class="lib-role">проверяет работу</span><span class="lib-link">review ← координатор</span></span></div>
+<div class="lib-card"><span class="lib-ico" style="color:#a855f7">Кр</span><span class="lib-body"><span class="lib-name">Критик</span><span class="lib-role">разбирает прогон</span><span class="lib-link">report → координатор</span></span></div>
+<div class="lib-card"><span class="lib-ico" style="color:#0f9b8e">Д</span><span class="lib-body"><span class="lib-name">Дизайнер</span><span class="lib-role">макеты до кода</span><span class="lib-link">delegate ← координатор</span></span></div>
+<div class="lib-card"><span class="lib-ico" style="color:#8b8b96">⇄</span><span class="lib-body"><span class="lib-name">Папка обмена</span><span class="lib-role">папка, не агент</span><span class="lib-link">обмен с workflow</span></span></div><div class="lib-hint">Навёл на выступ — он выдвинулся. Курсор можно вести внутрь: карточка не закроется, пока курсор в ней.</div></aside>
+      <div class="canvas-shell">
+        <div class="c-head"><strong>Structure</strong><span class="chip">4 узла</span><span class="chip">4 связи</span><span class="chip">в работе: 1</span><span class="chip is-blocked">4 находки</span></div>
+        <div class="canvas"><svg class="edges" aria-hidden="true">
+  <defs>
+    <marker id="ar-del2" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="#4176e6"/></marker>
+    <marker id="ar-rev2" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="#a86200"/></marker>
+    <marker id="ar-rep2" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="#8b8b96"/></marker>
+  </defs>
+  <path d="M230 55 H414" fill="none" stroke="#4176e6" stroke-width="1.5" marker-end="url(#ar-del2)"/>
+  <path d="M128 86 V126" fill="none" stroke="#4176e6" stroke-width="1.5" marker-end="url(#ar-del2)"/>
+  <path d="M508 86 V126" fill="none" stroke="#a86200" stroke-width="1.5" stroke-dasharray="6 5" marker-end="url(#ar-rev2)"/>
+  <path d="M216 163 H414" fill="none" stroke="#8b8b96" stroke-width="1.5" stroke-dasharray="6 5" marker-end="url(#ar-rep2)"/>
+</svg><div class="card is-hot" style="left:40px;top:24px">
+  <span class="card-clip"><span class="card-stripe" style="background:#4176e6"></span></span>
+  <span class="card-id">coordinator</span>
+  <span class="card-role">координатор · deepseek-v4.1-flash</span>
+  <span class="card-state st-run">работает</span>
+  <span class="card-run">◷ следующий запуск 08.11 15:30</span>
+  <span class="card-dot"></span>
+</div><div class="card" style="left:420px;top:24px">
+  <span class="card-clip"><span class="card-stripe" style="background:#1f9d55"></span></span>
+  <span class="card-id">worker</span>
+  <span class="card-role">исполнитель · deepseek-v4.1-flash</span>
+  <span class="card-state">свободен</span>
+</div><div class="card" style="left:40px;top:132px">
+  <span class="card-clip"><span class="card-stripe" style="background:#b26a00"></span></span>
+  <span class="card-id">judge</span>
+  <span class="card-role">приёмщик · glm-5.3-flash</span>
+  <span class="card-state st-run">выполняется</span>
+  <span class="card-dot"></span>
+</div><div class="card" style="left:420px;top:132px">
+  <span class="card-clip"><span class="card-stripe" style="background:#a855f7"></span></span>
+  <span class="card-id">critic</span>
+  <span class="card-role">критик · glm-5.3-flash</span>
+  <span class="card-state st-done">завершил</span>
+</div><div class="portal" style="left:700px;top:24px">
+  <span class="portal-head">Выход вне<span class="portal-sub"> · folder-1 · принята</span></span>
+  <span class="portal-rule"></span>
+  <span class="portal-row"><b>workflow</b></span>
+  <span class="portal-count">↗ 3 исходящих · ↙ 2 входящих</span>
+  <span class="portal-dates">вх. 08.11 14:20 · исх. 08.11 09:05</span>
+  <span class="portal-rule is-dash"></span>
+  <span class="portal-foot">path coordination/threads</span>
+  <span class="portal-hint">папка проверяется валидатором: ящик, участники, оркестратор</span>
+</div>
+<div class="vtab is-open is-warn" style="left:216px;top:24px" role="dialog" aria-label="Валидатор структуры: 4 находки">
+  <div class="vhead"><span class="vtitle">Валидатор структуры</span><span class="vwhen">15:04</span></div>
+  <div class="vstatus"><svg viewBox="0 0 10 10" aria-hidden="true"><path d="M5 1.4 L5 6.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="5" cy="8.3" r="0.95" fill="currentColor"/></svg>4 находки</div>
+  <ul class="vlist">
+    <li><b>duplicate-edge</b>· связь дважды</li>
+    <li><b>unknown-model</b>· judge · glm-5.3</li>
+    <li><b>unknown-edge-endpoint</b>· judge-1</li>
+  </ul>
+  <div class="vfoot">ещё 1 · все 4 и diff →</div>
+</div>
+<span class="note is-warn" style="left:40px;top:208px">выдвижение 180 px: задержка 160 мс, анимация 140 мс</span>
+<span class="note is-plain" style="left:40px;top:236px">Esc или уход курсора сворачивает; пока курсор внутри — карточка стоит</span>
+<span class="note is-plain" style="left:40px;top:264px">счёт и первые находки — без клика; полный список — по нажатию</span>
+</div>
+      </div>
+    </div>
+    <div class="legend">
+      <span><b style="color:#4176e6">—</b> delegate: поручение</span>
+      <span><b style="color:#a86200">—</b> review: проверка</span>
+      <span><b style="color:#8b8b96">—</b> report: возврат</span>
+      <span><b style="color:#6f6f7a">—</b> peer: равные</span>
+    </div>
+    <div class="strip"><span class="details-id">coordinator</span><span class="details-sub">координатор · выбран</span><span class="spacer"></span><span class="strip-hint">валидатор: 4 находки — запуск заблокирован</span><button class="btn">Связь</button><button class="btn" disabled>Запустить</button></div>
+  </div>
+</div></figure>
+    <div class="scene-notes"><div class="cols">
+      <div class="card-note"><h3>Что нажато / что показано</h3>
+        <ul><li>курсор наведён на выступ (карточка координатора получает accent-рамку);</li>
+          <li>через 160 мс выступ выдвигается до 180 px за 140 мс;</li>
+          <li>видно: заголовок, время проверки, статус «4 находки», первые три кода;</li>
+          <li>внизу — «ещё 1 · все 4 и diff →»: одна строка ведёт в панель 03.</li></ul></div>
+      <div class="card-note"><h3>Размеры и отступы</h3>
+        <ul><li>карточка 180 × 104, левый край прижат к 216 (как у свёрнутого выступа);</li>
+          <li>внутренние отступы 6/9 px, шаг строк списка 2 px, кегль кодов 8 px;</li>
+          <li>высота 104, а не 62: в 62 не влезают статус и три строки;</li>
+          <li>правый край 396 — до карточки исполнителя (420) остаётся 24 px.</li></ul></div>
+      <div class="card-note"><h3>Поведение ховера</h3>
+        <ul><li>открытие с задержкой 160 мс — курсор, идущий по канве, не раскрывает выступ случайно;</li>
+          <li>закрытие через 250 мс после ухода — можно перевести курсор в карточку;</li>
+          <li>фокус с клавиатуры держит карточку открытой; Esc закрывает;</li>
+          <li>без анимации при <code>prefers-reduced-motion</code> — просто появляется.</li></ul></div>
+    </div></div>
+  </section>
+  <section class="scene" id="scene-03">
+    <div class="scene-head">
+      <span class="scene-no">03</span>
+      <span class="scene-name">Находки · панель 424 × 452</span>
+      <span class="badge-rec">главный экран</span>
+      <span class="scene-note">Код, что не так, что сделать. «Исправить безопасное» — две из четырёх; «Показать diff» — до записи. Запуск заблокирован.</span>
+    </div>
+    <figure class="shot"><div class="panel">
+  <div class="p-top">
+    <span class="p-title">Структура проекта</span>
+    <span class="chip">структура</span>
+    <span class="chip">сборка 08.11 15:04</span>
+    <span class="panel-badge">03 · находки</span>
+    <span class="spacer"></span>
+    <button class="btn">Обновить</button>
+    <button class="btn">Собрать</button>
+    <button class="btn">Добавить узел</button>
+  </div>
+  <div class="p-main">
+    <div class="p-rid">
+      <aside class="lib"><div class="lib-head"><span class="lib-title">Библиотека узлов</span><span class="lib-count" title="6 элементов в библиотеке">6 элементов</span><button class="lib-collapse is-icon" aria-label="Свернуть библиотеку узлов">−</button></div><div class="lib-card"><span class="lib-ico" style="color:#4176e6">К</span><span class="lib-body"><span class="lib-name">Координатор</span><span class="lib-role">ведёт план и раздаёт работу</span><span class="lib-link">delegate → исполнитель</span></span></div>
+<div class="lib-card"><span class="lib-ico" style="color:#1f9d55">И</span><span class="lib-body"><span class="lib-name">Исполнитель</span><span class="lib-role">делает порученное</span><span class="lib-link">report → координатор</span></span></div>
+<div class="lib-card"><span class="lib-ico" style="color:#b26a00">П</span><span class="lib-body"><span class="lib-name">Приёмщик</span><span class="lib-role">проверяет работу</span><span class="lib-link">review ← координатор</span></span></div>
+<div class="lib-card"><span class="lib-ico" style="color:#a855f7">Кр</span><span class="lib-body"><span class="lib-name">Критик</span><span class="lib-role">разбирает прогон</span><span class="lib-link">report → координатор</span></span></div>
+<div class="lib-card"><span class="lib-ico" style="color:#0f9b8e">Д</span><span class="lib-body"><span class="lib-name">Дизайнер</span><span class="lib-role">макеты до кода</span><span class="lib-link">delegate ← координатор</span></span></div>
+<div class="lib-card"><span class="lib-ico" style="color:#8b8b96">⇄</span><span class="lib-body"><span class="lib-name">Папка обмена</span><span class="lib-role">папка, не агент</span><span class="lib-link">обмен с workflow</span></span></div><div class="lib-hint">У каждой находки три вещи: <b>код</b> (по нему ищут), <b>что не так</b> (файл и строка) и <b>что сделать</b> (рецепт).</div></aside>
+      <div class="canvas-shell">
+        <div class="c-head"><strong>Structure</strong><span class="chip">4 узла</span><span class="chip">4 связи</span><span class="chip is-blocked">запуск заблокирован</span><span class="chip">проверено 15:04</span></div>
+        <div class="canvas"><svg class="edges" aria-hidden="true">
+  <defs>
+    <marker id="ar-del3" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="#4176e6"/></marker>
+    <marker id="ar-rev3" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="#a86200"/></marker>
+    <marker id="ar-rep3" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="#8b8b96"/></marker>
+  </defs>
+  <path d="M230 55 H414" fill="none" stroke="#4176e6" stroke-width="1.5" marker-end="url(#ar-del3)"/>
+  <path d="M128 86 V126" fill="none" stroke="#4176e6" stroke-width="1.5" marker-end="url(#ar-del3)"/>
+  <path d="M508 86 V126" fill="none" stroke="#a86200" stroke-width="1.5" stroke-dasharray="6 5" marker-end="url(#ar-rev3)"/>
+  <path d="M216 163 H414" fill="none" stroke="#8b8b96" stroke-width="1.5" stroke-dasharray="6 5" marker-end="url(#ar-rep3)"/>
+</svg><div class="card" style="left:40px;top:24px">
+  <span class="card-clip"><span class="card-stripe" style="background:#4176e6"></span></span>
+  <span class="card-id">coordinator</span>
+  <span class="card-role">координатор · deepseek-v4.1-flash</span>
+  <span class="card-state st-block">ждёт валидатора</span>
+  <span class="card-run">◷ 15:30 — на паузе</span>
+  <span class="card-dot is-warn"></span>
+</div><div class="card" style="left:420px;top:24px">
+  <span class="card-clip"><span class="card-stripe" style="background:#1f9d55"></span></span>
+  <span class="card-id">worker</span>
+  <span class="card-role">исполнитель · deepseek-v4.1-flash</span>
+  <span class="card-state">свободен</span>
+</div><div class="card" style="left:40px;top:132px">
+  <span class="card-clip"><span class="card-stripe" style="background:#b26a00"></span></span>
+  <span class="card-id">judge</span>
+  <span class="card-role">приёмщик · glm-5.3-flash</span>
+  <span class="card-state st-run">выполняется</span>
+  <span class="card-dot"></span>
+</div><div class="card" style="left:420px;top:132px">
+  <span class="card-clip"><span class="card-stripe" style="background:#a855f7"></span></span>
+  <span class="card-id">critic</span>
+  <span class="card-role">критик · glm-5.3-flash</span>
+  <span class="card-state st-done">завершил</span>
+</div><div class="portal" style="left:700px;top:24px">
+  <span class="portal-head">Выход вне<span class="portal-sub"> · folder-1 · принята</span></span>
+  <span class="portal-rule"></span>
+  <span class="portal-row"><b>workflow</b></span>
+  <span class="portal-count">↗ 3 исходящих · ↙ 2 входящих</span>
+  <span class="portal-dates">вх. 08.11 14:20 · исх. 08.11 09:05</span>
+  <span class="portal-rule is-dash"></span>
+  <span class="portal-foot">path coordination/threads</span>
+  <span class="portal-hint">папка проверяется валидатором: ящик, участники, оркестратор</span>
+</div>
+<div class="vtab is-collapsed is-warn" style="left:216px;top:24px;z-index:6" role="button" aria-label="Валидатор структуры: 4 находки, панель открыта">
+  <span class="vtab-glyph"><svg viewBox="0 0 10 10" aria-hidden="true"><path d="M5 1.7 L5 5.9" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="5" cy="8.2" r="0.95" fill="currentColor"/></svg></span>
+  <span class="vtab-badge">4</span>
+</div>
+<div class="vpanel" style="left:230px;top:24px;width:424px;height:452px" role="dialog" aria-label="Валидатор структуры: 4 находки">
+  <div class="vp-head">
+    <span class="vp-ico"><svg viewBox="0 0 10 10" aria-hidden="true"><path d="M5 1.4 L5 6.1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="5" cy="8.2" r="0.95" fill="currentColor"/></svg></span>
+    <span class="vp-title">Валидатор структуры</span>
+    <span class="vp-chip">4 находки</span>
+    <span class="spacer"></span>
+    <span class="vp-gear is-hot" role="button" aria-label="Сведения и настройки блока"><svg class="gear" viewBox="0 0 16 16" aria-hidden="true" style="width:11px;height:11px"><circle cx="8" cy="8" r="2.3" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="8" cy="8" r="5.4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-dasharray="1.5 1.7"/></svg></span>
+    <button class="win-close" aria-label="Закрыть">×</button>
+  </div>
+  <div class="vp-block"><span><b>Запуск заблокирован.</b> 4 находки: задания не стартуют, пока структура не исправлена. Уже идущая сессия judge доработает.</span></div>
+  <div class="vp-list">
+    <article class="vfind">
+      <div class="vfind-top"><span class="vdot"></span><span class="vfind-code">duplicate-edge</span><span class="vtag is-safe">безопасно</span><span class="vfind-loc">graph.json:131</span></div>
+      <p class="vfind-what">Связь coordinator → worker · delegate объявлена дважды: строки 44 и 131. Вторая копия ничего не добавляет.</p>
+      <p class="vfind-fix"><b>Что сделать:</b> убрать строку 131. Поведение не меняется, ребро на канве остаётся одно.</p>
+    </article>
+    <article class="vfind">
+      <div class="vfind-top"><span class="vdot"></span><span class="vfind-code">invalid-schedule-timezone</span><span class="vtag is-safe">безопасно</span><span class="vfind-loc">graph.json:78</span></div>
+      <p class="vfind-what">Узел critic: <b>timeZone «MSK»</b> — не IANA-зона, расписание 03:00 не запустится ни разу.</p>
+      <p class="vfind-fix"><b>Что сделать:</b> заменить на Europe/Moscow — как у остальных узлов структуры.</p>
+    </article>
+    <article class="vfind">
+      <div class="vfind-top"><span class="vdot"></span><span class="vfind-code">unknown-model</span><span class="vtag is-choice">нужен выбор</span><span class="vfind-loc">graph.json:64</span></div>
+      <p class="vfind-what">Узел judge: провайдер opencode-go не подтверждает модель <b>glm-5.3-flash</b> — принудительная проверка подключаемых моделей включена.</p>
+      <p class="vfind-fix"><b>Что сделать:</b> выбрать модель из списка провайдера или сменить провайдера. Безопасной подстановки нет: это выбор, а не опечатка.</p>
+    </article>
+    <article class="vfind">
+      <div class="vfind-top"><span class="vdot"></span><span class="vfind-code">unknown-edge-endpoint</span><span class="vtag is-choice">нужен выбор</span><span class="vfind-loc">graph.json:127</span></div>
+      <p class="vfind-what">Связь critic → <b>judge-1</b>: узла «judge-1» нет — объявлен judge.</p>
+      <p class="vfind-fix"><b>Что сделать:</b> заменить на judge или удалить связь, если она лишняя.</p>
+    </article>
+  </div>
+  <div class="vp-foot">
+    <button class="btn btn-primary">Исправить безопасное (2)</button>
+    <button class="btn">Показать diff</button>
+    <span class="vp-foot-hint">15:04:12 · модели 3/4</span>
+  </div>
+</div>
+<span class="note is-danger" style="left:670px;top:158px">запуск заблокирован: баннер, чип и низ панели</span>
+<span class="note is-plain" style="left:670px;top:186px">безопасное: 2 из 4 — не трогает роли, модели, связи</span>
+<span class="note" style="left:670px;top:214px">«Показать diff» — до записи</span>
+</div>
+      </div>
+    </div>
+    <div class="legend">
+      <span><b style="color:#4176e6">—</b> delegate: поручение</span>
+      <span><b style="color:#a86200">—</b> review: проверка</span>
+      <span><b style="color:#8b8b96">—</b> report: возврат</span>
+      <span><b style="color:#6f6f7a">—</b> peer: равные</span>
+    </div>
+    <div class="strip"><span class="details-id">coordinator</span><span class="details-sub">координатор · выбран</span><span class="spacer"></span><span class="strip-hint" style="color:#c92626;font-weight:600">4 находки — «Запустить» недоступна</span><button class="btn">Связь</button><button class="btn" disabled>Запустить</button></div>
+  </div>
+</div></figure>
+    <div class="scene-notes"><div class="cols">
+      <div class="card-note"><h3>Что нажато / что показано</h3>
+        <ul><li>нажатие на выступ (или «все 4 и diff →» из 02) раскрывает панель;</li>
+          <li>каждая находка: цветная точка, код, метка «безопасно/нужен выбор», файл:строка;</li>
+          <li>ниже — «что не так» одной фразой и «что сделать» с рецептом;</li>
+          <li>внизу две кнопки: «Исправить безопасное (2)» и «Показать diff».</li></ul></div>
+      <div class="card-note"><h3>Размеры и отступы</h3>
+        <ul><li>панель 424 × 452, левый край 230 — вплотную к выступу (216 + 14);</li>
+          <li>шапка 34, баннер 34 (отступ 10 по бокам), карточка находки ~92, низ 40;</li>
+          <li>кегль: код 9.5 mono, «что не так» 9.8, «что сделать» 9.2, метки 7.5;</li>
+          <li>карточки справа перекрыты: панель — поповер, раскладка не пересчитывается.</li></ul></div>
+      <div class="card-note"><h3>Блокировка и безопасность</h3>
+        <ul><li>блокировка видна трижды: баннер в панели, красный чип на канве, недоступная «Запустить» внизу;</li>
+          <li>«Исправить безопасное» берёт только находки с меткой <b>безопасно</b> — те, что не меняют роли, модели и связи;</li>
+          <li>«нужен выбор» всегда остаётся человеку: панель не угадывает модель;</li>
+          <li>любая правка сначала в diff, запись — отдельным шагом; откат один клик.</li></ul></div>
+    </div></div>
+  </section>
+  <section class="scene" id="scene-04">
+    <div class="scene-head">
+      <span class="scene-no">04</span>
+      <span class="scene-name">Окно блока по шестерёнке · 560 × 430</span>
+      <span class="scene-note">Слева «Сведения»: роль, что проверяет, инварианты, журнал. Справа «Настройки»: принудительная проверка моделей и расписание.</span>
+    </div>
+    <figure class="shot"><div class="panel">
+  <div class="p-top">
+    <span class="p-title">Структура проекта</span>
+    <span class="chip">структура</span>
+    <span class="chip">сборка 08.11 15:04</span>
+    <span class="panel-badge">04 · окно блока</span>
+    <span class="spacer"></span>
+    <button class="btn">Обновить</button>
+    <button class="btn">Собрать</button>
+    <button class="btn">Добавить узел</button>
+  </div>
+  <div class="p-main">
+    <div class="p-rid">
+      <aside class="lib"><div class="lib-head"><span class="lib-title">Библиотека узлов</span><span class="lib-count" title="6 элементов в библиотеке">6 элементов</span><button class="lib-collapse is-icon" aria-label="Свернуть библиотеку узлов">−</button></div><div class="lib-card"><span class="lib-ico" style="color:#4176e6">К</span><span class="lib-body"><span class="lib-name">Координатор</span><span class="lib-role">ведёт план и раздаёт работу</span><span class="lib-link">delegate → исполнитель</span></span></div>
+<div class="lib-card"><span class="lib-ico" style="color:#1f9d55">И</span><span class="lib-body"><span class="lib-name">Исполнитель</span><span class="lib-role">делает порученное</span><span class="lib-link">report → координатор</span></span></div>
+<div class="lib-card"><span class="lib-ico" style="color:#b26a00">П</span><span class="lib-body"><span class="lib-name">Приёмщик</span><span class="lib-role">проверяет работу</span><span class="lib-link">review ← координатор</span></span></div>
+<div class="lib-card"><span class="lib-ico" style="color:#a855f7">Кр</span><span class="lib-body"><span class="lib-name">Критик</span><span class="lib-role">разбирает прогон</span><span class="lib-link">report → координатор</span></span></div>
+<div class="lib-card"><span class="lib-ico" style="color:#0f9b8e">Д</span><span class="lib-body"><span class="lib-name">Дизайнер</span><span class="lib-role">макеты до кода</span><span class="lib-link">delegate ← координатор</span></span></div>
+<div class="lib-card"><span class="lib-ico" style="color:#8b8b96">⇄</span><span class="lib-body"><span class="lib-name">Папка обмена</span><span class="lib-role">папка, не агент</span><span class="lib-link">обмен с workflow</span></span></div><div class="lib-hint">⚙ на выступе и в панели открывает одно окно. Из него же — «Проверить сейчас» и журнал.</div></aside>
+      <div class="canvas-shell">
+        <div class="c-head"><strong>Structure</strong><span class="chip">4 узла</span><span class="chip">4 связи</span><span class="chip is-blocked">4 находки</span></div>
+        <div class="canvas"><svg class="edges" aria-hidden="true">
+  <defs>
+    <marker id="ar-del4" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="#4176e6"/></marker>
+    <marker id="ar-acc4" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="#4176e6"/></marker>
+    <marker id="ar-rev4" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="#a86200"/></marker>
+    <marker id="ar-rep4" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="#8b8b96"/></marker>
+  </defs>
+  <path d="M230 55 H414" fill="none" stroke="#4176e6" stroke-width="1.5" marker-end="url(#ar-del4)"/>
+  <path d="M128 86 V126" fill="none" stroke="#4176e6" stroke-width="1.5" marker-end="url(#ar-del4)"/>
+  <path d="M508 86 V126" fill="none" stroke="#a86200" stroke-width="1.5" stroke-dasharray="6 5" marker-end="url(#ar-rev4)"/>
+  <path d="M216 163 H414" fill="none" stroke="#8b8b96" stroke-width="1.5" stroke-dasharray="6 5" marker-end="url(#ar-rep4)"/>
+  <path d="M232 55 H268" fill="none" stroke="#4176e6" stroke-width="1.4" stroke-dasharray="4 4" marker-end="url(#ar-acc4)"/>
+</svg><div class="card" style="left:40px;top:24px">
+  <span class="card-clip"><span class="card-stripe" style="background:#4176e6"></span></span>
+  <span class="card-id">coordinator</span>
+  <span class="card-role">координатор · deepseek-v4.1-flash</span>
+  <span class="card-state st-block">ждёт валидатора</span>
+  <span class="card-run">◷ 15:30 — на паузе</span>
+  <span class="card-dot is-warn"></span>
+</div><div class="card" style="left:420px;top:24px">
+  <span class="card-clip"><span class="card-stripe" style="background:#1f9d55"></span></span>
+  <span class="card-id">worker</span>
+  <span class="card-role">исполнитель · deepseek-v4.1-flash</span>
+  <span class="card-state">свободен</span>
+</div><div class="card" style="left:40px;top:132px">
+  <span class="card-clip"><span class="card-stripe" style="background:#b26a00"></span></span>
+  <span class="card-id">judge</span>
+  <span class="card-role">приёмщик · glm-5.3-flash</span>
+  <span class="card-state st-run">выполняется</span>
+  <span class="card-dot"></span>
+</div><div class="card" style="left:420px;top:132px">
+  <span class="card-clip"><span class="card-stripe" style="background:#a855f7"></span></span>
+  <span class="card-id">critic</span>
+  <span class="card-role">критик · glm-5.3-flash</span>
+  <span class="card-state st-done">завершил</span>
+</div><div class="portal" style="left:700px;top:24px">
+  <span class="portal-head">Выход вне<span class="portal-sub"> · folder-1 · принята</span></span>
+  <span class="portal-rule"></span>
+  <span class="portal-row"><b>workflow</b></span>
+  <span class="portal-count">↗ 3 исходящих · ↙ 2 входящих</span>
+  <span class="portal-dates">вх. 08.11 14:20 · исх. 08.11 09:05</span>
+  <span class="portal-rule is-dash"></span>
+  <span class="portal-foot">path coordination/threads</span>
+  <span class="portal-hint">папка проверяется валидатором: ящик, участники, оркестратор</span>
+</div>
+<div class="vtab is-collapsed is-warn" style="left:216px;top:24px" role="button" aria-label="Валидатор структуры: 4 находки">
+  <span class="vtab-glyph"><svg viewBox="0 0 10 10" aria-hidden="true"><path d="M5 1.7 L5 5.9" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="5" cy="8.2" r="0.95" fill="currentColor"/></svg></span>
+  <span class="vtab-badge">4</span>
+</div>
+<div class="win" style="left:272px;top:20px;width:560px;height:430px" role="dialog" aria-label="Валидатор структуры: сведения и настройки">
+  <div class="win-head">
+    <span class="wp-ico" style="width:16px;height:16px;border-radius:5px;background:#fdf7ee;border:1px solid #ecd3b0;display:flex;align-items:center;justify-content:center;color:#a86200"><svg viewBox="0 0 10 10" aria-hidden="true" style="width:9px;height:9px"><path d="M5 1.4 L5 6.1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="5" cy="8.2" r="0.95" fill="currentColor"/></svg></span>
+    <span class="win-title">Валидатор структуры</span>
+    <span class="pill">блок схемы · ⚙ и правая кнопка</span>
+    <span class="spacer"></span>
+    <button class="win-close" aria-label="Закрыть">×</button>
+  </div>
+  <div class="win-body is-two">
+    <div class="vpane">
+      <p class="vpane-h">Сведения</p>
+      <div class="vrow" style="display:flex;gap:6px"><span class="vlabel">Роль</span><span class="vtext">читает <b>structure/*.json</b> до запуска и называет находки: код, узел, файл, что сделать. Ничего не правит сам, если правка меняет смысл.</span></div>
+      <p class="vpane-h" style="margin-top:3px">Что проверяет</p>
+      <ul class="vlist2">
+        <li>JSON и схема фрагментов: version, nodes, folders, edges</li>
+        <li>связи: концы существуют, нет циклов delegate и точных дублей</li>
+        <li>модели: алиас → маршрут, семья, fallbackModel, отклик провайдера</li>
+        <li>папки: ящик, участники, оркестратор — id объявленного узла</li>
+        <li>расписание и занятость узла: refuse / queue / parallel</li>
+      </ul>
+      <p class="vpane-h" style="margin-top:3px">Инварианты</p>
+      <ul class="vlist2">
+        <li class="is-ok">находка не исчезает молча: код, файл и время остаются в журнале</li>
+        <li class="is-ok">безопасное исправление не меняет роли, модели и связи</li>
+        <li class="is-ok">пока есть находка — задания не стартуют; отказ называет код</li>
+      </ul>
+      <p class="vpane-h" style="margin-top:3px">Журнал</p>
+      <div class="vlog">
+        <div class="vlog-row"><span class="vlog-time">15:04</span><b>4 находки</b><span>· правка не применена</span><span class="vlog-diff">diff</span></div>
+        <div class="vlog-row"><span class="vlog-time">14:32</span><b>2 находки</b><span>· обе исправлены</span><span class="vlog-diff">diff</span></div>
+        <div class="vlog-row"><span class="vlog-time">13:10</span><b>структура исправна</b><span>· 8 моделей</span></div>
+      </div>
+    </div>
+    <div class="vpane is-narrow">
+      <p class="vpane-h">Настройки</p>
+      <div class="set is-first">
+        <div class="set-body">
+          <div class="set-name">Принудительная проверка подключаемых моделей</div>
+          <div class="set-desc">Провайдер и модель каждого узла спрашиваются у провайдера перед запуском; отказ — находка <b>unknown-model</b>, задание не стартует.</div>
+        </div>
+        <span class="sw"><i></i></span>
+      </div>
+      <div class="set">
+        <div class="set-body">
+          <div class="set-name">Блокировать запуск при находках</div>
+          <div class="set-desc">Задания ждут; обхода «Запустить всё равно» нет.</div>
+        </div>
+        <span class="sw"><i></i></span>
+      </div>
+      <div class="set">
+        <div class="set-body">
+          <div class="set-name">Проверять папки обмена</div>
+          <div class="set-desc">Ящик, участники и оркестратор каждой папки.</div>
+        </div>
+        <span class="sw"><i></i></span>
+      </div>
+      <p class="vpane-h" style="margin-top:2px">Расписание валидатора</p>
+      <div class="sched">
+        <div class="sched-row"><span class="pill-sm is-on">перед запуском</span>каждой сессии</div>
+        <div class="sched-row"><span class="pill-sm is-on">после правки</span>structure/*.json</div>
+        <div class="sched-row"><span class="pill-sm">по часам</span><b>03:00</b> · Europe/Moscow</div>
+        <div class="sched-row"><span class="pill-sm">модели</span>полный обход раз в сутки</div>
+      </div>
+      <div class="nfield-note" style="margin-top:auto">настройки блока — structure/validator.json</div>
+    </div>
+  </div>
+  <div class="win-foot">
+    <button class="btn btn-primary">Проверить сейчас</button>
+    <button class="btn">Открыть журнал</button>
+    <span class="win-hint">переключатели применяются сразу, без «Сохранить»</span>
+  </div>
+</div>
+<span class="note" style="left:272px;top:472px">⚙ на выступе и в панели — одно окно: слева «Сведения», справа «Настройки»</span>
+<span class="note is-warn" style="left:272px;top:500px">переключатель проверяет провайдера + модель каждого узла до запуска</span>
+</div>
+      </div>
+    </div>
+    <div class="legend">
+      <span><b style="color:#4176e6">—</b> delegate: поручение</span>
+      <span><b style="color:#a86200">—</b> review: проверка</span>
+      <span><b style="color:#8b8b96">—</b> report: возврат</span>
+      <span><b style="color:#6f6f7a">—</b> peer: равные</span>
+    </div>
+    <div class="strip"><span class="details-id">coordinator</span><span class="details-sub">координатор · выбран</span><span class="spacer"></span><span class="strip-hint" style="color:#c92626;font-weight:600">4 находки — «Запустить» недоступна</span><button class="btn">Связь</button><button class="btn" disabled>Запустить</button></div>
+  </div>
+</div></figure>
+    <div class="scene-notes"><div class="cols">
+      <div class="card-note"><h3>Что нажато / что показано</h3>
+        <ul><li>нажата ⚙ в шапке панели находок (или правая кнопка по выступу);</li>
+          <li>слева «Сведения»: роль блока, что проверяет, инварианты, журнал трёх последних прогонов;</li>
+          <li>справа «Настройки»: переключатель принудительной проверки моделей, блокировка запуска, проверка папок;</li>
+          <li>ниже — расписание: перед запуском, после правки файла, по часам 03:00.</li></ul></div>
+      <div class="card-note"><h3>Размеры и отступы</h3>
+        <ul><li>окно 560 × 430; слева 334, справа 226 (разделитель 1 px);</li>
+          <li>шапка 37, низ 41; внутренние отступы 9/12;</li>
+          <li>переключатель 24 × 14, кнопка-кружок 10 px;</li>
+          <li>кегли: заголовки разделов 8.5, текст 9.6, подписи 8.5.</li></ul></div>
+      <div class="card-note"><h3>Поведение</h3>
+        <ul><li>переключатели пишут сразу — кнопки «Сохранить» в окне нет;</li>
+          <li>«Проверить сейчас» запускает проверку и обновляет журнал без закрытия окна;</li>
+          <li>выключенная проверка моделей не отменяет синтаксис: unknown-model останется находкой, но без запроса к провайдеру;</li>
+          <li>окно не блокирует канву: его можно отодвинуть и смотреть, что подсвечено.</li></ul></div>
+    </div></div>
+  </section>
+  <section class="scene" id="scene-05">
+    <div class="scene-head">
+      <span class="scene-no">05</span>
+      <span class="scene-name">Окно узла · закреплённые шапка и линейка кнопок</span>
+      <span class="badge-new">дефект закрыт</span>
+      <span class="scene-note">Вкладка «Настройки»: прокручивается только середина; «Сохранить» и «Удалить узел» видны всегда.</span>
+    </div>
+    <figure class="shot"><div class="panel">
+  <div class="p-top">
+    <span class="p-title">Структура проекта</span>
+    <span class="chip">структура</span>
+    <span class="chip">сборка 08.11 15:04</span>
+    <span class="panel-badge">05 · окно узла</span>
+    <span class="spacer"></span>
+    <button class="btn">Обновить</button>
+    <button class="btn">Собрать</button>
+    <button class="btn">Добавить узел</button>
+  </div>
+  <div class="p-main">
+    <div class="p-rid">
+      <aside class="lib"><div class="lib-head"><span class="lib-title">Библиотека узлов</span><span class="lib-count" title="6 элементов в библиотеке">6 элементов</span><button class="lib-collapse is-icon" aria-label="Свернуть библиотеку узлов">−</button></div><div class="lib-card"><span class="lib-ico" style="color:#4176e6">К</span><span class="lib-body"><span class="lib-name">Координатор</span><span class="lib-role">ведёт план и раздаёт работу</span><span class="lib-link">delegate → исполнитель</span></span></div>
+<div class="lib-card"><span class="lib-ico" style="color:#1f9d55">И</span><span class="lib-body"><span class="lib-name">Исполнитель</span><span class="lib-role">делает порученное</span><span class="lib-link">report → координатор</span></span></div>
+<div class="lib-card"><span class="lib-ico" style="color:#b26a00">П</span><span class="lib-body"><span class="lib-name">Приёмщик</span><span class="lib-role">проверяет работу</span><span class="lib-link">review ← координатор</span></span></div>
+<div class="lib-card"><span class="lib-ico" style="color:#a855f7">Кр</span><span class="lib-body"><span class="lib-name">Критик</span><span class="lib-role">разбирает прогон</span><span class="lib-link">report → координатор</span></span></div>
+<div class="lib-card"><span class="lib-ico" style="color:#0f9b8e">Д</span><span class="lib-body"><span class="lib-name">Дизайнер</span><span class="lib-role">макеты до кода</span><span class="lib-link">delegate ← координатор</span></span></div>
+<div class="lib-card"><span class="lib-ico" style="color:#8b8b96">⇄</span><span class="lib-body"><span class="lib-name">Папка обмена</span><span class="lib-role">папка, не агент</span><span class="lib-link">обмен с workflow</span></span></div><div class="lib-hint">Окно узла: шапка и вкладки стоят, поля прокручиваются, линейка кнопок внизу не уезжает.</div></aside>
+      <div class="canvas-shell">
+        <div class="c-head"><strong>Structure</strong><span class="chip">4 узла</span><span class="chip">4 связи</span><span class="chip">в работе: 1</span></div>
+        <div class="canvas"><svg class="edges" aria-hidden="true">
+  <defs>
+    <marker id="ar-del5" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="#4176e6"/></marker>
+    <marker id="ar-rev5" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="#a86200"/></marker>
+    <marker id="ar-rep5" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="#8b8b96"/></marker>
+  </defs>
+  <path d="M230 55 H414" fill="none" stroke="#4176e6" stroke-width="1.5" marker-end="url(#ar-del5)"/>
+  <path d="M128 86 V126" fill="none" stroke="#4176e6" stroke-width="1.5" marker-end="url(#ar-del5)"/>
+  <path d="M508 86 V126" fill="none" stroke="#a86200" stroke-width="1.5" stroke-dasharray="6 5" marker-end="url(#ar-rev5)"/>
+  <path d="M216 163 H414" fill="none" stroke="#8b8b96" stroke-width="1.5" stroke-dasharray="6 5" marker-end="url(#ar-rep5)"/>
+</svg><div class="card" style="left:40px;top:24px">
+  <span class="card-clip"><span class="card-stripe" style="background:#4176e6"></span></span>
+  <span class="card-id">coordinator</span>
+  <span class="card-role">координатор · deepseek-v4.1-flash</span>
+  <span class="card-state st-run">работает</span>
+  <span class="card-run">◷ следующий запуск 08.11 15:30</span>
+  <span class="card-dot"></span>
+</div><div class="card is-hot" style="left:420px;top:24px">
+  <span class="card-clip"><span class="card-stripe" style="background:#1f9d55"></span></span>
+  <span class="card-id">worker</span>
+  <span class="card-role">исполнитель · deepseek-v4.1-flash</span>
+  <span class="card-state">свободен</span>
+</div><div class="card" style="left:40px;top:132px">
+  <span class="card-clip"><span class="card-stripe" style="background:#b26a00"></span></span>
+  <span class="card-id">judge</span>
+  <span class="card-role">приёмщик · glm-5.3-flash</span>
+  <span class="card-state st-run">выполняется</span>
+  <span class="card-dot"></span>
+</div><div class="card" style="left:420px;top:132px">
+  <span class="card-clip"><span class="card-stripe" style="background:#a855f7"></span></span>
+  <span class="card-id">critic</span>
+  <span class="card-role">критик · glm-5.3-flash</span>
+  <span class="card-state st-done">завершил</span>
+</div><div class="portal" style="left:700px;top:24px">
+  <span class="portal-head">Выход вне<span class="portal-sub"> · folder-1 · принята</span></span>
+  <span class="portal-rule"></span>
+  <span class="portal-row"><b>workflow</b></span>
+  <span class="portal-count">↗ 3 исходящих · ↙ 2 входящих</span>
+  <span class="portal-dates">вх. 08.11 14:20 · исх. 08.11 09:05</span>
+  <span class="portal-rule is-dash"></span>
+  <span class="portal-foot">path coordination/threads</span>
+  <span class="portal-hint">папка проверяется валидатором: ящик, участники, оркестратор</span>
+</div>
+<div class="vtab is-collapsed" style="left:216px;top:24px" role="button" aria-label="Валидатор структуры: структура исправна">
+  <span class="vtab-glyph"><svg viewBox="0 0 10 10" aria-hidden="true"><path d="M1.6 5.3 L3.9 7.6 L8.4 2.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+</div>
+<div class="win nwin" style="left:300px;top:14px;width:520px;height:440px" role="dialog" aria-label="Узел worker: настройки">
+  <div class="win-head">
+    <span class="win-title">Узел worker</span>
+    <span class="pill">⚙ из узла · двойной клик · Enter</span>
+    <span class="spacer"></span>
+    <button class="win-close" aria-label="Закрыть">×</button>
+  </div>
+  <div class="tabs is-pinned" role="tablist">
+    <button class="tab" role="tab" aria-selected="false">Сведения</button>
+    <button class="tab" role="tab" aria-selected="false">Состояние</button>
+    <button class="tab is-on" role="tab" aria-selected="true">Настройки</button>
+    <span class="tabs-note"><span class="dirty-dot"></span>черновик не сохранён</span>
+  </div>
+  <div class="nbody">
+    <div class="nscroll">
+      <div class="nf"><span class="flabel">id</span><span class="fcontrol"><div class="in" style="background:var(--layer1);color:var(--muted)">worker</div></span></div>
+      <div class="nf"><span class="flabel">Роль</span><span class="fcontrol"><div class="in">исполнитель</div></span></div>
+      <div class="nf"><span class="flabel">Провайдер</span><span class="fcontrol selwrap"><div class="in">opencode-go</div></span></div>
+      <div class="nf"><span class="flabel">Модель</span><span class="fcontrol selwrap"><div class="in">deepseek-v4.1-flash</div></span></div>
+      <div class="nf"><span class="flabel">Назначение</span><span class="fcontrol"><div class="in">делает основную работу по заданию координатора</div></span></div>
+      <div class="nf"><span class="flabel">Расписание</span><span class="fcontrol"><div class="in">по заданию · без расписания</div></span></div>
+      <div class="nf"><span class="flabel">Fallback-модель</span><span class="fcontrol selwrap"><div class="in">glm-5.3-flash</div></span></div>
+      <div class="nf"><span class="flabel">Занятость</span><span class="fcontrol selwrap"><div class="in">queue — одна задача ждёт освобождения</div></span></div>
+      <div class="nf is-wide"><span class="flabel">Prompt · роль и DoD</span><span class="fcontrol"><div class="in ta">Роль: исполнитель — делает основную работу по заданию координатора. Definition of Done: результат собран, проверки и тесты пройдены, в отчёте названы файлы, команды и отклонения от задания.</div></span></div>
+      <div class="nf is-wide"><span class="flabel">Связи</span><span class="fcontrol"><div class="in" style="height:auto;padding:4px 6px;font-size:10px;line-height:1.5">coordinator → worker · delegate<br>judge → worker · review</div></span></div>
+    </div>
+    <div class="nbar"><i></i></div>
+  </div>
+  <div class="nfoot">
+    <button class="btn btn-primary">Сохранить</button>
+    <span class="nfoot-hint is-dirty"><span class="dirty-dot"></span>2 поля изменены</span>
+    <span class="spacer"></span>
+    <button class="btn" style="border-color:#f0c4c0;color:#c92626;background:#fdeceb">Удалить узел</button>
+  </div>
+</div>
+<div class="demo" style="left:36px;top:290px;width:250px">
+  <div class="demo-title">Линейка «Сохранить» — три состояния</div>
+  <div style="margin-top:7px;display:flex;flex-direction:column;gap:6px">
+    <div>
+      <div class="demo-cap" style="margin-bottom:3px"><b>изменений нет</b>кнопка неактивна, записывать нечего</div>
+      <div class="minibar"><button class="btn btn-primary" disabled>Сохранить</button><span class="mini-hint">нет правок</span></div>
+    </div>
+    <div>
+      <div class="demo-cap" style="margin-bottom:3px"><b>есть правки</b>кнопка активна, в линейке — счёт правок</div>
+      <div class="minibar"><button class="btn btn-primary">Сохранить</button><span class="mini-hint" style="color:#a86200">2 поля</span></div>
+    </div>
+    <div>
+      <div class="demo-cap" style="margin-bottom:3px"><b>есть находки</b>сохранить можно, запуск — нет</div>
+      <div class="minibar" style="border-color:#f0c4c0"><button class="btn btn-primary">Сохранить</button><span class="mini-hint" style="color:#c92626">2 находки</span></div>
+    </div>
+  </div>
+</div>
+<span class="note is-plain" style="left:300px;top:486px">шапка 37 + вкладки 31 закреплены: прокручивается только середина 328</span>
+<span class="note is-ok" style="left:300px;top:514px">линейка 44 видна всегда: «Сохранить» слева, «Удалить узел» справа</span>
+</div>
+      </div>
+    </div>
+    <div class="legend">
+      <span><b style="color:#4176e6">—</b> delegate: поручение</span>
+      <span><b style="color:#a86200">—</b> review: проверка</span>
+      <span><b style="color:#8b8b96">—</b> report: возврат</span>
+      <span><b style="color:#6f6f7a">—</b> peer: равные</span>
+    </div>
+    <div class="strip"><span class="details-id">worker</span><span class="details-sub">исполнитель · открыт</span><span class="spacer"></span><span class="strip-hint">низ окна не прячет кнопки</span><button class="btn">Связь</button><button class="btn btn-primary">Запустить</button></div>
+  </div>
+</div></figure>
+    <div class="scene-notes"><div class="cols">
+      <div class="card-note"><h3>Что нажато / что показано</h3>
+        <ul><li>⚙ на карточке worker → вкладка «Настройки» (тот же вход, что в макете 2026-11-07);</li>
+          <li>шапка с названием узла и вкладки не двигаются;</li>
+          <li>девять полей прокручиваются; у нижнего края видна обрезанная строка и мягкая тень;</li>
+          <li>внизу постоянная линейка: «Сохранить» и «Удалить узел».</li></ul></div>
+      <div class="card-note"><h3>Размеры и отступы</h3>
+        <ul><li>окно 520 × 440: шапка 37 + вкладки 31 + середина 328 + линейка 44;</li>
+          <li>полоса прокрутки 3 px у правого края, ползунок 92 px при 10 полях;</li>
+          <li>поле 30 px (подпись 104 + контрол), широкие поля — 66 px;</li>
+          <li>тень над линейкой 7 px и под вкладками 5 px — граница «здесь режется».</li></ul></div>
+      <div class="card-note"><h3>Прокрутка и кнопки</h3>
+        <ul><li>прокручивается только середина; колесо над полями, PageUp/PageDown, стрелки;</li>
+          <li>линейка не уезжает никогда: это не часть прокручиваемой области, а flex-элемент окна;</li>
+          <li>«Сохранить» неактивна, когда изменений нет; при правке включается и показывает их число;</li>
+          <li>при находках валидатора «Сохранить» остаётся активной (правку надо записать), но линейка краснеет: «2 находки — запуск заблокирован».</li></ul></div>
+    </div></div>
+  </section>
+  <section class="scene" id="scene-06">
+    <div class="scene-head">
+      <span class="scene-no">06</span>
+      <span class="scene-name">Удаление узла · подтверждение поверх</span>
+      <span class="scene-note">Нажато «Удалить узел»: подтверждение над кнопкой, затемнены только поля — шапка и линейка на месте.</span>
+    </div>
+    <figure class="shot"><div class="panel">
+  <div class="p-top">
+    <span class="p-title">Структура проекта</span>
+    <span class="chip">структура</span>
+    <span class="chip">сборка 08.11 15:04</span>
+    <span class="panel-badge">06 · удаление</span>
+    <span class="spacer"></span>
+    <button class="btn">Обновить</button>
+    <button class="btn">Собрать</button>
+    <button class="btn">Добавить узел</button>
+  </div>
+  <div class="p-main">
+    <div class="p-rid">
+      <aside class="lib"><div class="lib-head"><span class="lib-title">Библиотека узлов</span><span class="lib-count" title="6 элементов в библиотеке">6 элементов</span><button class="lib-collapse is-icon" aria-label="Свернуть библиотеку узлов">−</button></div><div class="lib-card"><span class="lib-ico" style="color:#4176e6">К</span><span class="lib-body"><span class="lib-name">Координатор</span><span class="lib-role">ведёт план и раздаёт работу</span><span class="lib-link">delegate → исполнитель</span></span></div>
+<div class="lib-card"><span class="lib-ico" style="color:#1f9d55">И</span><span class="lib-body"><span class="lib-name">Исполнитель</span><span class="lib-role">делает порученное</span><span class="lib-link">report → координатор</span></span></div>
+<div class="lib-card"><span class="lib-ico" style="color:#b26a00">П</span><span class="lib-body"><span class="lib-name">Приёмщик</span><span class="lib-role">проверяет работу</span><span class="lib-link">review ← координатор</span></span></div>
+<div class="lib-card"><span class="lib-ico" style="color:#a855f7">Кр</span><span class="lib-body"><span class="lib-name">Критик</span><span class="lib-role">разбирает прогон</span><span class="lib-link">report → координатор</span></span></div>
+<div class="lib-card"><span class="lib-ico" style="color:#0f9b8e">Д</span><span class="lib-body"><span class="lib-name">Дизайнер</span><span class="lib-role">макеты до кода</span><span class="lib-link">delegate ← координатор</span></span></div>
+<div class="lib-card"><span class="lib-ico" style="color:#8b8b96">⇄</span><span class="lib-body"><span class="lib-name">Папка обмена</span><span class="lib-role">папка, не агент</span><span class="lib-link">обмен с workflow</span></span></div><div class="lib-hint">Подтверждение не закрывает линейку: «Сохранить» и «Удалить узел» остаются на своих местах.</div></aside>
+      <div class="canvas-shell">
+        <div class="c-head"><strong>Structure</strong><span class="chip">4 узла</span><span class="chip">4 связи</span><span class="chip">в работе: 1</span></div>
+        <div class="canvas"><svg class="edges" aria-hidden="true">
+  <defs>
+    <marker id="ar-del6" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="#4176e6"/></marker>
+    <marker id="ar-rev6" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="#a86200"/></marker>
+    <marker id="ar-rep6" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="#8b8b96"/></marker>
+  </defs>
+  <path d="M230 55 H414" fill="none" stroke="#4176e6" stroke-width="1.5" marker-end="url(#ar-del6)"/>
+  <path d="M128 86 V126" fill="none" stroke="#4176e6" stroke-width="1.5" marker-end="url(#ar-del6)"/>
+  <path d="M508 86 V126" fill="none" stroke="#a86200" stroke-width="1.5" stroke-dasharray="6 5" marker-end="url(#ar-rev6)"/>
+  <path d="M216 163 H414" fill="none" stroke="#8b8b96" stroke-width="1.5" stroke-dasharray="6 5" marker-end="url(#ar-rep6)"/>
+</svg><div class="card" style="left:40px;top:24px">
+  <span class="card-clip"><span class="card-stripe" style="background:#4176e6"></span></span>
+  <span class="card-id">coordinator</span>
+  <span class="card-role">координатор · deepseek-v4.1-flash</span>
+  <span class="card-state st-run">работает</span>
+  <span class="card-run">◷ следующий запуск 08.11 15:30</span>
+  <span class="card-dot"></span>
+</div><div class="card is-hot" style="left:420px;top:24px">
+  <span class="card-clip"><span class="card-stripe" style="background:#1f9d55"></span></span>
+  <span class="card-id">worker</span>
+  <span class="card-role">исполнитель · deepseek-v4.1-flash</span>
+  <span class="card-state">свободен</span>
+</div><div class="card" style="left:40px;top:132px">
+  <span class="card-clip"><span class="card-stripe" style="background:#b26a00"></span></span>
+  <span class="card-id">judge</span>
+  <span class="card-role">приёмщик · glm-5.3-flash</span>
+  <span class="card-state st-run">выполняется</span>
+  <span class="card-dot"></span>
+</div><div class="card" style="left:420px;top:132px">
+  <span class="card-clip"><span class="card-stripe" style="background:#a855f7"></span></span>
+  <span class="card-id">critic</span>
+  <span class="card-role">критик · glm-5.3-flash</span>
+  <span class="card-state st-done">завершил</span>
+</div><div class="portal" style="left:700px;top:24px">
+  <span class="portal-head">Выход вне<span class="portal-sub"> · folder-1 · принята</span></span>
+  <span class="portal-rule"></span>
+  <span class="portal-row"><b>workflow</b></span>
+  <span class="portal-count">↗ 3 исходящих · ↙ 2 входящих</span>
+  <span class="portal-dates">вх. 08.11 14:20 · исх. 08.11 09:05</span>
+  <span class="portal-rule is-dash"></span>
+  <span class="portal-foot">path coordination/threads</span>
+  <span class="portal-hint">папка проверяется валидатором: ящик, участники, оркестратор</span>
+</div>
+<div class="vtab is-collapsed" style="left:216px;top:24px" role="button" aria-label="Валидатор структуры: структура исправна">
+  <span class="vtab-glyph"><svg viewBox="0 0 10 10" aria-hidden="true"><path d="M1.6 5.3 L3.9 7.6 L8.4 2.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+</div>
+<div class="win nwin" style="left:300px;top:14px;width:520px;height:440px" role="dialog" aria-label="Узел worker: подтверждение удаления">
+  <div class="win-head">
+    <span class="win-title">Узел worker</span>
+    <span class="pill">⚙ из узла · двойной клик · Enter</span>
+    <span class="spacer"></span>
+    <button class="win-close" aria-label="Закрыть">×</button>
+  </div>
+  <div class="tabs is-pinned" role="tablist">
+    <button class="tab" role="tab" aria-selected="false">Сведения</button>
+    <button class="tab" role="tab" aria-selected="false">Состояние</button>
+    <button class="tab is-on" role="tab" aria-selected="true">Настройки</button>
+    <span class="tabs-note"><span class="dirty-dot"></span>черновик не сохранён</span>
+  </div>
+  <div class="nbody">
+    <div class="nscroll">
+      <div class="nf"><span class="flabel">id</span><span class="fcontrol"><div class="in" style="background:var(--layer1);color:var(--muted)">worker</div></span></div>
+      <div class="nf"><span class="flabel">Роль</span><span class="fcontrol"><div class="in">исполнитель</div></span></div>
+      <div class="nf"><span class="flabel">Провайдер</span><span class="fcontrol selwrap"><div class="in">opencode-go</div></span></div>
+      <div class="nf"><span class="flabel">Модель</span><span class="fcontrol selwrap"><div class="in">deepseek-v4.1-flash</div></span></div>
+      <div class="nf"><span class="flabel">Назначение</span><span class="fcontrol"><div class="in">делает основную работу по заданию координатора</div></span></div>
+      <div class="nf"><span class="flabel">Расписание</span><span class="fcontrol"><div class="in">по заданию · без расписания</div></span></div>
+      <div class="nf"><span class="flabel">Fallback-модель</span><span class="fcontrol selwrap"><div class="in">glm-5.3-flash</div></span></div>
+      <div class="nf"><span class="flabel">Занятость</span><span class="fcontrol selwrap"><div class="in">queue — одна задача ждёт освобождения</div></span></div>
+      <div class="nf is-wide"><span class="flabel">Prompt · роль и DoD</span><span class="fcontrol"><div class="in ta">Роль: исполнитель — делает основную работу по заданию координатора. Definition of Done: результат собран, проверки и тесты пройдены, в отчёте названы файлы, команды и отклонения от задания.</div></span></div>
+      <div class="nf is-wide"><span class="flabel">Связи</span><span class="fcontrol"><div class="in" style="height:auto;padding:4px 6px;font-size:10px;line-height:1.5">coordinator → worker · delegate<br>judge → worker · review</div></span></div>
+    </div>
+    <div class="nbar"><i></i></div>
+    <div class="nscrim"></div>
+    <div class="confirm" style="right:14px;bottom:16px">
+      <div class="confirm-title">Удалить узел worker?</div>
+      <p class="confirm-text">Исчезнут <b>две связи</b> (coordinator → worker, judge → worker) и <b>2 задания</b> в очереди. Отменить можно до сохранения — Ctrl+Z; после записи узел не вернуть.</p>
+      <div class="confirm-row">
+        <button class="btn">Отмена</button>
+        <button class="btn btn-danger">Удалить узел</button>
+        <span class="win-hint" style="font-size:8.5px">Esc / Enter</span>
+      </div>
+    </div>
+  </div>
+  <div class="nfoot">
+    <button class="btn btn-primary">Сохранить</button>
+    <span class="nfoot-hint is-dirty"><span class="dirty-dot"></span>2 поля изменены</span>
+    <span class="spacer"></span>
+    <button class="btn" style="border-color:#f0c4c0;color:#c92626;background:#fdeceb;box-shadow:inset 0 1px 3px rgba(0,0,0,.12)">Удалить узел</button>
+  </div>
+</div>
+<span class="note is-danger" style="left:300px;top:486px">подтверждение над кнопкой: видно, что удаляется, и линейка остаётся на месте</span>
+<span class="note is-plain" style="left:300px;top:514px">затемнены только поля; шапка, вкладки и кнопки не под затемнением</span>
+</div>
+      </div>
+    </div>
+    <div class="legend">
+      <span><b style="color:#4176e6">—</b> delegate: поручение</span>
+      <span><b style="color:#a86200">—</b> review: проверка</span>
+      <span><b style="color:#8b8b96">—</b> report: возврат</span>
+      <span><b style="color:#6f6f7a">—</b> peer: равные</span>
+    </div>
+    <div class="strip"><span class="details-id">worker</span><span class="details-sub">исполнитель · удаление ждёт подтверждения</span><span class="spacer"></span><span class="strip-hint">Esc отменяет, Enter подтверждает</span><button class="btn">Связь</button><button class="btn btn-primary">Запустить</button></div>
+  </div>
+</div></figure>
+    <div class="scene-notes"><div class="cols">
+      <div class="card-note"><h3>Что нажато / что показано</h3>
+        <ul><li>нажато «Удалить узел» в нижней линейке;</li>
+          <li>над кнопкой появляется подтверждение с последствиями: связи и очередь заданий;</li>
+          <li>затемнена только прокручиваемая область — видно, что именно удаляется;</li>
+          <li>«Отмена» — первая кнопка и первая в фокусе; Esc — то же.</li></ul></div>
+      <div class="card-note"><h3>Размеры и отступы</h3>
+        <ul><li>карточка подтверждения 276 px, отступ от правого края 14, от линейки 16;</li>
+          <li>стрелка 10 px указывает на «Удалить узел» в линейке;</li>
+          <li>затемнение — только поля: <code>top: 68</code> (шапка + вкладки), <code>bottom: 44</code> (линейка);</li>
+          <li>опасная кнопка — красная заливка, отмена — нейтральная.</li></ul></div>
+      <div class="card-note"><h3>Почему не по центру</h3>
+        <ul><li>подтверждение у самой кнопки: связь «нажал это — подтверждаю это» не теряется;</li>
+          <li>линейка остаётся видимой — видно, что окно не «прыгнуло»;</li>
+          <li>поля затемнены, поэтому видно, что правки ждут сохранения;</li>
+          <li>после «Удалить узел» окно закрывается, карточка исчезает с канвы, отмена — один шаг.</li></ul></div>
+    </div></div>
+  </section>
+  <div class="compare">
+    <h2 class="cmp-h">Размеры и отступы</h2>
+    <table class="spec">
+      <thead><tr><th style="width:32%">Элемент</th><th style="width:18%">Размер</th><th>Где и как</th></tr></thead>
+      <tbody>
+        <tr><td>Выступ, свёрнут</td><td>14 × 62</td><td>прижат к правому краю карточки координатора (x 216); высота равна высоте блока, радиус справа 6, правый бордюр 3 px = статус</td></tr>
+        <tr><td>Бейдж находок</td><td>13 px, сдвиг −6 / −6</td><td>только при находках, в нём число; при «исправна» бейджа нет</td></tr>
+        <tr><td>Выступ, наведение</td><td>180 × 104</td><td>левый край тот же 216, правый 396; до карточки исполнителя (420) — 24 px</td></tr>
+        <tr><td>Панель находок</td><td>424 × 452</td><td>левый край 230 (216 + 14); шапка 34, баннер 34, карточка находки ≈ 92, низ 40</td></tr>
+        <tr><td>Окно блока валидатора</td><td>560 × 430</td><td>слева 334, справа 226, разделитель 1 px; шапка 37, низ 41</td></tr>
+        <tr><td>Окно узла</td><td>520 × 440</td><td>шапка 37 + вкладки 31 + прокрутка 328 + линейка 44</td></tr>
+        <tr><td>Подтверждение удаления</td><td>276 × ~96</td><td>14 от правого края, 16 над линейкой, стрелка 10 px на «Удалить узел»</td></tr>
+        <tr><td>Карточка узла (не менялась)</td><td>176 × 62</td><td>сетка 40 / 420 по x, 24 / 132 по y; зазор между колонками 204, выступ занимает 14</td></tr>
+        <tr><td>Рёбра</td><td>от x = 230</td><td>delegate coordinator → worker начинается на 230, а не на 216: выступ — часть габарита блока</td></tr>
+        <tr><td>Кегли</td><td>7.5 – 12.5 px</td><td>код находки 9.5 mono, «что не так» 9.8, «что сделать» 9.2, метки 7.5, заголовок панели 12</td></tr>
+      </tbody>
+    </table>
+
+    <h2 class="cmp-h">Что нажато → что показано</h2>
+    <table class="spec">
+      <thead><tr><th style="width:10%">Экран</th><th style="width:30%">Действие</th><th>Что видно в кадре</th></tr></thead>
+      <tbody>
+        <tr><td>01</td><td>ничего — покой</td><td>выступ 14 × 62 справа от координатора, ✓, структура исправна, запуск доступен; врезка «два состояния»</td></tr>
+        <tr><td>02</td><td>курсор на выступе</td><td>выступ выдвинут на 180 px: «4 находки», первые три кода, «ещё 1 · все 4 и diff →»</td></tr>
+        <tr><td>03</td><td>клик по выступу</td><td>панель находок: код, файл:строка, что не так, что сделать, метки «безопасно / нужен выбор», две кнопки, баннер блокировки</td></tr>
+        <tr><td>04</td><td>⚙ в панели или правая кнопка по выступу</td><td>окно блока: «Сведения» (роль, что проверяет, инварианты, журнал) и «Настройки» (проверка моделей, блокировка, расписание)</td></tr>
+        <tr><td>05</td><td>⚙ на карточке worker</td><td>окно узла, «Настройки»: шапка и вкладки стоят, поля прокручиваются (видна обрезанная строка), нижняя линейка «Сохранить / Удалить узел»</td></tr>
+        <tr><td>06</td><td>«Удалить узел» в линейке</td><td>подтверждение над кнопкой, затемнены только поля; шапка и линейка на месте</td></tr>
+      </tbody>
+    </table>
+
+    <h2 class="cmp-h">Отклонения от брифа — названы</h2>
+    <table class="spec">
+      <thead><tr><th style="width:32%">Пункт брифа</th><th>Что сделано и почему</th></tr></thead>
+      <tbody>
+        <tr><td>«выступ выдвигается правее (~180 px)»</td><td>Ширина ровно 180. Высота 104, а не 62: в 62 px не помещаются статус и три находки. Выступ всё равно выдвигается вправо, а не раскрывается вниз.</td></tr>
+        <tr><td>«узкая вкладка ~14 px»</td><td>14 × 62. Добавлен бейдж с числом (13 px, выступает на 6 px): иначе «N находок» не видно без наведения. В покое без находок бейджа нет.</td></tr>
+        <tr><td>«статус: структура исправна / N находок»</td><td>Экран 01 снят в спокойном состоянии, 02–03 — в день находок: это два момента одного элемента. Оба вида сведены врезкой на 01.</td></tr>
+        <tr><td>«видно, что задания заблокированы»</td><td>Четыре места: баннер в панели, красный чип на канве, недоступная «Запустить» внизу, «ждёт валидатора» на карточке. Правило — в окне 04, переключатель «Блокировать запуск при находках».</td></tr>
+        <tr><td>«что с «Сохранить», когда изменений нет»</td><td>Неактивна (врезка на 05, первая строка). При правке — активна и показывает их число. При находках — активна (правку надо записать), но линейка краснеет: «2 находки — запуск заблокирован».</td></tr>
+        <tr><td>Коды находок</td><td>Взяты из нынешнего <code>lib/graph.js</code> (duplicate-edge, invalid-schedule-timezone, unknown-model, unknown-edge-endpoint), чтобы макет не выдумывал словарь. Финальный набор — дело задачи 0152.</td></tr>
+        <tr><td>Где живёт валидатор</td><td>Выступ прикреплён к координатору, потому что блокируется запуск заданий. Сам валидатор — не узел: отдельной карточки на канве нет.</td></tr>
+      </tbody>
+    </table>
+
+    <h2 class="cmp-h">Вопросы заказчику</h2>
+    <table class="spec">
+      <thead><tr><th style="width:42%">Вопрос</th><th>Почему спрашиваю</th></tr></thead>
+      <tbody>
+        <tr><td>Высота выдвинутого выступа: 104 px или строго 62, как у блока?</td><td>В 62 не влезают статус и три находки; можно оставить 62 и показывать только статус, а список — лишь в панели 03.</td></tr>
+        <tr><td>Бейдж с числом на свёрнутом выступе — оставляем?</td><td>Он выступает за габарит на 6 px и стоит на канве всегда. Без него «N находок» видно только по наведению.</td></tr>
+        <tr><td>Находки блокируют запуск все или только «ошибки», а предупреждения — нет?</td><td>В макете блокируют все четыре. Если предупреждения не блокируют, баннер меняется на «3 из 4 блокируют» — это одна строка.</td></tr>
+        <tr><td>Раскрытая панель перекрывает карточки справа — так и надо?</td><td>Поповер не пересчитывает раскладку. Альтернатива — сдвигать канву вправо на ширину панели, но тогда схема «прыгает».</td></tr>
+        <tr><td>«Сохранить» при находках: разрешать запись или запрещать до исправления?</td><td>В макете запись разрешена, запуск — нет: иначе невозможно записать саму правку, которая устраняет находку.</td></tr>
+      </tbody>
+    </table>
+
+    <p class="footnote">
+      Макет — один файл, без сети и внешних файлов. Превью 1280 × 800 снимаются с этого же файла параметром
+      <code>?scene=01</code> … <code>?scene=06</code>; панель в кадре — 1248 × 768, канва 962 × 575.
+      Числа и подписи — числа макета. Файлы, размеры превью, поведение прокрутки и ховера — в <code>notes.md</code>.
+      Папка: <code>C:/Users/Goryachev/Documents/deepseek-harness/dsh-project-graph/.tmp/pending-design/validator-2026-11-08</code>.
+    </p>
+  </div>
+
+
+</div>
+<script>
+  (function () {
+    "use strict";
+    var scenes = ["01", "02", "03", "04", "05", "06"];
+    var params = new URLSearchParams(window.location.search);
+    var scene = params.get("scene");
+    if (scenes.indexOf(scene) !== -1) document.body.classList.add("is-shot", "scene-" + scene);
+    var readout = document.getElementById("readout");
+    if (readout && scene) readout.textContent = "превью: ?scene=" + scene;
+    var links = document.querySelectorAll("[data-scene-link]");
+    for (var i = 0; i < links.length; i += 1) {
+      links[i].addEventListener("click", function (event) {
+        event.preventDefault();
+        var target = event.currentTarget.getAttribute("data-scene-link");
+        for (var k = 0; k < scenes.length; k += 1) document.body.classList.remove("scene-" + scenes[k]);
+        document.body.classList.add("scene-" + target);
+        var element = document.getElementById("scene-" + target);
+        if (element) element.scrollIntoView({ behavior: "smooth", block: "start" });
+        var all = document.querySelectorAll("[data-scene-link]");
+        for (var j = 0; j < all.length; j += 1) all[j].classList.toggle("is-on", all[j] === event.currentTarget);
+      });
+    }
+    var first = document.querySelector("[data-scene-link='01']");
+    if (first) first.classList.add("is-on");
+  })();
+</script>
+</body>
+</html>
