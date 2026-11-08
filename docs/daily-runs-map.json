@@ -1,0 +1,105 @@
+{
+  "format": "dsh-daily-runs/1",
+  "generated": "2026-11-07T02:15+03:00",
+  "rule": "Разрыв без запусков у узла без cron — событийная пауза, не пропуск. Запуск вне окна cron — событие с причиной.",
+  "workspaces": [
+    {
+      "workspace": "dsh-project-graph",
+      "source": "structure/graph.json",
+      "nodes": [
+        {
+          "id": "coordinator",
+          "role": "координатор",
+          "owner": "dsh-project-graph",
+          "schedule": null,
+          "hasCron": false,
+          "eventDriven": true
+        },
+        {
+          "id": "worker",
+          "role": "исполнитель",
+          "owner": "dsh-project-graph",
+          "schedule": null,
+          "hasCron": false,
+          "eventDriven": true
+        },
+        {
+          "id": "judge",
+          "role": "приёмщик",
+          "owner": "dsh-project-graph",
+          "schedule": null,
+          "hasCron": false,
+          "eventDriven": true
+        },
+        {
+          "id": "designer",
+          "role": "исполнитель",
+          "owner": "dsh-project-graph",
+          "schedule": null,
+          "hasCron": false,
+          "eventDriven": true
+        },
+        {
+          "id": "critic",
+          "role": "критик",
+          "owner": "dsh-project-graph",
+          "schedule": {
+            "cron": null,
+            "at": "03:00"
+          },
+          "hasCron": false,
+          "eventDriven": false
+        },
+        {
+          "id": "reviewer-1",
+          "role": "ревьюер",
+          "owner": "dsh-project-graph",
+          "schedule": null,
+          "hasCron": false,
+          "eventDriven": true
+        }
+      ]
+    },
+    {
+      "workspace": "default-workspace",
+      "source": "structure/graph.json",
+      "nodes": [
+        {
+          "id": "coordinator",
+          "role": "координатор",
+          "owner": "default-workspace",
+          "schedule": null,
+          "hasCron": false,
+          "eventDriven": true
+        },
+        {
+          "id": "worker",
+          "role": "исполнитель",
+          "owner": "default-workspace",
+          "schedule": null,
+          "hasCron": false,
+          "eventDriven": true
+        },
+        {
+          "id": "judge",
+          "role": "приёмщик",
+          "owner": "default-workspace",
+          "schedule": null,
+          "hasCron": false,
+          "eventDriven": true
+        },
+        {
+          "id": "Critic",
+          "role": "critic",
+          "owner": "default-workspace",
+          "schedule": {
+            "cron": null,
+            "at": "01:32"
+          },
+          "hasCron": false,
+          "eventDriven": false
+        }
+      ]
+    }
+  ]
+}
