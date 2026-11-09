@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "edges": [
+    {
+      "from": "coord",
+      "to": "code.lead",
+      "kind": "delegate"
+    },
+    {
+      "from": "coord",
+      "to": "design.lead",
+      "kind": "delegate"
+    },
+    {
+      "from": "code.lead",
+      "to": "design.lead",
+      "kind": "peer"
+    }
+  ]
+}
