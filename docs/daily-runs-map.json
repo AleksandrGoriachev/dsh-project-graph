@@ -1,0 +1,92 @@
+{
+  "format": "dsh-daily-runs/2",
+  "rule": "Узел с at запускается по расписанию; узел без at — событийный: разрыв без запусков у него — пауза, а не пропуск окна. Запуск вне окна расписания — событие с причиной.",
+  "sources": {
+    "dsh-project-graph": "structure/graph.json",
+    "default-workspace": "../default-workspace/structure/graph.json"
+  },
+  "workspaces": {
+    "dsh-project-graph": {
+      "nodes": [
+        {
+          "id": "coordinator",
+          "role": "координатор"
+        },
+        {
+          "id": "worker",
+          "role": "исполнитель"
+        },
+        {
+          "id": "judge",
+          "role": "приёмщик"
+        },
+        {
+          "id": "designer",
+          "role": "исполнитель"
+        },
+        {
+          "id": "critic",
+          "role": "критик",
+          "at": "03:00"
+        },
+        {
+          "id": "reviewer-1",
+          "role": "ревьюер"
+        },
+        {
+          "id": "tester-1",
+          "role": "тестировщик"
+        }
+      ],
+      "schedule": [
+        {
+          "id": "critic",
+          "at": "03:00"
+        }
+      ]
+    },
+    "default-workspace": {
+      "nodes": [
+        {
+          "id": "coordinator",
+          "role": "координатор"
+        },
+        {
+          "id": "worker",
+          "role": "исполнитель"
+        },
+        {
+          "id": "judge",
+          "role": "приёмщик"
+        },
+        {
+          "id": "Critic",
+          "role": "critic",
+          "at": "01:32"
+        },
+        {
+          "id": "reviewer-1",
+          "role": "ревьюер"
+        },
+        {
+          "id": "worker-1",
+          "role": "Дизайнер Остап"
+        },
+        {
+          "id": "worker-2",
+          "role": "Критик проектов"
+        },
+        {
+          "id": "worker-3",
+          "role": "Эксплуатационщик"
+        }
+      ],
+      "schedule": [
+        {
+          "id": "Critic",
+          "at": "01:32"
+        }
+      ]
+    }
+  }
+}

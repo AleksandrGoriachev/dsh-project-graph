@@ -1,0 +1,12 @@
+{
+  "mode": "clean",
+  "hasTab": true,
+  "transform": "translate(176 0)",
+  "width": "180",
+  "height": "104",
+  "rx": "8",
+  "fill": "var(--dsw-alias-bg-base, #ffffff)",
+  "stroke": "var(--dsw-alias-border-l2, rgba(127,127,127,0.36))",
+  "badge": false,
+  "summary": "структура исправна"
+}
