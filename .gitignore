@@ -1,0 +1,25 @@
+node_modules/
+.tmp/
+.dsh/
+*.log
+preview-out/
+# subagent-workflow: журналы прогонов
+docs/tasks/**/*.log
+# subagent-workflow: журнал включения guard
+docs/subagent-workflow/guard.log
+# subagent-workflow: ключ приёмщика проекта
+.wf-keys/
+# subagent-workflow: журнал развёртывания
+docs/subagent-workflow/deploy.log
+
+# собранные пакеты
+*.tgz
+# subagent-workflow: node для хуков
+docs/subagent-workflow/.node-path
+# внутренний процесс разработки (не публикуется)
+docs/tasks/
+docs/subagent-workflow/
+docs/critic/
+HANDOVER*.md
+.wf-keys/
+check-report.json
