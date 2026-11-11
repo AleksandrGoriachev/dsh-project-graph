@@ -1,0 +1,33 @@
+{
+  "node": "release-1",
+  "version": 1,
+  "immutable": true,
+  "pipeline": "tools/release.mjs",
+  "requires": {
+    "acceptance": "строка accept в docs/tasks/<id>/gates.jsonl до bump",
+    "preflight": [
+      "check-version",
+      "release-receipt --online"
+    ],
+    "evidence": [
+      "tag",
+      "release URL",
+      "asset size",
+      "HTTP 200",
+      "SMOKE-<tag>.json"
+    ],
+    "guard": {
+      "enabled": true,
+      "scope": "session",
+      "reason": "коммит вне контракта задачи не должен проходить"
+    }
+  },
+  "deny": [
+    "git push",
+    "git push --tags",
+    "gh release create",
+    "publish-public",
+    "npm publish"
+  ],
+  "secrets": "не печатать; токен только из окружения/credential fill"
+}

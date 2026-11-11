@@ -1,0 +1,113 @@
+{
+  "version": 2,
+  "anchors": [
+    {
+      "id": "A1",
+      "claim": "Приёмка не стартует без квитанции ревьюера; review.json координатора не принимается; ребро reviewer-1→judge — kind:review",
+      "check": "node checks/0198-review-receipts.mjs c1,c2,c3,c4 + task-accept behavior (missing/mismatch receipt)",
+      "status": "auto",
+      "layer": "project",
+      "sides": "project",
+      "enforcedBy": "nodes"
+    },
+    {
+      "id": "A2",
+      "claim": "Плановый прогон получает done только с report+delivered; последующий error не снимает обязательство",
+      "check": "node checks/0197-edge-obligations.mjs c1..c5 + node checks/0198-review-receipts.mjs c5",
+      "status": "auto",
+      "layer": "project",
+      "sides": "project",
+      "enforcedBy": "nodes"
+    },
+    {
+      "id": "A3",
+      "claim": "Контракт задания не называет чужого acceptor; reviewer binding проверяется",
+      "check": "node checks/structure-contract.mjs + node checks/0168-review-gate.mjs c2,c3 + node test/spawn.test.mjs (reviewer binding :1999)",
+      "status": "auto",
+      "layer": "project",
+      "sides": "project",
+      "enforcedBy": "nodes"
+    },
+    {
+      "id": "A4",
+      "claim": "Прямые commit/push/--no-verify запрещены; tools/commit.ps1 разрешён",
+      "check": "node checks/0103-commit-gate.mjs c1..c5",
+      "status": "auto",
+      "layer": "project",
+      "sides": "project",
+      "enforcedBy": "nodes"
+    },
+    {
+      "id": "A5",
+      "claim": "Отчёт критика отклоняется, если тело начинается с рассуждений/нумерации/иного заголовка",
+      "check": "node checks/0196-critic-delivery.mjs c1,c5",
+      "status": "auto",
+      "layer": "project",
+      "sides": "project",
+      "enforcedBy": "nodes"
+    },
+    {
+      "id": "A6",
+      "claim": "Сохранение структуры/якорей не теряет рёбра и поля узлов; read-error/root-switch не перезаписывают anchors.json",
+      "check": "node test/graph.test.mjs + node checks/0192-anchors-editor.mjs c2,c3 + node test/panel-render.test.mjs",
+      "status": "auto",
+      "layer": "project",
+      "sides": "project",
+      "enforcedBy": "nodes"
+    },
+    {
+      "id": "A7",
+      "claim": "Недоступная история прогонов запрещает активацию (edge-obligation, 0 спавнов)",
+      "check": "node checks/0198-review-receipts.mjs c6",
+      "status": "auto",
+      "layer": "project",
+      "sides": "project",
+      "enforcedBy": "nodes"
+    },
+    {
+      "id": "A8",
+      "claim": "Правки структуры сохраняют anchors.consumes; ревьюер/аудитор без непустого consumes — отказ",
+      "check": "node checks/0192-anchors-editor.mjs c3 + node checks/0186-anchor-binding.mjs",
+      "status": "auto",
+      "layer": "project",
+      "sides": "project",
+      "enforcedBy": "nodes"
+    },
+    {
+      "id": "A9",
+      "claim": "run и spawn fail-before-activation при missing/mismatch receipt; оба entrypoint calls=0",
+      "check": "node checks/0198-review-receipts.mjs c3 + run-parity (в работе)",
+      "status": "inWork",
+      "layer": "project",
+      "sides": "project",
+      "enforcedBy": "nodes"
+    },
+    {
+      "id": "A10",
+      "claim": "Узел с пресетом не активируется при unknown/broken/unavailable preset или неподдержке provider; calls=0",
+      "check": "после 0202",
+      "status": "inWork",
+      "layer": "project",
+      "sides": "project",
+      "enforcedBy": "nodes"
+    },
+    {
+      "id": "A11",
+      "claim": "Каждый коммит покрыт вердиктом task-guard; обход по метке виден в аудите, а не молчит",
+      "check": "node checks/0031-self-control-baseline.mjs c10 + node tools/audit-commits.mjs",
+      "status": "auto",
+      "layer": "project",
+      "sides": "project",
+      "enforcedBy": "nodes"
+    },
+    {
+      "id": "A12",
+      "claim": "Реестр задач fail-closed: незарегистрированный номер task-lint отказывает",
+      "check": "node checks/0183-task-registry.mjs c1..c4",
+      "status": "auto",
+      "layer": "project",
+      "sides": "project",
+      "enforcedBy": "nodes"
+    }
+  ]
+}
