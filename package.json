@@ -1,6 +1,6 @@
 {
   "name": "dsh-project-graph",
-  "version": "1.0.75",
+  "version": "1.0.77",
   "description": "Project structure graph for DeepSeek Harness: build and edit a graph, check LLM routes/presets/provider, run one node and watch its state.",
   "license": "MIT",
   "type": "module",
@@ -14,7 +14,8 @@
     "cordis.patch.yml",
     "README.md",
     "structure",
-    "examples"
+    "examples",
+    "presets"
   ],
   "engines": {
     "node": ">=20"
