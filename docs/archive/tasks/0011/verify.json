@@ -1,0 +1,148 @@
+{
+  "version": 4,
+  "kind": "verify",
+  "acceptanceNonce": null,
+  "runKind": "self",
+  "task": "0011",
+  "createdAt": "2026-11-01T23:20:44.475Z",
+  "headSha": "26abb3463e7e35fa6dfba05acd13a88a812efb19",
+  "contractCommit": "26abb3463e7e35fa6dfba05acd13a88a812efb19",
+  "criteriaSha256": "aa451fa0bd12b649257320510a7b4a213dfaadd2687309aad3da0b6895c0a2f5",
+  "criteriaJsonSha256": "d5b061572a15eeb0c9ebd81b87d25cdbba2122216378985e15958da1e45e821d",
+  "taskFileSha256": "ec4217f6db340798a1b99eb9ef48cf6a45ac2a559133c0c5cc6d60bb087d5c34",
+  "changedPaths": [
+    "docs/exchange-format.md",
+    "docs/tasks/0011/criteria.lock",
+    "docs/tasks/0011/red.json",
+    "lib/api.js",
+    "lib/exchange-watch.js",
+    "lib/graph.js",
+    "structure/graph.json",
+    "test/exchange-watch.test.mjs",
+    "test/graph.test.mjs"
+  ],
+  "coverage": {
+    "declared": 5,
+    "covered": [
+      {
+        "path": "lib/api.js",
+        "criterion": "C1"
+      },
+      {
+        "path": "lib/exchange-watch.js",
+        "criterion": "C1"
+      },
+      {
+        "path": "lib/graph.js",
+        "criterion": "C1"
+      },
+      {
+        "path": "structure/graph.json",
+        "criterion": "C1"
+      }
+    ],
+    "uncovered": [
+      "test/exchange-watch.test.mjs",
+      "test/graph.test.mjs"
+    ],
+    "mode": "fail",
+    "warnings": []
+  },
+  "effects": {
+    "required": true,
+    "checked": false,
+    "mode": "fail",
+    "declared": [
+      {
+        "criterion": "C3",
+        "observable": "ящик папки обмена берётся из folders и разрешается от общего корня участников",
+        "threshold": "строка «C3 OK» в выводе проверки",
+        "measuredBy": "C1"
+      }
+    ],
+    "links": [],
+    "ok": true
+  },
+  "results": [
+    {
+      "id": "C1",
+      "command": "node checks/0011-portals.mjs c1",
+      "exitCode": 0,
+      "durationMs": 388,
+      "passed": true,
+      "timedOut": false,
+      "reasons": [],
+      "stdoutSha256": "c5c2c57af8c70ed9338b77b335da9d09ee8c9503e52a602a7b0882c89c0bfbb2",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdoutPreview": "C1 OK: folders прочитан, узлов 1, папка отдельно\n",
+      "stderrPreview": ""
+    },
+    {
+      "id": "C2",
+      "command": "node checks/0011-portals.mjs c2",
+      "exitCode": 0,
+      "durationMs": 489,
+      "passed": true,
+      "timedOut": false,
+      "reasons": [],
+      "stdoutSha256": "8e5aa150a5ac0efed56e78be6bd3f9337f470d425082e5398ad0e098f1219b6a",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdoutPreview": "C2 OK: три отказа с рецептами\n",
+      "stderrPreview": ""
+    },
+    {
+      "id": "C3",
+      "command": "node checks/0011-portals.mjs c3",
+      "exitCode": 0,
+      "durationMs": 555,
+      "passed": true,
+      "timedOut": false,
+      "reasons": [],
+      "stdoutSha256": "1601ef136ac4272e56d36f097bb877ea17dda3099b2e2e58c227cae1e8c98889",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdoutPreview": "C3 OK: watcher читает папки из folders\n",
+      "stderrPreview": ""
+    }
+  ],
+  "executed": 3,
+  "failed": 0,
+  "manualSkipped": 0,
+  "allPassed": false,
+  "violations": [
+    "изменённый файл не покрыт ни одним критерием: test/exchange-watch.test.mjs",
+    "изменённый файл не покрыт ни одним критерием: test/graph.test.mjs"
+  ],
+  "bypasses": {
+    "allowMissingRed": false,
+    "allowManual": false
+  },
+  "red": {
+    "baseSha": "26abb3463e7e35fa6dfba05acd13a88a812efb19",
+    "contractCommit": "26abb3463e7e35fa6dfba05acd13a88a812efb19",
+    "criteriaJsonSha256": "d5b061572a15eeb0c9ebd81b87d25cdbba2122216378985e15958da1e45e821d",
+    "failed": 3,
+    "failedIds": [
+      "C1",
+      "C2",
+      "C3"
+    ],
+    "redExpectation": {
+      "configured": true,
+      "ok": true,
+      "errors": [],
+      "mustFail": [
+        "C1",
+        "C2",
+        "C3"
+      ],
+      "mustPass": []
+    },
+    "bypasses": {
+      "allowDirty": true,
+      "allowBaseMismatch": false
+    },
+    "log": "red.log"
+  },
+  "worktreeDigest": "90e1d680aedd3a51c86d19a3ec39edcf91b97056743e020ba2bcfc6b6fabc848",
+  "log": "verify.log"
+}
