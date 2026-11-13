@@ -1,0 +1,22 @@
+{
+  "node": "critic",
+  "version": 1,
+  "immutable": true,
+  "pipeline": "project_graph_spawn",
+  "requires": {
+    "evidence": [
+      "critique.json"
+    ],
+    "guard": {
+      "enabled": true,
+      "scope": "session",
+      "reason": "критик не правит код"
+    }
+  },
+  "deny": [
+    "git commit",
+    "git push",
+    "publish-public"
+  ],
+  "secrets": "не печатать; значения только из окружения"
+}

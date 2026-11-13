@@ -1,0 +1,80 @@
+{
+  "task": "0011",
+  "setup": [],
+  "teardown": [],
+  "redExpect": {
+    "mustFail": [
+      "C1",
+      "C2",
+      "C3"
+    ],
+    "mustPass": [],
+    "reasons": {
+      "C1": "Cannot read properties of undefined (reading 'length')",
+      "C2": "папка без orchestrator отвергается",
+      "C3": "ящик берётся из folders и разрешается от общего корня"
+    }
+  },
+  "criteria": [
+    {
+      "id": "C1",
+      "title": "Список folders прочитан, папка не стала узлом",
+      "command": "node checks/0011-portals.mjs c1",
+      "cwd": ".",
+      "covers": [
+        "lib/**",
+        "structure/graph.json",
+        "docs/exchange-format.md"
+      ],
+      "timeoutMs": 120000,
+      "expect": {
+        "exitCode": 0,
+        "stdoutRegex": "C1 OK"
+      },
+      "tags": [
+        "fast"
+      ]
+    },
+    {
+      "id": "C2",
+      "title": "Отказы: без orchestrator, чужой orchestrator, папка-узел",
+      "command": "node checks/0011-portals.mjs c2",
+      "cwd": ".",
+      "covers": [
+        "lib/**"
+      ],
+      "timeoutMs": 120000,
+      "expect": {
+        "exitCode": 0,
+        "stdoutRegex": "C2 OK"
+      },
+      "tags": [
+        "fast",
+        "negative"
+      ]
+    },
+    {
+      "id": "C3",
+      "title": "Watcher читает ящик из folders",
+      "command": "node checks/0011-portals.mjs c3",
+      "cwd": ".",
+      "covers": [
+        "lib/**"
+      ],
+      "timeoutMs": 120000,
+      "expect": {
+        "exitCode": 0,
+        "stdoutRegex": "C3 OK"
+      },
+      "tags": [
+        "fast",
+        "effect"
+      ],
+      "effect": {
+        "observable": "ящик папки обмена берётся из folders и разрешается от общего корня участников",
+        "threshold": "строка «C3 OK» в выводе проверки",
+        "measuredBy": "C1"
+      }
+    }
+  ]
+}

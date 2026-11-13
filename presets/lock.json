@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "presets": {
+    "coordinator": "e2b0b4ba0c80a4dede95cdab0d46302101afd689cfcaddd22537f659053ecb0c",
+    "worker": "f32fe4079e09b71561533c720e4e1470d33506f9ccc3087da3e27c2ca5dc2a29",
+    "designer": "1c48f1f97c9b983020a74aad98f0063805fc93900f763fbd21ebdb9ca73fb532",
+    "reviewer-1": "6fa6f7d2fdb5dc581f96c974b2c46929ba78aaf6b892c3ba4024f64680e4ed05",
+    "judge": "84dcf0163a27b046fb2d0a47a1e2efe2060e72203d1b4c8bb448ee18e1553794",
+    "critic": "e8aebd7c93509b74d21a543becb41d06b6d8d844cbab3019ffb13bf1dd6e12d5",
+    "tester-1": "63e861bf6b0a0d5a68754e1adcd7d372b3b8e4b1efcc4eeb30d8b641fdb95920",
+    "worker-1": "159d21f3566dd293fbfbd9d1576510be9bd4c87a3c1783da461c8c7c8c11f150",
+    "worker-2": "0e829f1782ef3ca53f5e1b9accc28dcad27e54923cd46e0805360d01f4c3c526",
+    "release-1": "05ee92f4be2ca86d52ae1ee1b7825dee48b6a7338fe12b569bbba31a59971108"
+  }
+}
