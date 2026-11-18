@@ -1,0 +1,102 @@
+{
+  "version": 4,
+  "kind": "red",
+  "task": "0011",
+  "createdAt": "2026-11-01T22:53:59.670Z",
+  "base": "HEAD",
+  "baseSha": "26abb3463e7e35fa6dfba05acd13a88a812efb19",
+  "headSha": "26abb3463e7e35fa6dfba05acd13a88a812efb19",
+  "contractCommit": "26abb3463e7e35fa6dfba05acd13a88a812efb19",
+  "criteriaSha256": "aa451fa0bd12b649257320510a7b4a213dfaadd2687309aad3da0b6895c0a2f5",
+  "criteriaJsonSha256": "d5b061572a15eeb0c9ebd81b87d25cdbba2122216378985e15958da1e45e821d",
+  "dirtyPaths": [
+    "docs/subagent-workflow/SPEC.md",
+    "docs/subagent-workflow/VERSION",
+    "docs/subagent-workflow/checks/acceptance-record.mjs",
+    "docs/subagent-workflow/checks/ci-behavior.mjs",
+    "docs/subagent-workflow/checks/contract-selfcheck.mjs",
+    "docs/subagent-workflow/checks/covers-severity.mjs",
+    "docs/subagent-workflow/checks/engine-root.mjs",
+    "docs/subagent-workflow/checks/gate-rules.mjs",
+    "docs/subagent-workflow/checks/hooks-mode.mjs",
+    "docs/subagent-workflow/checks/release-hygiene.mjs",
+    "docs/subagent-workflow/scripts/lib/common.mjs",
+    "docs/subagent-workflow/scripts/task-lint.mjs",
+    "docs/tasks/0011/criteria.lock"
+  ],
+  "results": [
+    {
+      "id": "C1",
+      "command": "node checks/0011-portals.mjs c1",
+      "exitCode": 1,
+      "durationMs": 470,
+      "passed": false,
+      "timedOut": false,
+      "reasons": [
+        "exit code 1 != 0",
+        "stdout не соответствует /C1 OK/m"
+      ],
+      "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSha256": "674e353a9647224d1da9adb50fdb41efc54906c4d96e539e45ceae691704c33c",
+      "stdoutPreview": "",
+      "stderrPreview": "file:///C:/Users/Goryachev/Documents/deepseek-harness/dsh-project-graph/checks/0011-portals.mjs:36\r\n  assert.equal(result.graph.folders.length, 1, 'папка прочитана из folders');\r\n                                    ^\r\n\r\nTypeError: Cannot read properties of undefined (reading 'length')\r\n    at file:///C:/Users/Goryachev/Documents/deepseek-harness/dsh-project-graph/checks/0011-portals.mjs:36:37\r\n    at ModuleJob.run (node:internal/modules/esm/module_job:430:25)\r\n    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:654:26)\r\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)\r\n\r\nNode.js v25.4.0\r\n"
+    },
+    {
+      "id": "C2",
+      "command": "node checks/0011-portals.mjs c2",
+      "exitCode": 1,
+      "durationMs": 440,
+      "passed": false,
+      "timedOut": false,
+      "reasons": [
+        "exit code 1 != 0",
+        "stdout не соответствует /C2 OK/m"
+      ],
+      "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSha256": "fdb418794d981bfc950a2623030a6cb9c3e31367258b35496fcbd0af05400867",
+      "stdoutPreview": "",
+      "stderrPreview": "node:internal/modules/run_main:107\r\n    triggerUncaughtException(\r\n    ^\r\n\r\nAssertionError [ERR_ASSERTION]: папка без orchestrator отвергается\r\n    at file:///C:/Users/Goryachev/Documents/deepseek-harness/dsh-project-graph/checks/0011-portals.mjs:50:10\r\n    at ModuleJob.run (node:internal/modules/esm/module_job:430:25)\r\n    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:654:26)\r\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {\r\n  generatedMessage: false,\r\n  code: 'ERR_ASSERTION',\r\n  actual: false,\r\n  expected: true,\r\n  operator: '==',\r\n  diff: 'simple'\r\n}\r\n\r\nNode.js v25.4.0\r\n"
+    },
+    {
+      "id": "C3",
+      "command": "node checks/0011-portals.mjs c3",
+      "exitCode": 1,
+      "durationMs": 476,
+      "passed": false,
+      "timedOut": false,
+      "reasons": [
+        "exit code 1 != 0",
+        "stdout не соответствует /C3 OK/m"
+      ],
+      "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSha256": "a549d3b4155379b599c4eb0fd5fe62c1bea57a561ed89ffc4d6f0377bb5e3467",
+      "stdoutPreview": "",
+      "stderrPreview": "node:internal/modules/run_main:107\r\n    triggerUncaughtException(\r\n    ^\r\n\r\nAssertionError [ERR_ASSERTION]: ящик берётся из folders и разрешается от общего корня\r\n+ actual - expected\r\n\r\n+ []\r\n- [\r\n-   'C:\\\\Users\\\\GORYAC~1\\\\AppData\\\\Local\\\\Temp\\\\acc-0011-Dz6IAz\\\\coordination'\r\n- ]\r\n\r\n    at file:///C:/Users/Goryachev/Documents/deepseek-harness/dsh-project-graph/checks/0011-portals.mjs:90:10\r\n    at ModuleJob.run (node:internal/modules/esm/module_job:430:25)\r\n    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:654:26)\r\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {\r\n  generatedMessage: false,\r\n  code: 'ERR_ASSERTION',\r\n  actual: [],\r\n  expected: [\r\n    'C:\\\\Users\\\\GORYAC~1\\\\AppData\\\\Local\\\\Temp\\\\acc-0011-Dz6IAz\\\\coordination'\r\n  ],\r\n  operator: 'deepStrictEqual',\r\n  diff: 'simple'\r\n}\r\n\r\nNode.js v25.4.0\r\n"
+    }
+  ],
+  "executed": 3,
+  "failed": 3,
+  "failedIds": [
+    "C1",
+    "C2",
+    "C3"
+  ],
+  "allGreen": false,
+  "redProven": true,
+  "redExpectation": {
+    "configured": true,
+    "ok": true,
+    "errors": [],
+    "mustFail": [
+      "C1",
+      "C2",
+      "C3"
+    ],
+    "mustPass": []
+  },
+  "bypasses": {
+    "allowDirty": true,
+    "allowBaseMismatch": false
+  },
+  "log": "red.log"
+}

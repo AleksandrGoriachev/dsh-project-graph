@@ -1,0 +1,26 @@
+{
+  "node": "worker",
+  "version": 1,
+  "immutable": true,
+  "pipeline": "project_graph_spawn",
+  "requires": {
+    "preflight": [
+      "node docs/subagent-workflow/scripts/task-guard.mjs --staged"
+    ],
+    "evidence": [
+      "report.worker.json"
+    ],
+    "guard": {
+      "enabled": true,
+      "scope": "session",
+      "reason": "коммит вне контракта задачи не проходит"
+    }
+  },
+  "deny": [
+    "git push",
+    "publish-public",
+    "npm publish",
+    "gh release create"
+  ],
+  "secrets": "не печатать; значения только из окружения"
+}
