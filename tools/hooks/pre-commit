@@ -1,0 +1,5 @@
+#!/bin/sh
+# Ворота истории (И-6): индекс обязан быть покрыт активным заданием.
+# Обход осознанный: git commit --no-verify. Детектор: node checks/self-control.mjs.
+cd "$(git rev-parse --show-toplevel)" || exit 1
+exec node docs/subagent-workflow/scripts/task-guard.mjs --staged

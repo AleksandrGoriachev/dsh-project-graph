@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "models": {
+    "work": { "provider": "opencode", "model": "deepseek-v4.1-flash" },
+    "critic": { "provider": "opencode", "model": "glm-5.3-flash", "family": "zhipu" }
+  },
+  "nodes": [
+    { "id": "coordinator", "role": "coordinator", "model": "work", "brief": "держит план проекта и очередь работ" },
+    { "id": "lead-code", "role": "lead", "model": "work", "brief": "координатор программистов" },
+    { "id": "lead-design", "role": "lead", "model": "work", "brief": "координатор дизайнеров" },
+    { "id": "lead-analysis", "role": "lead", "model": "work", "brief": "координатор аналитиков" },
+    { "id": "judge", "role": "acceptor", "model": "critic", "brief": "принимает работу отдельной сессией", "mustDifferFrom": ["lead-code", "lead-design", "lead-analysis"] }
+  ],
+  "edges": [
+    { "from": "coordinator", "to": "lead-code", "kind": "delegate" },
+    { "from": "coordinator", "to": "lead-design", "kind": "delegate" },
+    { "from": "coordinator", "to": "lead-analysis", "kind": "delegate" },
+    { "from": "lead-code", "to": "judge", "kind": "review" },
+    { "from": "lead-design", "to": "judge", "kind": "review" },
+    { "from": "lead-analysis", "to": "judge", "kind": "review" },
+    { "from": "lead-code", "to": "lead-design", "kind": "peer" },
+    { "from": "lead-design", "to": "lead-analysis", "kind": "peer" }
+  ]
+}
