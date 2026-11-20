@@ -1,0 +1,1560 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Палитра-корешок и барьер «воркспейс | вне» — макет 2026-11-05</title>
+    <!--
+      МАКЕТ, а не рабочий экран. Один файл, без сети и внешних файлов: открывается двойным щелчком.
+
+      Что показывает. Слева палитра из трёх карточек (176 x 62, как в утверждённом макете 0009):
+      развёрнутая 250 px и свёрнутая 44 px — «корешок книги» с вертикальной надписью
+      «Набор узлов структуры» и тремя иконками. Справа канва: карточки, связи, пунктирная
+      граница воркспейса с перетаскиваемой риской и зона «вне» с порталами папок обмена.
+      Кнопки сверху: свернуть/развернуть панель, 0/1/3 папки обмена, сброс границы.
+      Барьер тянется мышью, стрелками, Home/End; двойной щелчок — сброс.
+
+      Зачем. Палитра не помнит, что её свернули, и в свёрнутом виде не называет себя; граница
+      воркспейса — картинка, у зоны «вне» нет органа управления. Метрики, состояния,
+      сохранение и доступность расписаны в docs/design/palette-nodes-2026-11-05.md.
+    -->
+    <style>
+      :root {
+        --text: #1b1b1f;
+        --muted: #5b5b66;
+        --tertiary: #6f6f7a;
+        --caption: #8b8b96;
+        --line: #dcdde3;
+        --line-strong: #c6c8d1;
+        --accent: #4176e6;
+        --accent-soft: #eef2ff;
+        --warn: #f59e0b;
+        --panel: #ffffff;
+        --bg: #eef0f5;
+        --layer-1: rgba(127, 127, 127, 0.06);
+        --layer-2: rgba(127, 127, 127, 0.1);
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+      }
+
+      body {
+        padding: 1.1rem;
+        font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+        color: var(--text);
+        background: var(--bg);
+        font-size: 15px;
+      }
+
+      body.is-dragging {
+        cursor: col-resize;
+        user-select: none;
+      }
+
+      .sheet {
+        max-width: 1320px;
+        margin: 0 auto;
+      }
+
+      .kicker {
+        margin: 0 0 0.25rem;
+        font-size: 0.74rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--accent);
+      }
+
+      h1 {
+        margin: 0 0 0.35rem;
+        font-size: 1.45rem;
+        letter-spacing: -0.01em;
+      }
+
+      .lead {
+        margin: 0 0 0.9rem;
+        max-width: 78rem;
+        color: var(--muted);
+        font-size: 0.92rem;
+        line-height: 1.55;
+      }
+
+      .lead b {
+        color: var(--text);
+      }
+
+      /* ================= пульт макета ================= */
+
+      .toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px;
+        margin: 0 0 0.75rem;
+      }
+
+      .btn {
+        font: inherit;
+        font-size: 12px;
+        padding: 6px 11px;
+        border-radius: 8px;
+        border: 1px solid var(--line-strong);
+        background: #fff;
+        color: var(--text);
+        cursor: pointer;
+      }
+
+      .btn:hover {
+        border-color: var(--accent);
+        color: #2c5bbd;
+      }
+
+      .btn:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
+      .seg {
+        display: inline-flex;
+        border: 1px solid var(--line-strong);
+        border-radius: 8px;
+        overflow: hidden;
+        background: #fff;
+      }
+
+      .seg button {
+        font: inherit;
+        font-size: 12px;
+        padding: 6px 10px;
+        border: 0;
+        border-right: 1px solid var(--line);
+        background: transparent;
+        color: var(--muted);
+        cursor: pointer;
+      }
+
+      .seg button:last-child {
+        border-right: 0;
+      }
+
+      .seg button[aria-pressed='true'] {
+        background: var(--accent-soft);
+        color: #2c5bbd;
+        font-weight: 600;
+      }
+
+      .seg button:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: -2px;
+      }
+
+      .readout {
+        margin-left: auto;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 11px;
+        color: var(--muted);
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 6px 10px;
+        white-space: nowrap;
+      }
+
+      /* ================= сцена: палитра + канва ================= */
+
+      .stage {
+        display: flex;
+        align-items: stretch;
+        gap: 10px;
+        min-width: 0;
+      }
+
+      .palette {
+        flex: 0 0 250px;
+        width: 250px;
+        padding: 12px 12px 14px;
+        border-radius: 16px;
+        background: var(--panel);
+        box-shadow: 0 8px 22px rgb(20 20 45 / 6%);
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        min-height: 0;
+      }
+
+      .stage.is-collapsed .palette {
+        flex: 0 0 44px;
+        width: 44px;
+        padding: 8px 6px;
+        gap: 0;
+      }
+
+      .pal-head {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .pal-head h2 {
+        margin: 0;
+        font-size: 0.98rem;
+        line-height: 1.3;
+        min-width: 0;
+      }
+
+      .chip {
+        flex: 0 0 auto;
+        font-size: 9.5px;
+        color: var(--muted);
+        border: 1px solid var(--line-strong);
+        border-radius: 999px;
+        padding: 1px 6px;
+        white-space: nowrap;
+      }
+
+      .chip--flat {
+        border: 0;
+        padding: 0;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 11px;
+        color: var(--tertiary);
+      }
+
+      .pal-toggle {
+        margin-left: auto;
+        flex: 0 0 auto;
+        font: inherit;
+        font-size: 11px;
+        padding: 3px 8px;
+        border-radius: 8px;
+        border: 1px solid var(--line-strong);
+        background: #fff;
+        color: var(--text);
+        cursor: pointer;
+      }
+
+      .pal-toggle:hover {
+        border-color: var(--accent);
+        color: #2c5bbd;
+      }
+
+      .pal-toggle:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
+      .stage.is-collapsed .pal-head,
+      .stage.is-collapsed .pal-list,
+      .stage.is-collapsed .pal-hint {
+        display: none;
+      }
+
+      .pal-list {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .lib-item {
+        position: relative;
+        display: block;
+        width: 100%;
+        padding: 0;
+        border: 0;
+        background: none;
+        text-align: left;
+        cursor: grab;
+        border-radius: 12px;
+      }
+
+      .lib-item:focus-visible {
+        outline: 3px solid var(--accent);
+        outline-offset: 3px;
+      }
+
+      .lib-card {
+        position: relative;
+        display: block;
+        width: 176px;
+        height: 62px;
+        border-radius: 10px;
+        background: #efeff3;
+        border: 1px solid var(--line-strong);
+        overflow: hidden;
+      }
+
+      .lib-item:hover .lib-card,
+      .lib-item:focus-visible .lib-card {
+        border-color: var(--accent);
+        box-shadow: 0 4px 12px rgb(65 118 230 / 18%);
+      }
+
+      .lib-stripe {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 4px;
+        height: 100%;
+        border-radius: 2px;
+      }
+
+      .lib-id {
+        position: absolute;
+        left: 14px;
+        top: 9px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 12.5px;
+        font-weight: 600;
+      }
+
+      .lib-sub {
+        position: absolute;
+        left: 14px;
+        top: 26px;
+        right: 8px;
+        font-size: 10.5px;
+        color: var(--tertiary);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .lib-rule {
+        position: absolute;
+        left: 14px;
+        top: 41px;
+        right: 8px;
+        font-size: 9.5px;
+        font-weight: 600;
+        color: var(--muted);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .lib-plus {
+        position: absolute;
+        right: 7px;
+        top: 7px;
+        width: 16px;
+        height: 16px;
+        border-radius: 999px;
+        border: 1px solid var(--line-strong);
+        background: #fff;
+        color: var(--accent);
+        font-size: 12px;
+        line-height: 14px;
+        text-align: center;
+        font-weight: 700;
+      }
+
+      .lib-caption {
+        display: block;
+        margin-top: 4px;
+        font-size: 11px;
+        font-weight: 700;
+      }
+
+      .lib-note {
+        display: block;
+        margin-top: 1px;
+        font-size: 10.5px;
+        line-height: 1.4;
+        color: var(--muted);
+      }
+
+      .pal-hint {
+        margin: 0;
+        font-size: 0.76rem;
+        line-height: 1.45;
+        color: var(--muted);
+        border-top: 1px solid var(--line);
+        padding-top: 8px;
+      }
+
+      /* ================= корешок ================= */
+
+      .spine {
+        display: none;
+        flex: 1 1 auto;
+        min-height: 0;
+        width: 100%;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        position: relative;
+      }
+
+      .stage.is-collapsed .spine {
+        display: flex;
+      }
+
+      .page-edge {
+        position: absolute;
+        right: -6px;
+        top: 0;
+        bottom: 0;
+        width: 3px;
+        border-radius: 2px;
+        background: linear-gradient(90deg, transparent, var(--layer-2));
+        transition: width 0.12s ease, background 0.12s ease;
+        pointer-events: none;
+      }
+
+      .stage.is-collapsed .palette:hover .page-edge {
+        width: 4px;
+        background: linear-gradient(90deg, transparent, var(--line-strong));
+      }
+
+      .spine-book {
+        flex: 1 1 auto;
+        min-height: 0;
+        width: 100%;
+        display: flex;
+        align-items: stretch;
+        justify-content: center;
+      }
+
+      .spine-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex: 1 1 auto;
+        width: 100%;
+        min-height: 0;
+        padding: 10px 0;
+        border: 0;
+        border-radius: 12px;
+        background: transparent;
+        color: var(--muted);
+        cursor: pointer;
+        font-family: inherit;
+        transition: background 0.12s ease, color 0.12s ease;
+      }
+
+      .spine-text {
+        writing-mode: vertical-rl;
+        text-orientation: mixed;
+        text-transform: uppercase;
+        font-family: inherit;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.12em;
+        line-height: 1.2;
+        text-align: center;
+        max-height: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .spine-btn:hover {
+        color: var(--text);
+        background: var(--layer-1);
+      }
+
+      .spine-btn:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: -3px;
+      }
+
+      .spine-btn:active {
+        background: var(--layer-2);
+      }
+
+      .spine-icons {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        flex: 0 0 auto;
+        width: 100%;
+      }
+
+      .icon-tile {
+        position: relative;
+        width: 32px;
+        height: 32px;
+        padding: 0;
+        border-radius: 8px;
+        border: 1px solid var(--line-strong);
+        background: #efeff3;
+        color: var(--text);
+        font-size: 14px;
+        line-height: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: grab;
+        overflow: hidden;
+      }
+
+      .icon-tile:hover {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgb(65 118 230 / 14%);
+      }
+
+      .icon-tile:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
+      .icon-tile:active {
+        cursor: grabbing;
+      }
+
+      .icon-stripe {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 4px;
+        height: 100%;
+        border-radius: 2px;
+      }
+
+      /* ================= канва ================= */
+
+      .canvas-panel {
+        flex: 1 1 auto;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .canvas-head {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 10px;
+        border: 1px solid var(--line);
+        border-bottom: 0;
+        border-radius: 10px 10px 0 0;
+        background: #fff;
+      }
+
+      .canvas-head strong {
+        font-size: 15px;
+      }
+
+      .canvas {
+        position: relative;
+        height: 480px;
+        border: 1px solid var(--line);
+        border-radius: 0 0 10px 10px;
+        background: var(--layer-1);
+        overflow: auto;
+      }
+
+      .canvas svg {
+        display: block;
+      }
+
+      .sep-hit {
+        cursor: col-resize;
+        touch-action: none;
+      }
+
+      .grip {
+        fill: #fff;
+        stroke: var(--line-strong);
+        stroke-width: 1.2;
+        transition: stroke 0.12s ease, fill 0.12s ease;
+      }
+
+      .sep-group:hover .grip,
+      .sep-group:focus-visible .grip {
+        stroke: var(--accent);
+      }
+
+      .sep-group:focus-visible .sep-line {
+        stroke: var(--accent);
+        stroke-width: 2;
+        stroke-dasharray: none;
+      }
+
+      .sep-group:focus {
+        outline: none;
+      }
+
+      .readout-row {
+        margin: 0.5rem 0 0.2rem;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 11px;
+        color: var(--muted);
+      }
+
+      .hint {
+        margin: 0 0 1.4rem;
+        font-size: 0.8rem;
+        line-height: 1.5;
+        color: var(--muted);
+      }
+
+      /* ================= галерея корешка ================= */
+
+      h2.section {
+        margin: 1.6rem 0 0.5rem;
+        font-size: 1.05rem;
+      }
+
+      .section-lead {
+        margin: 0 0 0.9rem;
+        max-width: 74rem;
+        color: var(--muted);
+        font-size: 0.86rem;
+        line-height: 1.5;
+      }
+
+      .gallery {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 18px;
+        align-items: flex-start;
+      }
+
+      .demo {
+        margin: 0;
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+      }
+
+      .demo-strip {
+        width: 44px;
+        border-radius: 16px;
+        background: #fff;
+        box-shadow: 0 8px 22px rgb(20 20 45 / 6%);
+        padding: 8px 6px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        position: relative;
+      }
+
+      .demo-strip .spine {
+        display: flex;
+      }
+
+      .demo-strip .spine-btn {
+        cursor: default;
+      }
+
+      .demo-strip .spine-btn:hover {
+        background: transparent;
+        color: var(--muted);
+      }
+
+      .demo figcaption {
+        width: 128px;
+        font-size: 0.78rem;
+        line-height: 1.45;
+        color: var(--muted);
+      }
+
+      .demo figcaption b {
+        display: block;
+        color: var(--text);
+        font-size: 0.8rem;
+      }
+
+      /* ================= таблицы ================= */
+
+      table.spec {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 12.5px;
+        margin: 0 0 0.6rem;
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        overflow: hidden;
+      }
+
+      table.spec th,
+      table.spec td {
+        text-align: left;
+        padding: 7px 10px;
+        border-bottom: 1px solid var(--line);
+        vertical-align: top;
+      }
+
+      table.spec th {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--tertiary);
+        background: var(--layer-1);
+        font-weight: 600;
+      }
+
+      table.spec tr:last-child td {
+        border-bottom: 0;
+      }
+
+      code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 11.5px;
+        background: var(--layer-1);
+        border-radius: 4px;
+        padding: 1px 4px;
+      }
+
+      .cols {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 12px;
+      }
+
+      .card-note {
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 10px 12px;
+      }
+
+      .card-note h3 {
+        margin: 0 0 6px;
+        font-size: 0.88rem;
+      }
+
+      .card-note p,
+      .card-note li {
+        margin: 0 0 5px;
+        font-size: 0.8rem;
+        line-height: 1.5;
+        color: var(--muted);
+      }
+
+      .card-note ul {
+        margin: 0;
+        padding-left: 16px;
+      }
+
+      .footnote {
+        margin: 1.6rem 0 0;
+        font-size: 0.76rem;
+        color: var(--tertiary);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="sheet">
+      <p class="kicker">Макет · 2026-11-05 · палитра и барьер</p>
+      <h1>Палитра-корешок и барьер «воркспейс | вне»</h1>
+      <p class="lead">
+        Два органа панели Structure. <b>Свёрнутая палитра</b> — полоса 44 px с вертикальной
+        надписью «Набор узлов структуры», как корешок книги; три карточки остаются иконками
+        32 × 32. <b>Барьер</b> — перетаскиваемая граница: она задаёт просвет до зоны «вне»
+        и решает, сколько колонок порталов помещается. Панель помнит и свернутость, и
+        просвет между перезагрузками. Метрики, состояния и чек-лист приёмки —
+        в <code>docs/design/palette-nodes-2026-11-05.md</code>.
+      </p>
+
+      <div class="toolbar">
+        <button type="button" class="btn" id="toggleBtn" aria-expanded="true" aria-controls="pg-library-items">
+          Свернуть панель
+        </button>
+        <div class="seg" role="group" aria-label="Сколько внешних папок обмена">
+          <button type="button" data-folders="0" aria-pressed="false">0 папок</button>
+          <button type="button" data-folders="1" aria-pressed="true">1 папка</button>
+          <button type="button" data-folders="3" aria-pressed="false">3 папки</button>
+        </div>
+        <button type="button" class="btn" id="resetBarrier">Сброс границы</button>
+        <span class="readout" id="readout"></span>
+      </div>
+
+      <div class="stage" id="stage">
+        <aside class="palette" id="palette" aria-label="Набор узлов структуры">
+          <div class="pal-head">
+            <h2>Библиотека узлов</h2>
+            <span class="chip">3 элемента</span>
+            <button type="button" class="pal-toggle" id="palToggle" aria-expanded="true" aria-controls="pg-library-items">
+              Свернуть
+            </button>
+          </div>
+          <div class="pal-list" id="pg-library-items"></div>
+          <div class="spine" id="spine"></div>
+          <p class="pal-hint">
+            Перетащите карточку на схему — узел встанет в точке сброса и сразу получит связь
+            по умолчанию. С клавиатуры: Tab до карточки, Enter — взять, стрелки — двигать,
+            Enter — поставить, Esc — отмена.
+          </p>
+        </aside>
+
+        <main class="canvas-panel">
+          <div class="canvas-head">
+            <strong>Structure</strong>
+            <span class="chip">4 узла</span>
+            <span class="chip">4 связи</span>
+            <span class="chip chip--flat" id="zoneChip">вне: 284 px · 1 колонка</span>
+            <span class="chip" style="margin-left: auto">Сбросить схему</span>
+          </div>
+          <div class="canvas" id="canvas">
+            <div id="board"></div>
+          </div>
+        </main>
+      </div>
+
+      <p class="readout-row" id="readout2"></p>
+      <p class="hint">
+        Границу воркспейса можно тянуть мышью; стрелки двигают её на 8 px, Shift — на 1 px,
+        Home — сброс на 20 px. Двойной щелчок по риске — тоже сброс. Портал входит в левый
+        край, если он в первой колонке, и в верхний — если во второй.
+      </p>
+
+      <h2 class="section">Корешок на трёх высотах</h2>
+      <p class="section-lead">
+        Надпись одна и та же; меняется только свободная высота полосы. Обрезка — многоточием,
+        без прокрутки и без уменьшения кегля: 11 px уже минимум. Полная строка всегда есть в
+        <code>title</code> и <code>aria-label</code>.
+      </p>
+      <div class="gallery" id="gallery" aria-hidden="true"></div>
+
+      <h2 class="section">Три состояния зоны «вне»</h2>
+      <table class="spec">
+        <thead>
+          <tr><th>Папок обмена</th><th>Что в зоне</th><th>Ширина зоны</th><th>Линии</th><th>Что делает разделитель</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>0</td>
+            <td>прежний портал «Выход вне» с пустым состоянием: причина и рецепт</td>
+            <td>284 px, 1 колонка</td>
+            <td>линия от узла <code>self</code> к порталу, наконечник по последнему факту</td>
+            <td>тянется, но пусто; сброс — 20 px</td>
+          </tr>
+          <tr>
+            <td>1</td>
+            <td>портал папки: участники, счётчики ↗ ↙, обе крайние даты</td>
+            <td>284 px, 1 колонка</td>
+            <td>вход в левый край, на высоте середины портала</td>
+            <td>то же; портал идёт за линией в том же кадре</td>
+          </tr>
+          <tr>
+            <td>2 и больше, места хватает</td>
+            <td>две колонки порталов через 16 px</td>
+            <td>536 px, 2 колонки</td>
+            <td>колонка 1 — в левый край; колонка 2 — в верхний, по полосе <code>y = −8</code></td>
+            <td>тянем вправо — просвет растёт, колонка складывается на отпускании, схеме возвращается 252 px</td>
+          </tr>
+          <tr>
+            <td>2 и больше, места мало</td>
+            <td>одна колонка, лента вниз через 26 px</td>
+            <td>284 px, 1 колонка</td>
+            <td>как при одной папке</td>
+            <td>канва выше и прокручивается, но не шире</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2 class="section">Таблица состояний</h2>
+      <table class="spec">
+        <thead>
+          <tr><th>Ситуация</th><th>Палитра</th><th>Барьер</th><th>Что видит человек</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Первый вход</td><td>250 px, три карточки</td><td><code>outside = 20</code>, 1 колонка</td><td>привычный вид, ничего не сдвинуто</td></tr>
+          <tr><td>Свернул палитру</td><td>44 px, корешок + 3 иконки</td><td>без изменений</td><td>схема получила 206 px</td></tr>
+          <tr><td>Перезагрузка</td><td>как было</td><td>как было</td><td>ничего не прыгает</td></tr>
+          <tr><td>Хранилище недоступно</td><td>дефолт: развёрнуто</td><td>20 px</td><td>панель работает, ошибок не показывает</td></tr>
+          <tr><td>Тянут вправо</td><td>без изменений</td><td>просвет растёт, 2 → 1 колонка на отпускании</td><td>схеме возвращается 252 px</td></tr>
+          <tr><td>Двойной клик / Home</td><td>без изменений</td><td>20 px</td><td>«как при первом входе»</td></tr>
+          <tr><td>Окно сузили</td><td>как было</td><td>2 → 1 колонка при видимых &lt; 512</td><td>без горизонтальной прокрутки</td></tr>
+          <tr><td>Только клавиатура</td><td>Tab → надпись → Enter</td><td>Tab → разделитель → стрелки</td><td>фокус виден, значение озвучено</td></tr>
+        </tbody>
+      </table>
+
+      <h2 class="section">Метрики и решения</h2>
+      <div class="cols">
+        <div class="card-note">
+          <h3>Корешок</h3>
+          <ul>
+            <li>полоса <b>44 px</b>, отступы 8 / 6, скругление 16, фон и тень как у панели;</li>
+            <li>надпись: <b>11 px / 600 / uppercase / 0.12em</b>, <code>T.secondary</code>,
+              <code>writing-mode: vertical-rl</code>, чтение сверху вниз;</li>
+            <li>три иконки <b>32 × 32</b>, полоса роли 4 px: <code>#f59e0b</code>,
+              <code>#3b82f6</code>, <code>#10b981</code>;</li>
+            <li>обрез страниц 3 px справа — «за полосой целая книга», без стрелки и галочки.</li>
+          </ul>
+        </div>
+        <div class="card-note">
+          <h3>Барьер</h3>
+          <ul>
+            <li><code>outside = 20 … 360</code>, по умолчанию 20 — сегодняшний вид, шаг 8 / Shift 1;</li>
+            <li><code>borderX = cardsRight + outside</code>, портал в <code>+48</code>,
+              ширина 236 не меняется;</li>
+            <li>вторая колонка — при 2+ папках и видимых <b>≥ 536 px</b>, гистерезис 24 px;</li>
+            <li>сохраняется на воркспейс: у разных структур разная ширина.</li>
+          </ul>
+        </div>
+        <div class="card-note">
+          <h3>Доступность</h3>
+          <ul>
+            <li>корешок — <code>&lt;button&gt;</code> с <code>aria-expanded</code> и
+              <code>aria-controls</code>; Enter и Space разворачивают;</li>
+            <li>разделитель — <code>role="separator"</code>, <code>aria-orientation="vertical"</code>,
+              <code>aria-valuenow/min/max</code>, русский <code>aria-valuetext</code>;</li>
+            <li>стрелки 8 px, Shift 1 px, Home / End — пределы, Esc в переносе — отмена;</li>
+            <li>сообщения — в существующую живую область, без спама.</li>
+          </ul>
+        </div>
+      </div>
+
+      <p class="footnote">
+        Макет один файл, без сети и внешних файлов. Карточки, цвета и подписи палитры — из
+        утверждённого макета 0009 и не переделываются. Числа на этой странице — числа макета
+        (канва 480 px высотой); в панели они те же, ширина канвы своя.
+      </p>
+    </div>
+
+    <script>
+      (function () {
+        'use strict';
+
+        var NODE_W = 176;
+        var NODE_H = 62;
+        var PORTAL_W = 236;
+        var PORTAL_GAP = 48;
+        var COLUMN_GUTTER = 16;
+        var STACK_GAP = 26;
+        var PAD = 16;
+        var OUTSIDE_MIN = 20;
+        var OUTSIDE_MAX = 360;
+        var OUTSIDE_STEP = 8;
+        var TWO_COLUMNS_NEED = 536;
+        var TWO_COLUMNS_HYSTERESIS = 24;
+        var SNAP = 8;
+
+        var state = {
+          collapsed: false,
+          folders: 1,
+          outside: OUTSIDE_MIN,
+          twoColumns: false,
+          drag: null
+        };
+
+        var nodes = [
+          { id: 'coordinator', role: 'координатор', brief: 'ведёт план и раздаёт работу', x: 16, y: 24, color: '#3b82f6' },
+          { id: 'worker', role: 'исполнитель', brief: 'делает основную работу', x: 216, y: 24, color: '#3b82f6' },
+          { id: 'judge', role: 'приёмщик', brief: 'проверяет отдельной сессией', x: 16, y: 140, color: '#f59e0b' },
+          { id: 'critic', role: 'критик', brief: 'оценивает качество работы', x: 216, y: 140, color: '#f59e0b' }
+        ];
+
+        var edges = [
+          { from: 'coordinator', to: 'worker', kind: 'delegate' },
+          { from: 'worker', to: 'critic', kind: 'review' },
+          { from: 'coordinator', to: 'judge', kind: 'report' },
+          { from: 'judge', to: 'critic', kind: 'delegate' }
+        ];
+
+        var library = [
+          {
+            type: 'critic', label: 'Критик', icon: '⚖', stripe: '#f59e0b',
+            sub: 'критик · work', rule: 'возврат report координатору · ежедневно 09:00',
+            brief: 'проверяет работу отдельной сессией'
+          },
+          {
+            type: 'worker', label: 'Воркер', icon: '⚙', stripe: '#3b82f6',
+            sub: 'исполнитель · work', rule: 'координатор поручает · delegate',
+            brief: 'делает основную работу'
+          },
+          {
+            type: 'folder', label: 'Папка', icon: '📁', stripe: '#10b981',
+            sub: 'папка · не агент', rule: 'папка, не агент',
+            brief: 'общая папка: в ней лежат сообщения, если включён обмен'
+          }
+        ];
+
+        var folders = [
+          {
+            id: 'shared', sub: 'участники: structure, workflow',
+            rows: [
+              { name: 'structure', kind: 'двусторонняя', out: 12, inc: 9, last: '28.10, 23:40' },
+              { name: 'workflow', kind: 'исходящая', out: 4, inc: 0, last: '27.10, 12:05' }
+            ]
+          },
+          {
+            id: 'coordination', sub: 'участники: design',
+            rows: [
+              { name: 'design', kind: 'входящая', out: 0, inc: 3, last: '01.11, 09:12' }
+            ]
+          },
+          {
+            id: 'design', sub: 'участники: kb-core',
+            rows: [
+              { name: 'kb-core', kind: 'двусторонняя', out: 2, inc: 2, last: '02.11, 18:44' }
+            ]
+          }
+        ];
+
+        var board = document.getElementById('board');
+        var canvas = document.getElementById('canvas');
+        var stage = document.getElementById('stage');
+        var readout = document.getElementById('readout');
+        var readout2 = document.getElementById('readout2');
+        var zoneChip = document.getElementById('zoneChip');
+        var toggleBtn = document.getElementById('toggleBtn');
+        var palToggle = document.getElementById('palToggle');
+        var spine = document.getElementById('spine');
+        var gallery = document.getElementById('gallery');
+        var list = document.getElementById('pg-library-items');
+
+        function esc(value) {
+          return String(value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+        }
+
+        function clampOutside(value) {
+          var number = Math.round(Number(value));
+          if (!isFinite(number)) return OUTSIDE_MIN;
+          return Math.max(OUTSIDE_MIN, Math.min(OUTSIDE_MAX, number));
+        }
+
+        function snapOutside(value) {
+          /* Сетка отсчитывается от минимума, иначе сам минимум 20 недостижим: 20 → 24. */
+          var clamped = clampOutside(value);
+          var snapped = OUTSIDE_MIN + Math.round((clamped - OUTSIDE_MIN) / SNAP) * SNAP;
+          return clampOutside(snapped);
+        }
+
+        /* ---------- палитра ---------- */
+
+        function paletteMarkup() {
+          var cards = library.map(function (item) {
+            return '<button type="button" class="lib-item" data-library="' + item.type + '"'
+              + ' title="' + esc(item.label + ' — ' + item.rule) + '"'
+              + ' aria-label="' + esc(item.label + ': ' + item.rule) + '">'
+              + '<span class="lib-card">'
+              + '<span class="lib-stripe" style="background:' + item.stripe + '"></span>'
+              + '<span class="lib-plus" aria-hidden="true">+</span>'
+              + '<span class="lib-id">' + esc(item.type) + '</span>'
+              + '<span class="lib-sub">' + esc(item.sub) + '</span>'
+              + '<span class="lib-rule">' + esc(item.rule) + '</span>'
+              + '</span>'
+              + '<span class="lib-caption">' + esc(item.label) + '</span>'
+              + '<span class="lib-note">' + esc(item.brief) + '</span>'
+              + '</button>';
+          }).join('');
+          list.innerHTML = cards;
+        }
+
+        function spineIconsMarkup(interactive) {
+          var tag = interactive ? 'button' : 'span';
+          var type = interactive ? ' type="button"' : '';
+          return library.map(function (item) {
+            return '<' + tag + type + ' class="icon-tile" data-library="' + item.type + '"'
+              + ' title="' + esc(item.label + ' — ' + item.rule) + '"'
+              + ' aria-label="' + esc(item.label + ': ' + item.rule) + '">'
+              + '<span class="icon-stripe" style="background:' + item.stripe + '"></span>'
+              + '<span aria-hidden="true">' + item.icon + '</span>'
+              + '</' + tag + '>';
+          }).join('');
+        }
+
+        function spineMarkup(interactive) {
+          var label = 'Набор узлов структуры';
+          var head = interactive
+            ? '<button type="button" class="spine-btn" id="spineToggle" aria-expanded="false"'
+              + ' aria-controls="pg-library-items"'
+              + ' aria-label="Развернуть набор узлов структуры"'
+              + ' title="Развернуть набор узлов структуры — панель 250 px">'
+              + '<span class="spine-text">' + label + '</span></button>'
+            : '<span class="spine-btn is-demo"><span class="spine-text">' + label + '</span></span>';
+          return '<span class="page-edge" aria-hidden="true"></span>'
+            + '<span class="spine-book">' + head + '</span>'
+            + '<span class="spine-icons">' + spineIconsMarkup(interactive) + '</span>';
+        }
+
+        function renderPalette() {
+          var collapsed = state.collapsed;
+          stage.classList.toggle('is-collapsed', collapsed);
+          toggleBtn.textContent = collapsed ? 'Развернуть панель' : 'Свернуть панель';
+          toggleBtn.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+          palToggle.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+          spine.innerHTML = collapsed ? spineMarkup(true) : '';
+        }
+
+        /* ---------- галерея ---------- */
+
+        function renderGallery() {
+          var heights = [
+            { h: 420, title: 'H = 420 px', note: 'надпись целиком: 184 px' },
+            { h: 300, title: 'H = 300 px', note: 'обрезка: «Набор узлов стру…»' },
+            { h: 220, title: 'H = 220 px', note: 'обрезка: «НАБОР У…», полное имя в title' }
+          ];
+          gallery.innerHTML = heights.map(function (item) {
+            return '<figure class="demo">'
+              + '<div class="demo-strip" style="height:' + item.h + 'px">'
+              + '<span class="page-edge" aria-hidden="true"></span>'
+              + '<span class="spine" style="display:flex">'
+              + '<span class="spine-book"><span class="spine-btn is-demo"><span class="spine-text">Набор узлов структуры</span></span></span>'
+              + '<span class="spine-icons">' + spineIconsMarkup(false) + '</span>'
+              + '</span>'
+              + '</div>'
+              + '<figcaption><b>' + item.title + '</b>' + item.note + '</figcaption>'
+              + '</figure>';
+          }).join('');
+        }
+
+        /* ---------- канва ---------- */
+
+        function boxCenter(box) {
+          return { x: box.x + NODE_W / 2, y: box.y + NODE_H / 2 };
+        }
+
+        function sidePoint(box, toward) {
+          var cx = box.x + NODE_W / 2;
+          var cy = box.y + NODE_H / 2;
+          var dx = toward.x - cx;
+          var dy = toward.y - cy;
+          if (dx === 0 && dy === 0) return { x: cx, y: cy };
+          var scale = Math.min(
+            dx === 0 ? Infinity : (NODE_W / 2) / Math.abs(dx),
+            dy === 0 ? Infinity : (NODE_H / 2) / Math.abs(dy)
+          );
+          return { x: cx + dx * scale, y: cy + dy * scale };
+        }
+
+        function edgeMarkup(edge) {
+          var a = nodes.filter(function (n) { return n.id === edge.from; })[0];
+          var b = nodes.filter(function (n) { return n.id === edge.to; })[0];
+          if (!a || !b) return '';
+          var ca = boxCenter(a);
+          var cb = boxCenter(b);
+          var p1 = sidePoint(a, cb);
+          var p2 = sidePoint(b, ca);
+          var stroke = edge.kind === 'delegate' ? '#4176e6' : (edge.kind === 'review' ? '#f59e0b' : '#8b8b96');
+          var dash = edge.kind === 'delegate' ? '' : ' stroke-dasharray="6 5"';
+          var marker = 'url(#arrow-' + (edge.kind === 'delegate' ? 'delegate' : (edge.kind === 'review' ? 'review' : 'report')) + ')';
+          return '<line x1="' + p1.x + '" y1="' + p1.y + '" x2="' + p2.x + '" y2="' + p2.y + '"'
+            + ' stroke="' + stroke + '" stroke-width="1.5"' + dash + ' marker-end="' + marker + '"/>';
+        }
+
+        function cardMarkup(node) {
+          var parts = [];
+          parts.push('<g class="pg-node" transform="translate(' + node.x + ' ' + node.y + ')" data-node="' + node.id + '" tabindex="0" role="button" aria-label="'
+            + esc(node.id + ': ' + node.role + ', ' + node.brief) + '">');
+          parts.push('<title>' + esc(node.id + ' · ' + node.role + ' · ' + node.brief) + '</title>');
+          parts.push('<rect x="0" y="0" width="176" height="62" rx="10" fill="#efeff3" stroke="#c6c8d1" stroke-width="1"/>');
+          parts.push('<rect x="0" y="0" width="4" height="62" rx="2" fill="' + node.color + '"/>');
+          parts.push('<text x="14" y="22" font-size="12.5" font-weight="600" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" fill="#1b1b1f">' + esc(node.id) + '</text>');
+          parts.push('<text x="14" y="39" font-size="10.5" fill="#6f6f7a">' + esc(node.role) + '</text>');
+          parts.push('<text x="14" y="54" font-size="9.5" font-weight="600" fill="#5b5b66">' + esc(node.brief) + '</text>');
+          parts.push('</g>');
+          return parts.join('');
+        }
+
+        function portalHeight(portal) {
+          if (portal.empty) return 108;
+          return 62 + portal.rows.length * 26 + 22;
+        }
+
+        function portalMarkup(portal, x, y, h) {
+          var parts = [];
+          parts.push('<g class="pg-portal" data-portal="' + esc(portal.id) + '">');
+          parts.push('<title>' + esc(portal.id + ' · ' + (portal.sub || '')) + '</title>');
+          parts.push('<rect x="' + x + '" y="' + y + '" width="236" height="' + h + '" rx="12" fill="rgba(127,127,127,0.10)" stroke="#c6c8d1" stroke-width="1.2" stroke-dasharray="5 4"/>');
+          parts.push('<rect x="' + (x + 5) + '" y="' + (y + 5) + '" width="226" height="' + (h - 10) + '" rx="9" fill="none" stroke="#dcdde3" stroke-width="1" stroke-dasharray="2 3"/>');
+          parts.push('<text x="' + (x + 12) + '" y="' + (y + 22) + '" font-size="11.5" font-weight="700" fill="#1b1b1f">' + esc(portal.id) + '</text>');
+          parts.push('<text x="' + (x + 12) + '" y="' + (y + 36) + '" font-size="9.5" fill="#8b8b96">' + esc(portal.sub || '') + '</text>');
+          if (portal.empty) {
+            parts.push('<text x="' + (x + 12) + '" y="' + (y + 58) + '" font-size="10" fill="#5b5b66">обмена нет: папок обмена не найдено</text>');
+            parts.push('<text x="' + (x + 12) + '" y="' + (y + 74) + '" font-size="9.5" fill="#5b5b66">задайте exchange в cordis.patch.yml</text>');
+          } else {
+            portal.rows.forEach(function (row, index) {
+              var top = y + 50 + index * 26;
+              parts.push('<text x="' + (x + 12) + '" y="' + top + '" font-size="10.5" font-weight="600" fill="#1b1b1f">' + esc(row.name) + '</text>');
+              parts.push('<text x="' + (x + 92) + '" y="' + top + '" font-size="9.5" fill="#6f6f7a">' + esc(row.kind) + '</text>');
+              parts.push('<text x="' + (x + 224) + '" y="' + top + '" font-size="9.5" text-anchor="end" fill="#5b5b66">↗ ' + row.out + '  ↙ ' + row.inc + '</text>');
+              parts.push('<text x="' + (x + 224) + '" y="' + (top + 12) + '" font-size="9" text-anchor="end" fill="#8b8b96">последнее: ' + esc(row.last) + '</text>');
+            });
+          }
+          parts.push('<text x="' + (x + 12) + '" y="' + (y + h - 8) + '" font-size="9" fill="#8b8b96">клик или Enter — факты под схемой</text>');
+          parts.push('</g>');
+          return parts.join('');
+        }
+
+        function connectorMarkup(from, portal, entry, secondColumn) {
+          var stroke = '#5b5b66';
+          var marker = 'marker-end="url(#arrow-report)"';
+          var x0 = from.x + NODE_W;
+          var y0 = from.y + NODE_H / 2;
+          var d;
+          if (secondColumn) {
+            var cx = portal.x + 26;
+            d = 'M' + x0 + ' ' + y0
+              + ' L' + (portal.borderX - 8) + ' ' + y0
+              + ' L' + (portal.borderX - 8) + ' -8'
+              + ' L' + cx + ' -8'
+              + ' L' + cx + ' ' + (portal.y + 1);
+          } else {
+            d = 'M' + x0 + ' ' + y0
+              + ' L' + (portal.borderX - 8) + ' ' + y0
+              + ' L' + (portal.borderX - 8) + ' ' + entry
+              + ' L' + portal.x + ' ' + entry;
+          }
+          return '<path d="' + d + '" fill="none" stroke="' + stroke + '" stroke-width="1.5"'
+            + ' stroke-dasharray="2 4" ' + marker + '/>';
+        }
+
+        function buildLayout() {
+          var cardsRight = 0;
+          var cardsBottom = 0;
+          nodes.forEach(function (node) {
+            cardsRight = Math.max(cardsRight, node.x + NODE_W);
+            cardsBottom = Math.max(cardsBottom, node.y + NODE_H);
+          });
+          var viewport = Math.max(320, canvas.clientWidth - 2);
+          var borderX = cardsRight + state.outside;
+          var visible = viewport - borderX - PAD;
+          var portals = state.folders === 0
+            ? [{ id: 'Выход вне', sub: 'папок обмена нет', rows: [], empty: true }]
+            : folders.slice(0, state.folders);
+
+          var need = TWO_COLUMNS_NEED + (state.twoColumns ? -TWO_COLUMNS_HYSTERESIS : 0);
+          var twoColumns = portals.length >= 2 && visible >= need;
+          /* Пока тянут, число колонок заморожено: портал не должен прыгать под курсором. */
+          if (state.drag) {
+            twoColumns = state.drag.dragColumns;
+          } else {
+            state.twoColumns = twoColumns;
+          }
+
+          var cols = twoColumns ? 2 : 1;
+          var portalX = borderX + PORTAL_GAP;
+          var heights = portals.map(portalHeight);
+          var per = Math.ceil(portals.length / cols);
+          var placed = [];
+          var column = 0;
+          for (column = 0; column < cols; column += 1) {
+            var top = 0;
+            var start = column * per;
+            var stop = Math.min(portals.length, (column + 1) * per);
+            for (var index = start; index < stop; index += 1) {
+              placed.push({
+                portal: portals[index],
+                x: portalX + column * (PORTAL_W + COLUMN_GUTTER),
+                y: top,
+                h: heights[index],
+                column: column
+              });
+              top += heights[index] + STACK_GAP;
+            }
+          }
+
+          var contentW = Math.max(cardsRight + PAD, portalX + cols * PORTAL_W + (cols - 1) * COLUMN_GUTTER + PAD);
+          var contentH = cardsBottom;
+          placed.forEach(function (item) {
+            contentH = Math.max(contentH, item.y + item.h);
+          });
+          contentH = Math.max(contentH, 150);
+
+          return {
+            cardsRight: cardsRight,
+            cardsBottom: cardsBottom,
+            borderX: borderX,
+            portalX: portalX,
+            cols: cols,
+            placed: placed,
+            visible: visible,
+            contentW: contentW,
+            contentH: contentH
+          };
+        }
+
+        function render() {
+          var layout = buildLayout();
+          var viewW = layout.contentW + PAD * 2;
+          var viewH = layout.contentH + PAD * 2;
+          var self = nodes[0];
+          var parts = [];
+
+          parts.push('<svg id="svg" width="' + viewW + '" height="' + viewH + '"'
+            + ' viewBox="' + (-PAD) + ' ' + (-PAD) + ' ' + viewW + ' ' + viewH + '"'
+            + ' role="group" aria-label="Схема структуры: карточки, связи, граница воркспейса и порталы обмена">');
+
+          parts.push('<defs>'
+            + '<marker id="arrow-delegate" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="#4176e6"/></marker>'
+            + '<marker id="arrow-review" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="#f59e0b"/></marker>'
+            + '<marker id="arrow-report" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="#8b8b96"/></marker>'
+            + '</defs>');
+
+          parts.push('<g id="pg-outside-pane">');
+          layout.placed.forEach(function (item) {
+            var entry = item.column === 0 ? item.y + Math.max(20, Math.min(item.h / 2, item.h - 20)) : 0;
+            var portalBox = { x: item.x, y: item.y, h: item.h, borderX: layout.borderX };
+            parts.push(connectorMarkup(self, portalBox, entry, item.column > 0));
+          });
+          layout.placed.forEach(function (item) {
+            parts.push(portalMarkup(item.portal, item.x, item.y, item.h));
+          });
+          parts.push('</g>');
+
+          parts.push('<line class="sep-line" x1="' + layout.borderX + '" y1="-8" x2="' + layout.borderX + '" y2="' + (layout.contentH + 8) + '" stroke="#c6c8d1" stroke-width="1" stroke-dasharray="4 4"/>');
+          parts.push('<text x="' + (layout.borderX - 7) + '" y="-3" font-size="9" fill="#8b8b96" text-anchor="end">воркспейс</text>');
+          parts.push('<text x="' + (layout.borderX + 7) + '" y="-3" font-size="9" fill="#8b8b96">вне</text>');
+
+          parts.push('<g id="pg-workspace-pane">');
+          edges.forEach(function (edge) {
+            parts.push(edgeMarkup(edge));
+          });
+          nodes.forEach(function (node) {
+            parts.push(cardMarkup(node));
+          });
+          parts.push('</g>');
+
+          parts.push('<g class="sep-group" role="separator" tabindex="0" aria-orientation="vertical"'
+            + ' aria-label="Граница воркспейса и зоны «вне»"'
+            + ' aria-valuemin="' + OUTSIDE_MIN + '" aria-valuemax="' + OUTSIDE_MAX + '"'
+            + ' aria-valuenow="' + state.outside + '"'
+            + ' aria-valuetext="' + outsideText(layout) + '"'
+            + ' aria-controls="pg-workspace-pane pg-outside-pane">'
+            + '<title>' + 'Граница воркспейса: ' + state.outside + ' px до зоны «вне». Стрелки — 8 px, Shift — 1 px, двойной щелчок — сброс.' + '</title>'
+            + '<rect class="sep-hit" data-sep-hit="1" x="' + (layout.borderX - 6) + '" y="-14" width="12"'
+            + ' height="' + (layout.contentH + 28) + '" fill="transparent"/>'
+            + '<rect class="grip" x="' + (layout.borderX - 3) + '" y="6" width="6" height="36" rx="3"/>'
+            + '<circle cx="' + layout.borderX + '" cy="18" r="1" fill="#8b8b96"/>'
+            + '<circle cx="' + layout.borderX + '" cy="24" r="1" fill="#8b8b96"/>'
+            + '<circle cx="' + layout.borderX + '" cy="30" r="1" fill="#8b8b96"/>'
+            + '</g>');
+
+          parts.push('</svg>');
+
+          var scroll = canvas.scrollLeft;
+          board.innerHTML = parts.join('');
+          canvas.scrollLeft = scroll;
+
+          var zoneWidth = 48 + layout.cols * PORTAL_W + (layout.cols - 1) * COLUMN_GUTTER;
+          var foldersWord = state.folders === 0 ? 'папок обмена нет' : (state.folders + (state.folders === 1 ? ' папка' : ' папки'));
+          readout.textContent = 'outside = ' + state.outside + ' px · зона «вне» = ' + zoneWidth
+            + ' px · колонок ' + layout.cols + ' · канва ' + viewW + ' px';
+          readout2.textContent = foldersWord + ' · просвет ' + state.outside + ' px · видимых под зону «вне» '
+            + Math.max(0, Math.round(layout.visible)) + ' px · порогов 536 px';
+          zoneChip.textContent = 'вне: ' + zoneWidth + ' px · ' + layout.cols
+            + (layout.cols === 1 ? ' колонка' : ' колонки');
+        }
+
+        function outsideText(layout) {
+          var zoneWidth = 48 + layout.cols * PORTAL_W + (layout.cols - 1) * COLUMN_GUTTER;
+          return state.outside + ' пикселей между схемой и зоной «вне»; '
+            + 'зона ' + zoneWidth + ' пикселей, ' + layout.cols
+            + (layout.cols === 1 ? ' колонка' : ' колонки') + ' порталов';
+        }
+
+        /* ---------- перетаскивание ---------- */
+
+        function onPointerDown(event) {
+          var target = event.target;
+          if (!target || !target.closest) return;
+          var hit = target.closest('[data-sep-hit]');
+          if (!hit) return;
+          if (event.button !== undefined && event.button !== 0) return;
+          event.preventDefault();
+          var multi = event.pointerType === 'touch' ? 24 : 12;
+          hit.setAttribute('width', String(multi));
+          hit.setAttribute('x', String(Number(hit.getAttribute('x')) - (multi - 12) / 2));
+          state.drag = {
+            startClientX: event.clientX,
+            startOutside: state.outside,
+            dragColumns: state.twoColumns,
+            pointerId: event.pointerId,
+            moved: false,
+            frame: 0,
+            next: state.outside
+          };
+          document.body.classList.add('is-dragging');
+          try {
+            hit.setPointerCapture(event.pointerId);
+          } catch (error) {
+            /* старые движки: перенос всё равно пойдёт по window */
+          }
+          window.addEventListener('pointermove', onPointerMove);
+          window.addEventListener('pointerup', onPointerUp);
+          window.addEventListener('pointercancel', onPointerUp);
+        }
+
+        function onPointerMove(event) {
+          var drag = state.drag;
+          if (!drag) return;
+          var dx = event.clientX - drag.startClientX;
+          var raw = event.shiftKey ? drag.startOutside + dx : snapOutside(drag.startOutside + dx);
+          drag.next = clampOutside(raw);
+          if (!drag.moved && Math.abs(dx) > 3) drag.moved = true;
+          if (drag.frame) return;
+          drag.frame = window.requestAnimationFrame(function () {
+            var current = state.drag;
+            if (!current) return;
+            current.frame = 0;
+            if (current.next !== state.outside) {
+              state.outside = current.next;
+              render();
+            }
+          });
+        }
+
+        function onPointerUp() {
+          var drag = state.drag;
+          window.removeEventListener('pointermove', onPointerMove);
+          window.removeEventListener('pointerup', onPointerUp);
+          window.removeEventListener('pointercancel', onPointerUp);
+          document.body.classList.remove('is-dragging');
+          if (!drag) return;
+          state.drag = null;
+          if (drag.frame) window.cancelAnimationFrame(drag.frame);
+          render();
+          announce('граница воркспейса: ' + state.outside + ' px до зоны «вне»');
+        }
+
+        /* ---------- клавиатура ---------- */
+
+        function onKeyDown(event) {
+          var group = event.target && event.target.closest ? event.target.closest('.sep-group') : null;
+          if (!group) return;
+          var delta = null;
+          if (event.key === 'ArrowLeft' || event.key === 'ArrowDown') delta = -1;
+          if (event.key === 'ArrowRight' || event.key === 'ArrowUp') delta = 1;
+          if (event.key === 'Home') {
+            event.preventDefault();
+            state.outside = OUTSIDE_MIN;
+            render();
+            announce('граница воркспейса: ' + state.outside + ' px, как при первом входе');
+            return;
+          }
+          if (event.key === 'End') {
+            event.preventDefault();
+            state.outside = OUTSIDE_MAX;
+            render();
+            announce('граница воркспейса: ' + state.outside + ' px, предел');
+            return;
+          }
+          if (event.key === 'Escape' && state.drag) {
+            event.preventDefault();
+            state.outside = state.drag.startOutside;
+            state.drag = null;
+            document.body.classList.remove('is-dragging');
+            render();
+            return;
+          }
+          if (delta === null) return;
+          event.preventDefault();
+          var step = event.shiftKey ? 1 : OUTSIDE_STEP;
+          var next = clampOutside(state.outside + delta * step);
+          if (next === state.outside) return;
+          state.outside = next;
+          render();
+          announce('граница воркспейса: ' + state.outside + ' px');
+        }
+
+        function onDoubleClick(event) {
+          var target = event.target;
+          if (!target || !target.closest) return;
+          if (!target.closest('.sep-group')) return;
+          state.outside = OUTSIDE_MIN;
+          render();
+          announce('граница воркспейса: ' + state.outside + ' px, как при первом входе');
+        }
+
+        function announce(text) {
+          var live = document.getElementById('pg-live');
+          if (!live) {
+            live = document.createElement('p');
+            live.id = 'pg-live';
+            live.className = 'hint';
+            live.setAttribute('aria-live', 'polite');
+            live.style.margin = '0 0 0.6rem';
+            readout.parentNode.parentNode.insertBefore(live, readout.parentNode.nextSibling);
+          }
+          live.textContent = text;
+        }
+
+        /* ---------- переключатели ---------- */
+
+        function setCollapsed(collapsed) {
+          state.collapsed = collapsed;
+          renderPalette();
+          if (!collapsed) {
+            var first = list.querySelector('.lib-item');
+            if (first) first.focus();
+          } else {
+            var spineButton = document.getElementById('spineToggle');
+            if (spineButton) spineButton.focus();
+          }
+          window.requestAnimationFrame(render);
+        }
+
+        toggleBtn.addEventListener('click', function () {
+          setCollapsed(!state.collapsed);
+        });
+
+        palToggle.addEventListener('click', function () {
+          setCollapsed(true);
+        });
+
+        spine.addEventListener('click', function (event) {
+          var target = event.target;
+          if (target && target.closest && target.closest('#spineToggle')) setCollapsed(false);
+        });
+
+        Array.prototype.forEach.call(document.querySelectorAll('.seg button'), function (button) {
+          button.addEventListener('click', function () {
+            state.folders = Number(button.getAttribute('data-folders'));
+            Array.prototype.forEach.call(document.querySelectorAll('.seg button'), function (other) {
+              other.setAttribute('aria-pressed', other === button ? 'true' : 'false');
+            });
+            state.twoColumns = false;
+            render();
+          });
+        });
+
+        document.getElementById('resetBarrier').addEventListener('click', function () {
+          state.outside = OUTSIDE_MIN;
+          render();
+          announce('граница воркспейса: ' + state.outside + ' px, как при первом входе');
+        });
+
+        board.addEventListener('pointerdown', onPointerDown);
+        board.addEventListener('dblclick', onDoubleClick);
+        board.addEventListener('keydown', onKeyDown);
+
+        window.addEventListener('resize', function () {
+          window.requestAnimationFrame(render);
+        });
+
+        /* Для показа состояний на приёмке: ?collapsed=1&folders=0|1|3 */
+        try {
+          var params = new URLSearchParams(window.location.search || '');
+          var foldersParam = params.get('folders');
+          if (foldersParam !== null) {
+            var asNumber = Number(foldersParam);
+            if (asNumber === 0 || asNumber === 1 || asNumber === 3) {
+              state.folders = asNumber;
+              Array.prototype.forEach.call(document.querySelectorAll('.seg button'), function (other) {
+                other.setAttribute('aria-pressed',
+                  other.getAttribute('data-folders') === String(asNumber) ? 'true' : 'false');
+              });
+            }
+          }
+          if (params.get('collapsed') === '1') state.collapsed = true;
+        } catch (error) {
+          /* без параметров — обычный вид */
+        }
+
+        paletteMarkup();
+        renderPalette();
+        renderGallery();
+        render();
+      })();
+    </script>
+  </body>
+</html>

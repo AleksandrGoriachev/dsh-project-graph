@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "models": { "work": { "provider": "opencode", "model": "deepseek-v4.1-flash" } },
+  "nodes": [
+    { "id": "analyst-a", "role": "analyst", "model": "work" },
+    { "id": "analyst-b", "role": "analyst", "model": "work" },
+    { "id": "designer", "role": "designer", "model": "work" }
+  ],
+  "edges": [
+    { "from": "analyst-a", "to": "analyst-b", "kind": "peer" },
+    { "from": "analyst-b", "to": "designer", "kind": "peer" },
+    { "from": "designer", "to": "analyst-a", "kind": "peer" }
+  ]
+}
