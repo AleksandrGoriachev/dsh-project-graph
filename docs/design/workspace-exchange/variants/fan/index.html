@@ -1,0 +1,1614 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+<!-- DOC:START -->
+    <title>Веер адресатов — выход вне воркспейса (макет 0002)</title>
+    <!--
+      МАКЕТ, а не рабочий экран. Один файл, без сети и внешних файлов: открывается двойным щелчком.
+      Панель Structure нарисована по текущему коду (lib/client.js, lib/graph.js): карточки узлов
+      176 × 62 со скруглением 10, зазор 64 по горизонтали и 96 по вертикали, слои по delegate,
+      связи delegate (синяя сплошная), review (оранжевый пунктир), report (серый пунктир).
+
+      Что показывает. «Выход вне» — это граница и лучи через неё. На каждого адресата за пунктирной
+      границей стоит свой чип; от узла coordinator (self) к чипу идёт штриховая линия, и её
+      наконечники показывают тип связи: один у чипа — исходящая, один у графа — входящая, оба —
+      двусторонняя. У нас один адресат workflow и связь двусторонняя: 3 исходящих, 8 входящих,
+      последнее входящее 28.10 23:40, исходящее 19:48. Клик по чипу открывает список фактов,
+      отфильтрованный этим адресатом.
+
+      Почему веер, а не портал. Портал показывает «последнее событие» и прячет форму связи: одна
+      линия не может нести два направления. Веер показывает тип связи буквально — формой линии, один
+      в один с правилом заказчика «одно сообщение — односторонняя, оба направления — двусторонняя».
+      Цена: «выход» перестаёт быть одной карточкой и становится границей плюс N чипов.
+
+      Почему не цвет. Все линии нейтральные, отличаются только наконечниками, глифами и словами:
+      цвет на схеме уже занят видами связи (delegate, review, report) и не должен значить второе.
+
+      Данные. 11 фактов, 3 исходящих, 8 входящих, адресат workflow. Второй адресат kb-core существует
+      только в демо-переключателе «Адресаты: 2» и помечен «демо» на чипе и в списке: в данных его нет.
+    -->
+    <!-- DOC:END -->
+    <style>
+      :root {
+        --text: #1b1b1f;
+        --muted: #5b5b66;
+        --line: #d9d9e0;
+        --accent: #4176e6;
+        --accent-soft: #eef2ff;
+        --panel: #fff;
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+      }
+
+      body {
+        padding: 1.1rem;
+        font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+        color: var(--text);
+        background: #eef0f5;
+        font-size: 15px;
+      }
+
+      .sheet {
+        max-width: 1180px;
+        margin: 0 auto;
+      }
+
+      .kicker {
+        margin: 0 0 0.25rem;
+        font-size: 0.74rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--accent);
+      }
+
+      h1 {
+        margin: 0 0 0.35rem;
+        font-size: 1.45rem;
+        letter-spacing: -0.01em;
+      }
+
+      .lead {
+        margin: 0 0 1.1rem;
+        max-width: 62rem;
+        color: var(--muted);
+        font-size: 0.94rem;
+        line-height: 1.55;
+      }
+
+      .stage {
+        display: flex;
+        gap: 1.4rem;
+        align-items: flex-start;
+        margin-bottom: 1.2rem;
+      }
+
+      /* ================= Панель Structure ================= */
+
+      .panel {
+        flex: 1 1 auto;
+        min-width: 0;
+        max-width: 840px;
+        padding: 12px 12px 14px;
+        border-radius: 14px;
+        background: var(--panel);
+        box-shadow: 0 8px 22px rgb(20 20 45 / 6%);
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .panel-bar {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+        font-size: 13px;
+      }
+
+      .panel-title {
+        font-size: 15px;
+        font-weight: 600;
+      }
+
+      .chip {
+        padding: 2px 8px;
+        border-radius: 999px;
+        background: #efeff3;
+        color: var(--muted);
+        font-size: 11px;
+      }
+
+      .grow {
+        flex: 1 1 auto;
+      }
+
+      .btn {
+        padding: 3px 10px;
+        border-radius: 6px;
+        border: 1px solid #dcdde3;
+        background: #f7f7f9;
+        color: var(--text);
+        cursor: pointer;
+        font: inherit;
+        font-size: 12px;
+      }
+
+      .btn:hover {
+        border-color: #b9c4e8;
+        background: var(--accent-soft);
+      }
+
+      .btn:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 1px;
+      }
+
+      .pg-canvas {
+        border: 1px solid #dcdde3;
+        border-radius: 10px;
+        background: #f7f7f9;
+        overflow: auto;
+        min-height: 220px;
+        font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+      }
+
+      .pg-canvas svg {
+        display: block;
+      }
+
+      .pg-legend {
+        display: flex;
+        gap: 14px;
+        flex-wrap: wrap;
+        color: #6f6f7a;
+        font-size: 11px;
+        line-height: 1.4;
+      }
+
+      .pg-key {
+        font-weight: 700;
+      }
+
+      .pg-key--delegate {
+        color: #4176e6;
+      }
+
+      .pg-key--review {
+        color: #f59e0b;
+      }
+
+      .pg-key--report {
+        color: #5b5b66;
+      }
+
+      .pg-key--border {
+        color: #c6c8d1;
+      }
+
+      .pg-on {
+        color: #15803d;
+      }
+
+      .pg-done {
+        color: #4176e6;
+      }
+
+      .pg-err {
+        color: #ec1313;
+      }
+
+      /* ================= Список обмена ================= */
+
+      .pg-card {
+        border: 1px solid #dcdde3;
+        border-radius: 8px;
+        background: #f7f7f9;
+        padding: 8px 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        font-size: 12px;
+      }
+
+      .pg-card-head {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+
+      .pg-card-head b {
+        font-size: 12px;
+      }
+
+      .pg-link {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+
+      .pg-mono {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 11px;
+        font-weight: 600;
+      }
+
+      .pg-kind {
+        font-size: 12px;
+      }
+
+      .pg-hint {
+        color: #6f6f7a;
+        font-size: 11px;
+        line-height: 1.45;
+      }
+
+      .pg-warn {
+        color: #8a5300;
+      }
+
+      .pg-btn {
+        padding: 2px 8px;
+        border-radius: 6px;
+        border: 1px solid #dcdde3;
+        background: #fff;
+        color: var(--text);
+        cursor: pointer;
+        font: inherit;
+        font-size: 11px;
+      }
+
+      .pg-btn:hover {
+        border-color: #b9c4e8;
+        background: var(--accent-soft);
+      }
+
+      .pg-btn:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 1px;
+      }
+
+      .pg-badge {
+        padding: 0 6px;
+        border-radius: 999px;
+        border: 1px solid #f0c674;
+        background: #fff8ec;
+        color: #8a5300;
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+
+      .pg-fx {
+        border-top: 1px solid #e4e5ea;
+        padding-top: 6px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .pg-list-head {
+        display: flex;
+        gap: 8px;
+        align-items: baseline;
+        flex-wrap: wrap;
+        font-size: 12px;
+        outline: none;
+      }
+
+      .pg-list-head:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+        border-radius: 4px;
+      }
+
+      .pg-filters {
+        display: flex;
+        gap: 4px;
+        flex-wrap: wrap;
+      }
+
+      .pg-pill {
+        padding: 2px 8px;
+        border-radius: 999px;
+        border: 1px solid #dcdde3;
+        background: #fff;
+        color: var(--text);
+        cursor: pointer;
+        font: inherit;
+        font-size: 11px;
+      }
+
+      .pg-pill[aria-pressed='true'] {
+        border-color: #4176e6;
+        background: var(--accent-soft);
+        color: #1b3f8f;
+        font-weight: 600;
+      }
+
+      .pg-pill:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 1px;
+      }
+
+      .pg-rows {
+        max-height: 262px;
+        overflow: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 1px;
+        padding-right: 4px;
+      }
+
+      .pg-fact {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        align-items: baseline;
+        padding: 3px 6px;
+        border-radius: 6px;
+        font-size: 11px;
+      }
+
+      .pg-fact:hover {
+        background: var(--accent-soft);
+      }
+
+      .pg-time {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-variant-numeric: tabular-nums;
+        color: #3c3c48;
+        min-width: 74px;
+      }
+
+      .pg-dir {
+        font-weight: 600;
+        min-width: 92px;
+      }
+
+      .pg-dir--in {
+        color: #2b5bd7;
+      }
+
+      .pg-dir--out {
+        color: #8a5300;
+      }
+
+      .pg-route {
+        min-width: 152px;
+      }
+
+      .pg-thread {
+        color: #6f6f7a;
+      }
+
+      .pg-status {
+        color: #8b8b96;
+      }
+
+      .pg-empty {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        outline: none;
+      }
+
+      .pg-empty:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+        border-radius: 4px;
+      }
+
+      .pg-empty p {
+        margin: 0;
+        color: #5b5b66;
+        font-size: 11.5px;
+        line-height: 1.5;
+        max-width: 56rem;
+      }
+
+      /* Демо-разметка направлений: включается пультом, в панели её не будет. */
+      .pg-dirband {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        padding: 6px 8px;
+        border: 1px dashed #c6c8d1;
+        border-radius: 8px;
+        background: #fffdf5;
+      }
+
+      .pg-dirband[hidden] {
+        display: none;
+      }
+
+      .pg-band-title {
+        margin: 0;
+        font-size: 11px;
+        color: #5b5b66;
+      }
+
+      .pg-ticks {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+      }
+
+      .pg-tick {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 1px 6px;
+        border: 1px solid #e4e5ea;
+        border-radius: 999px;
+        background: #fff;
+        font-size: 10px;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .pg-tick b {
+        color: #5b5b66;
+      }
+
+      /* ================= Пульт ================= */
+
+      .side {
+        flex: 0 0 306px;
+        padding: 1rem 1.1rem 1.1rem;
+        border-radius: 18px;
+        background: #fff;
+        box-shadow: 0 8px 22px rgb(20 20 45 / 6%);
+      }
+
+      .side h2 {
+        margin: 0 0 0.25rem;
+        font-size: 0.98rem;
+      }
+
+      .side-note {
+        margin: 0 0 0.85rem;
+        color: var(--muted);
+        font-size: 0.78rem;
+        line-height: 1.45;
+      }
+
+      .field {
+        margin: 0 0 0.85rem;
+      }
+
+      .field-label {
+        display: block;
+        margin-bottom: 0.3rem;
+        font-size: 0.74rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      .seg {
+        display: flex;
+        gap: 0.3rem;
+        flex-wrap: wrap;
+      }
+
+      .seg button {
+        flex: 1 1 auto;
+        min-height: 30px;
+        padding: 3px 8px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fafafd;
+        color: #3f3f4b;
+        font: inherit;
+        font-size: 0.76rem;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .seg button[aria-pressed='true'] {
+        border-color: var(--accent);
+        background: var(--accent-soft);
+        color: #1b3f8f;
+      }
+
+      .seg button:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 1px;
+      }
+
+      .demo {
+        font-size: 0.62rem;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: #8a5300;
+      }
+
+      .check {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.4rem;
+        margin: 0 0 0.35rem;
+        font-size: 0.82rem;
+        color: #3f3f4b;
+        line-height: 1.35;
+        cursor: pointer;
+      }
+
+      .check input {
+        margin-top: 0.15rem;
+        accent-color: var(--accent);
+      }
+
+      .primary {
+        width: 100%;
+        height: 40px;
+        border: 0;
+        border-radius: 12px;
+        background: var(--accent);
+        color: #fff;
+        font: inherit;
+        font-size: 0.86rem;
+        font-weight: 800;
+        cursor: pointer;
+        margin: 0 0 0.8rem;
+      }
+
+      .primary:hover {
+        background: #3567d6;
+      }
+
+      .primary:focus-visible {
+        outline: 2px solid #1b3f8f;
+        outline-offset: 2px;
+      }
+
+      .phases {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.76rem;
+        line-height: 1.35;
+        margin-top: 0.2rem;
+      }
+
+      .phases th {
+        text-align: left;
+        padding: 0.3rem 0.2rem;
+        color: var(--muted);
+        font-size: 0.66rem;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .phases td {
+        padding: 0.32rem 0.2rem;
+        border-bottom: 1px solid #f0f0f5;
+        vertical-align: top;
+      }
+
+      .phases td:first-child {
+        width: 5rem;
+        color: var(--muted);
+        white-space: nowrap;
+      }
+
+      .note {
+        margin: 0.8rem 0 0;
+        padding: 0.55rem 0.65rem;
+        border-radius: 12px;
+        background: #fff8ec;
+        border: 1px solid #f6dfb4;
+        color: #6b5a3e;
+        font-size: 0.76rem;
+        line-height: 1.45;
+      }
+
+      /* ================= Пояснения ================= */
+
+      .notes {
+        display: grid;
+        grid-template-columns: 1.15fr 1fr;
+        gap: 1rem;
+      }
+
+      .panel-note {
+        padding: 1rem 1.1rem 1.1rem;
+        border-radius: 18px;
+        background: #fff;
+        box-shadow: 0 8px 22px rgb(20 20 45 / 6%);
+      }
+
+      .panel-note h2 {
+        margin: 0 0 0.55rem;
+        font-size: 0.98rem;
+      }
+
+      .panel-note p,
+      .panel-note li {
+        font-size: 0.84rem;
+        line-height: 1.5;
+        color: #3c3c48;
+      }
+
+      .panel-note p {
+        margin: 0 0 0.55rem;
+      }
+
+      .panel-note p:last-child {
+        margin-bottom: 0;
+      }
+
+      .sr {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+      }
+
+      /* ================= SVG: состояния и фокус ================= */
+
+      .pg-node {
+        cursor: pointer;
+      }
+
+      .pg-node-frame {
+        transition: stroke-width 0.12s ease;
+      }
+
+      .pg-node:hover .pg-node-frame {
+        stroke-width: 2;
+      }
+
+      .pg-exit {
+        cursor: pointer;
+        outline: none;
+      }
+
+      .pg-exit-frame {
+        transition: stroke-width 0.12s ease;
+      }
+
+      .pg-exit:hover .pg-exit-frame,
+      .pg-exit.is-hot .pg-exit-frame {
+        stroke-width: 2;
+      }
+
+      .pg-exit-ring {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .pg-exit:focus .pg-exit-ring,
+      .pg-exit.is-focus .pg-exit-ring {
+        opacity: 1;
+      }
+
+      .pg-exit-hint {
+        opacity: 0;
+        transition: opacity 0.12s ease;
+      }
+
+      .pg-exit:hover .pg-exit-hint,
+      .pg-exit.is-hot .pg-exit-hint,
+      .pg-exit:focus .pg-exit-hint,
+      .pg-exit.is-focus .pg-exit-hint {
+        opacity: 1;
+      }
+
+      .pg-row {
+        cursor: pointer;
+        outline: none;
+      }
+
+      .pg-row-bg {
+        fill: none;
+      }
+
+      .pg-row:hover .pg-row-bg,
+      .pg-row:focus .pg-row-bg,
+      .pg-row.is-focus .pg-row-bg {
+        fill: var(--accent-soft);
+      }
+
+      @media (max-width: 1080px) {
+        .stage {
+          flex-direction: column;
+        }
+
+        .side {
+          width: 100%;
+          flex: 0 0 auto;
+        }
+
+        .notes {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="sheet">
+      <header class="intro">
+        <p class="kicker">Structure · заказ 0002 · вариант 2 из 3</p>
+<!-- TITLE:START -->
+        <h1>Веер адресатов</h1>
+        <p class="lead">
+          <b>Выход вне</b> — граница и лучи через неё. На каждого адресата за пунктирной границей
+          стоит свой чип; линия от <code>coordinator</code> несёт наконечники, и их форма читается
+          как тип связи: один у чипа — исходящая, один у графа — входящая, оба — двусторонняя.
+          У нас один адресат <code>workflow</code>, связь двусторонняя: 3 исходящих, 8 входящих,
+          последнее входящее 28.10 23:40, исходящее 19:48. Клик по чипу открывает список из 11
+          фактов, отфильтрованный адресатом.
+        </p>
+        <!-- TITLE:END -->
+      </header>
+
+      <div class="stage">
+        <div class="panel" role="region" aria-label="Макет панели Structure">
+          <div class="panel-bar">
+            <span class="panel-title">Structure</span>
+            <span class="chip">4 узла</span>
+            <span class="chip">5 связей</span>
+            <span class="chip">3 слоя</span>
+            <span class="grow"></span>
+            <span class="chip" id="pickInfo">выбран: —</span>
+            <button type="button" class="btn" id="btnRefresh">Обновить</button>
+          </div>
+
+          <div class="pg-canvas" id="canvas">
+            <svg id="svg" role="group" aria-label="Схема структуры: 4 узла, 5 связей, выход вне воркспейса"></svg>
+          </div>
+
+          <div class="pg-legend" aria-label="Виды связей и состояния узлов">
+            <span><span class="pg-key pg-key--delegate">—</span> delegate: поручение</span>
+            <span><span class="pg-key pg-key--review">– –</span> review: проверка</span>
+            <span><span class="pg-key pg-key--report">· ·</span> report: возврат</span>
+            <span><span class="pg-key pg-key--border">┊</span> граница воркспейса</span>
+            <span>состояния: <b class="pg-on">работает</b> — зелёная рамка, <b class="pg-done">завершил</b> и <b class="pg-err">ошибка</b> — словом</span>
+          </div>
+
+          <div class="pg-card" id="exchangeCard"></div>
+
+          <div class="pg-dirband" id="dirBand" hidden></div>
+        </div>
+
+        <aside class="side" id="side" aria-label="Пульт показа">
+          <h2>Пульт показа</h2>
+          <p class="side-note">Макет, не рабочий экран. Переключатели меняют только показ, данные не перечитываются.</p>
+
+          <div class="field">
+            <span class="field-label" id="lblAddr">Адресаты</span>
+            <div class="seg" role="group" aria-labelledby="lblAddr">
+              <button type="button" data-addr="1" aria-pressed="true">1 · workflow</button>
+              <button type="button" data-addr="2" aria-pressed="false">2 <span class="demo">демо</span></button>
+            </div>
+            <p class="pg-hint" style="margin: 0.35rem 0 0">
+              Второй адресат <code>kb-core</code> — мок: в данных воркспейса его нет. На схеме и в
+              списке он помечен «демо», счётчики основного адресата не меняются.
+            </p>
+          </div>
+
+          <div class="field">
+            <span class="field-label">Данные</span>
+            <label class="check"><input type="checkbox" id="chkEmpty" /> Пустое состояние: источник не найден</label>
+            <label class="check"><input type="checkbox" id="chkUnparsed" /> Не разобрано: 3 файла без From/To/Date</label>
+            <label class="check"><input type="checkbox" id="chkDirs" /> Показать направления (демо-разметка)</label>
+          </div>
+
+          <div class="field">
+            <span class="field-label" id="lblState">Состояние coordinator</span>
+            <div class="seg" role="group" aria-labelledby="lblState">
+              <button type="button" data-self="running" aria-pressed="true">работает</button>
+              <button type="button" data-self="done" aria-pressed="false">завершил</button>
+              <button type="button" data-self="error" aria-pressed="false">ошибка</button>
+            </div>
+            <p class="pg-hint" style="margin: 0.35rem 0 0">
+              Зелёная рамка — только у «работает». «Завершил» и «ошибка» видны словом и цветом слова,
+              рамка остаётся обычной: так это устроено в панели.
+            </p>
+          </div>
+
+          <button type="button" class="primary" id="btnOpen">Открыть список фактов</button>
+
+        </aside>
+      </div>
+
+<!-- NOTES:START -->
+      <div class="notes">
+        <section class="panel-note">
+          <h2>Почему так, а не иначе</h2>
+          <p>
+            <b>Тип связи — формой линии.</b> Один факт в одну сторону даёт ровно один наконечник на
+            своём конце, оба направления — два. Это буквальное исполнение правила заказчика
+            «одно сообщение — односторонняя связь, оба направления — двусторонняя». Слово в чипе
+            дублирует форму, глифы ↗ / ↙ дублируют слово.
+          </p>
+          <p>
+            <b>Чип на адресата, а не на факт.</b> Чип отвечает «с кем и как»; история фактов — в
+            списке под схемой, где чип задаёт фильтр. На полотне не появляется ни одной строки
+            факта, поэтому веер не превращается в ленту.
+          </p>
+          <p>
+            <b>Граница — тоже элемент.</b> Когда адресатов нет, чипов нет, но пунктирная граница
+            остаётся и объясняет: выход есть, обмена нет. Исчезнувшая граница читалась бы как
+            «проект замкнут».
+          </p>
+          <p>
+            <b>Порог — три чипа.</b> Дальше колонка начинает спорить с графом за высоту, поэтому
+            четвёртый и следующие уходят в «ещё N» и в список. Второй чип здесь — демо-мок.
+          </p>
+        </section>
+
+        <section class="panel-note">
+          <h2>Что не показываем</h2>
+          <p>
+            Тексты сообщений и <code>Subject</code>, вложения, имена файлов, пути и узлы чужого
+            воркспейса, его структуру. «Ждёт ответа», «доставлено», «не прочитано» не существуют
+            как сигналы и не рисуются. В шапке стоят только время, направление, ветка и статус.
+          </p>
+          <p>
+            На чипе нет ни пути, ни узла адресата — только подпись из шапки (<code>workflow</code>).
+            Если факта нет, нет и линии: серой пунктирной связи «на всякий случай» не бывает.
+          </p>
+          <p>
+            Отсутствие текста объяснено: в <code>aria-label</code> чипа перечислены счётчики и обе
+            крайние даты, в списке стоит постоянная подпись «показываются только факты», в
+            <code>title</code> — те же поля.
+          </p>
+        </section>
+        <section class="panel-note">
+          <h2>Как вести себя</h2>
+          <table class="phases">
+            <tr><th>Действие</th><th>Что происходит</th></tr>
+            <tr><td>наведение</td><td>рамка чипа плотнее и курсор-указатель; подпись под чипами — «клик по чипу — факты адресата»</td></tr>
+            <tr><td>Tab</td><td>фокус на чипе, видимая синяя рамка; узлы в фокус не входят — как в панели</td></tr>
+            <tr><td>Enter / Space</td><td>открыть или свернуть список под схемой, фокус — на его заголовке</td></tr>
+            <tr><td>Esc</td><td>закрыть список и вернуть фокус тому чипу, с которого открыли</td></tr>
+            <tr><td>клик по узлу</td><td>выбор узла, подпись «выбран» в шапке панели</td></tr>
+          </table>
+        </section>
+
+        <section class="panel-note">
+          <h2>Цифры и допущения</h2>
+          <p class="note">
+            <b>Данные макета.</b> 11 фактов: 3 исходящих, 8 входящих; адресат <code>workflow</code>;
+            связь двусторонняя; последнее входящее 28.10 23:40, исходящее 19:48; ветка одна.
+            Время — время размещения из шапки, не время файла. Второй адресат — только демо.
+          </p>
+        </section>
+
+      </div>
+      <!-- NOTES:END -->
+    </div>
+
+    <div id="live" class="sr" aria-live="polite"></div>
+
+    <script>
+      'use strict';
+
+      /*
+       * Макет на чистом DOM: ни сборки, ни зависимостей, ни сети. Схема строится теми же числами,
+       * что в lib/graph.js: карточка 176 × 62, зазор 64 / 96, слои по delegate. В рабочем клиенте
+       * это React.createElement и SVG — здесь та же геометрия и тот же визуальный язык.
+       */
+
+      var T = {
+        text: '#1b1b1f',
+        secondary: '#5b5b66',
+        tertiary: '#6f6f7a',
+        caption: '#8b8b96',
+        bg1: '#f7f7f9',
+        bg2: '#efeff3',
+        border1: '#dcdde3',
+        border2: '#c6c8d1',
+        link: '#4176e6',
+        success: '#22c55e',
+        successText: '#15803d',
+        warn: '#f59e0b',
+        warnText: '#8a5300',
+        danger: '#ec1313',
+        mono: 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace'
+      };
+
+      var NODE_W = 176, NODE_H = 62, GAP_X = 64, GAP_Y = 96;
+      var LAYOUT_W = 416, LAYOUT_H = 378, PAD = 16;
+      var BORDER_X = LAYOUT_W + 20;
+
+      /* ===== EXIT:START ===== */
+      /*
+       * Веер: колонка чипов за границей, x = layout.width + 44, ширина 200. Чип 200 × 68 на четыре
+       * строки: подпись, тип связи словом, счётчики, две крайние даты. Канвас расширяется до правого
+       * края чипа плюс 16. Наконечники линии кодируют тип связи: marker-start — входящая,
+       * marker-end — исходящая, оба — двусторонняя.
+       */
+      var EXIT_X = LAYOUT_W + 44;
+      var EXIT_W = 200;
+      var CHIP_H = 68;
+      var CHIP_GAP = 10;
+      var CANVAS_W = EXIT_X + EXIT_W + 16;
+      var SELF_X = 296, SELF_Y = 31;
+
+      function chipY(index) {
+        return index * (CHIP_H + CHIP_GAP);
+      }
+
+      function chipTop(index) {
+        return chipY(index);
+      }
+
+      function connectorSvg(a, index) {
+        var cy = chipTop(index) + CHIP_H / 2;
+        var d = 'M ' + SELF_X + ' ' + SELF_Y + ' H 424 L 446 ' + cy + ' H ' + EXIT_X;
+        var map = { d: d, fill: 'none', stroke: T.secondary, 'stroke-width': 1.5, 'stroke-dasharray': '2 4' };
+        if (a.inc > 0) map['marker-start'] = 'url(#pg-arrow-report)';
+        if (a.out > 0) map['marker-end'] = 'url(#pg-arrow-report)';
+        return mk('path', map);
+      }
+
+      function chipAria(a) {
+        return 'Выход вне: ' + a.name + (a.demo ? ' (демо)' : '') + ', ' + a.kindWord + '. '
+          + countWord(a.out, 'исходящее', 'исходящих') + ', ' + countWord(a.inc, 'входящее', 'входящих')
+          + '. Последнее входящее ' + a.lastIn + ', последнее исходящее ' + a.lastOut
+          + '. Enter открывает список фактов по адресату ' + a.name + '.';
+      }
+
+      function chipSvg(a, index) {
+        var y = chipTop(index);
+        var parts = [];
+        parts.push('<g class="pg-exit" data-exit="' + a.name + '" data-filter="' + a.name + '" role="button" tabindex="0"'
+          + ' aria-pressed="' + (state.open && state.filter === a.name ? 'true' : 'false') + '"'
+          + ' aria-expanded="' + (state.open ? 'true' : 'false') + '" aria-controls="exchangeCard"'
+          + ' aria-label="' + esc(chipAria(a)) + '">');
+        parts.push('<title>' + esc(chipAria(a)) + '</title>');
+        parts.push(mk('rect', { class: 'pg-exit-ring', x: EXIT_X - 3, y: y - 3, width: EXIT_W + 6, height: CHIP_H + 6, rx: 13, fill: 'none', stroke: T.link, 'stroke-width': 2 }));
+        parts.push(mk('rect', { class: 'pg-exit-frame', x: EXIT_X, y: y, width: EXIT_W, height: CHIP_H, rx: 10, fill: '#fff', stroke: a.demo ? T.border2 : T.border1, 'stroke-width': 1.2, 'stroke-dasharray': a.demo ? '5 4' : null }));
+        parts.push(mk('text', { x: EXIT_X + 12, y: y + 20, 'font-size': 12, fill: T.text }, '<tspan font-family="' + T.mono + '" font-weight="600">' + esc(a.name) + '</tspan>'));
+        if (a.demo) {
+          parts.push(mk('rect', { x: EXIT_X + EXIT_W - 50, y: y + 7, width: 38, height: 14, rx: 7, fill: '#fff8ec', stroke: '#f0c674', 'stroke-width': 1 }));
+          parts.push(mk('text', { x: EXIT_X + EXIT_W - 31, y: y + 17, 'font-size': 8, fill: T.warnText, 'text-anchor': 'middle', 'font-weight': 700, 'letter-spacing': 0.6 }, 'ДЕМО'));
+        }
+        parts.push(mk('text', { x: EXIT_X + 12, y: y + 36, 'font-size': 10.5, fill: T.secondary }, esc(a.kindWord)));
+        parts.push(mk('text', { x: EXIT_X + 12, y: y + 50, 'font-size': 9.5, fill: T.secondary },
+          '↗ ' + countWord(a.out, 'исходящее', 'исходящих') + ' · ↙ ' + countWord(a.inc, 'входящее', 'входящих')));
+        parts.push(mk('text', { x: EXIT_X + 12, y: y + 63, 'font-size': 9, fill: T.caption },
+          'вх. ' + esc(a.lastIn) + ' · исх. ' + esc(a.lastOut)));
+        parts.push('</g>');
+        return parts.join('');
+      }
+
+      function exitSvg(d) {
+        if (d.empty) {
+          var h = 132;
+          return '<g class="pg-exit" data-exit="all" role="button" tabindex="0" aria-expanded="' + (state.open ? 'true' : 'false') + '" aria-controls="exchangeCard"'
+            + ' aria-label="Выход вне воркспейса. Фактов обмена нет: папка coordination рядом с воркспейсом не найдена и exchange не задан. Enter открывает объяснение и рецепт под схемой.">'
+            + '<title>Выход вне: фактов обмена нет</title>'
+            + mk('rect', { class: 'pg-exit-ring', x: EXIT_X - 3, y: -3, width: EXIT_W + 6, height: h + 6, rx: 13, fill: 'none', stroke: T.link, 'stroke-width': 2 })
+            + mk('rect', { class: 'pg-exit-frame', x: EXIT_X, y: 0, width: EXIT_W, height: h, rx: 10, fill: '#fff', stroke: T.border2, 'stroke-width': 1.2, 'stroke-dasharray': '5 4' })
+            + mk('text', { x: EXIT_X + 12, y: 22, 'font-size': 11.5, fill: T.text, 'font-weight': 600 }, 'выхода нет')
+            + mk('text', { x: EXIT_X + 12, y: 40, 'font-size': 9, fill: T.caption }, 'папка coordination рядом')
+            + mk('text', { x: EXIT_X + 12, y: 53, 'font-size': 9, fill: T.caption }, 'с воркспейсом не найдена')
+            + mk('text', { x: EXIT_X + 12, y: 66, 'font-size': 9, fill: T.caption }, 'и exchange не задан.')
+            + mk('text', { x: EXIT_X + 12, y: 79, 'font-size': 9, fill: T.caption }, 'Задайте exchange в')
+            + mk('text', { x: EXIT_X + 12, y: 92, 'font-size': 9, fill: T.caption }, 'cordis.patch.yml.')
+            + mk('text', { x: EXIT_X + 12, y: 112, 'font-size': 9, fill: T.caption }, 'не разобрано: ' + d.unparsed)
+            + mk('text', { class: 'pg-exit-hint', x: EXIT_X + 2, y: h + 15, 'font-size': 9, fill: T.secondary }, 'клик или Enter — объяснение')
+            + '</g>';
+        }
+        var parts = [];
+        d.addrs.forEach(function (a, index) { parts.push(connectorSvg(a, index)); });
+        d.addrs.forEach(function (a, index) { parts.push(chipSvg(a, index)); });
+        var bottom = chipTop(d.addrs.length - 1) + CHIP_H;
+        parts.push(mk('text', { x: EXIT_X, y: bottom + 16, 'font-size': 9.5, fill: T.caption }, 'обмен: coordination · по соглашению'));
+        parts.push(mk('text', { x: EXIT_X, y: bottom + 28, 'font-size': 9.5, fill: d.unparsed ? T.warnText : T.caption }, 'не разобрано: ' + d.unparsed));
+        parts.push(mk('text', { x: EXIT_X, y: bottom + 42, 'font-size': 9, fill: T.secondary }, 'клик по чипу — факты адресата'));
+        return parts.join('');
+      }
+      /* ===== EXIT:END ===== */
+
+      var NODES = [
+        { id: 'coordinator', role: 'координатор', model: 'work', brief: 'ведёт план и раздаёт работу', x: 120, y: 0, self: true },
+        { id: 'worker', role: 'исполнитель', model: 'work', brief: 'делает основную работу', x: 0, y: 158, run: 'done' },
+        { id: 'designer', role: 'исполнитель', model: 'designer', brief: 'делает графику', x: 240, y: 158, run: 'idle' },
+        { id: 'judge', role: 'приёмщик', model: 'critic', brief: 'проверяет работу отдельной сессией', x: 120, y: 316, run: 'error' }
+      ];
+
+      var EDGES = [
+        { from: 'coordinator', to: 'worker', kind: 'delegate', x1: 208, y1: 62, x2: 88, y2: 158 },
+        /* Пара coordinator <-> designer несёт две связи; в layoutGraph они сдвинуты на 9 px,
+           иначе report лёг бы ровно под delegate и исчез. Здесь те же сдвиги. */
+        { from: 'coordinator', to: 'designer', kind: 'delegate', x1: 211.6, y1: 59.3, x2: 331.6, y2: 155.3 },
+        { from: 'worker', to: 'judge', kind: 'review', x1: 88, y1: 220, x2: 208, y2: 316 },
+        { from: 'designer', to: 'coordinator', kind: 'report', x1: 324.4, y1: 160.7, x2: 204.4, y2: 64.7 },
+        { from: 'judge', to: 'coordinator', kind: 'report', x1: 208, y1: 316, x2: 208, y2: 62 }
+      ];
+
+      var EDGE_HELP = {
+        delegate: 'поручение: источник передаёт работу цели',
+        review: 'проверка: цель оценивает работу источника',
+        report: 'возврат: цель принимает результат источника без оценки',
+        peer: 'сотрудничество равных, без направления'
+      };
+
+      /*
+       * Факты обмена. Только разрешённые поля: время размещения, направление, ветка, статус.
+       * Счётчики сходятся с данными воркспейса: 11 фактов, 3 исходящих, 8 входящих, последнее
+       * входящее 28.10 23:40, последнее исходящее 28.10 19:48. Порядок — свежее первым.
+       */
+      var FACTS = [
+        { time: '28.10 23:40', iso: '2026-10-28T23:40Z', dir: 'in', thread: 'workflow-install', status: 'proposal' },
+        { time: '28.10 22:05', iso: '2026-10-28T22:05Z', dir: 'in', thread: 'workflow-install', status: 'answer' },
+        { time: '28.10 20:12', iso: '2026-10-28T20:12Z', dir: 'in', thread: 'workflow-install', status: 'answer' },
+        { time: '28.10 19:48', iso: '2026-10-28T19:48Z', dir: 'out', thread: 'workflow-install', status: 'proposal' },
+        { time: '28.10 18:30', iso: '2026-10-28T18:30Z', dir: 'in', thread: 'workflow-install', status: 'accepted' },
+        { time: '28.10 17:02', iso: '2026-10-28T17:02Z', dir: 'out', thread: 'workflow-install', status: 'question' },
+        { time: '28.10 15:40', iso: '2026-10-28T15:40Z', dir: 'in', thread: 'workflow-install', status: 'answer' },
+        { time: '27.10 23:10', iso: '2026-10-27T23:10Z', dir: 'in', thread: 'workflow-install', status: 'proposal' },
+        { time: '27.10 21:40', iso: '2026-10-27T21:40Z', dir: 'in', thread: 'workflow-install', status: 'answer' },
+        { time: '27.10 16:20', iso: '2026-10-27T16:20Z', dir: 'in', thread: 'workflow-install', status: 'accepted' },
+        { time: '27.10 14:15', iso: '2026-10-27T14:15Z', dir: 'out', thread: 'workflow-install', status: 'proposal' }
+      ];
+
+      /* Демо-мок второго адресата: в данных его нет, поэтому каждая строка помечена. */
+      var DEMO_FACTS = [
+        { time: '27.10 09:30', iso: '2026-10-27T09:30Z', dir: 'in', thread: 'kb-sync', status: 'answer', counterpart: 'kb-core', demo: true },
+        { time: '26.10 12:10', iso: '2026-10-26T12:10Z', dir: 'out', thread: 'kb-sync', status: 'proposal', counterpart: 'kb-core', demo: true }
+      ];
+
+      var STATE = {
+        running: { key: 'running', word: 'работает', color: T.successText, hint: 'агент этого узла выполняет работу сейчас' },
+        done: { key: 'done', word: 'завершил', color: T.link, hint: 'последний запуск закончился успешно' },
+        error: { key: 'error', word: 'ошибка', color: T.danger, hint: 'последний запуск завершился ошибкой — откройте журнал запуска' },
+        idle: { key: 'idle', word: 'свободен', color: T.tertiary, hint: 'по этому узлу сейчас никто не работает' }
+      };
+
+      var ROLE_COLORS = [T.link, T.success, T.warn, '#a855f7', '#06b6d4', '#f472b6', '#84cc16', '#fb7185'];
+
+      var state = {
+        addressees: 1,
+        empty: false,
+        unparsed: 0,
+        dirs: false,
+        self: 'running',
+        open: false,
+        filter: 'all',
+        lastExit: 'all',
+        selected: null
+      };
+
+      /* ---------- маленькие помощники разметки ---------- */
+
+      function esc(value) {
+        return String(value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+      }
+
+      function mk(name, map, inner) {
+        var list = [];
+        for (var key in map) {
+          if (!Object.prototype.hasOwnProperty.call(map, key)) continue;
+          var value = map[key];
+          if (value === null || value === undefined || value === false) continue;
+          list.push(key + '="' + String(value) + '"');
+        }
+        var open = '<' + name + (list.length ? ' ' + list.join(' ') : '');
+        if (inner === undefined) return open + '/>';
+        return open + '>' + inner + '</' + name + '>';
+      }
+
+      function countWord(count, one, many) {
+        return count + ' ' + (count === 1 ? one : many);
+      }
+
+      function roleColor(role) {
+        var value = String(role || '');
+        var hash = 0;
+        for (var index = 0; index < value.length; index += 1) hash = (hash * 31 + value.charCodeAt(index)) % 100000;
+        return ROLE_COLORS[hash % ROLE_COLORS.length];
+      }
+
+      function nodeState(node) {
+        if (node.self) return STATE[state.self];
+        return STATE[node.run || 'idle'];
+      }
+
+      function edgeStroke(kind) {
+        if (kind === 'delegate') return T.link;
+        if (kind === 'review') return T.warn;
+        if (kind === 'report') return T.secondary;
+        return T.border2;
+      }
+
+      function edgeDash(kind) {
+        if (kind === 'review') return '5 4';
+        if (kind === 'peer') return '2 4';
+        if (kind === 'report') return '1 4';
+        return null;
+      }
+
+      function edgeMarker(kind) {
+        if (kind === 'delegate') return 'url(#pg-arrow-delegate)';
+        if (kind === 'review') return 'url(#pg-arrow-review)';
+        if (kind === 'report') return 'url(#pg-arrow-report)';
+        return null;
+      }
+
+      function marker(id, color) {
+        return '<marker id="' + id + '" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">'
+          + '<path d="M 0 0 L 10 5 L 0 10 z" fill="' + color + '"/></marker>';
+      }
+
+      /* ---------- схема ---------- */
+
+      function defsSvg() {
+        return '<defs>'
+          + marker('pg-arrow-delegate', T.link)
+          + marker('pg-arrow-review', T.warn)
+          + marker('pg-arrow-report', T.secondary)
+          + '</defs>';
+      }
+
+      function borderSvg() {
+        return mk('line', { x1: BORDER_X, y1: -8, x2: BORDER_X, y2: LAYOUT_H + 8, stroke: T.border2, 'stroke-width': 1, 'stroke-dasharray': '4 4' })
+          + mk('text', { x: BORDER_X - 7, y: -2, 'font-size': 9, fill: T.caption, 'text-anchor': 'end' }, 'воркспейс')
+          + mk('text', { x: BORDER_X + 7, y: -2, 'font-size': 9, fill: T.caption }, 'вне');
+      }
+
+      function edgesSvg() {
+        return EDGES.map(function (edge) {
+          return '<g><title>' + esc(EDGE_HELP[edge.kind] + '\n' + edge.from + ' → ' + edge.to) + '</title>'
+            + mk('line', {
+              x1: edge.x1, y1: edge.y1, x2: edge.x2, y2: edge.y2,
+              stroke: edgeStroke(edge.kind),
+              'stroke-width': edge.kind === 'peer' ? 1 : 1.5,
+              'stroke-dasharray': edgeDash(edge.kind),
+              'marker-end': edgeMarker(edge.kind),
+              opacity: edge.kind === 'peer' ? 0.8 : 1
+            })
+            + '</g>';
+        }).join('');
+      }
+
+      function nodeSvg(node) {
+        var st = nodeState(node);
+        var selected = state.selected === node.id;
+        var running = st.key === 'running';
+        var clip = 'pg-clip-' + node.id;
+        var label = node.role + ' · ' + node.model;
+        if (label.length > 26) label = label.slice(0, 25) + '…';
+        var tip = node.id + '\nроль: ' + node.role + '\nмодель: ' + node.model + '\nсостояние: ' + st.word + ' — ' + st.hint + '\n' + node.brief;
+        var parts = [];
+        parts.push('<title>' + esc(tip) + '</title>');
+        parts.push('<defs><clipPath id="' + clip + '"><rect width="' + NODE_W + '" height="' + NODE_H + '" rx="10"/></clipPath></defs>');
+        parts.push(mk('rect', {
+          class: 'pg-node-frame',
+          width: NODE_W, height: NODE_H, rx: 10, fill: T.bg2,
+          stroke: running ? T.success : selected ? T.link : T.border2,
+          'stroke-width': running ? 3 : selected ? 2 : 1
+        }));
+        parts.push('<g clip-path="url(#' + clip + ')"><rect width="4" height="' + NODE_H + '" rx="2" fill="' + roleColor(node.role) + '"/></g>');
+        if (running) {
+          parts.push('<circle cx="' + (NODE_W - 10) + '" cy="10" r="4" fill="' + T.success + '" stroke="#fff" stroke-width="1"><title>' + esc(st.hint) + '</title></circle>');
+        }
+        parts.push(mk('text', { x: 14, y: 24, 'font-size': 13, 'font-weight': 600, fill: T.text, 'font-family': T.mono }, esc(node.id)));
+        parts.push(mk('text', { x: 14, y: 44, 'font-size': 11, fill: T.tertiary }, esc(label)));
+        parts.push(mk('text', { x: 14, y: 58, 'font-size': 10, 'font-weight': 600, fill: st.color }, esc(st.word)));
+        return '<g class="pg-node" transform="translate(' + node.x + ' ' + node.y + ')" data-node="' + node.id + '" aria-label="' + esc(node.id + ', ' + node.role + ', ' + st.word) + '">' + parts.join('') + '</g>';
+      }
+
+      function renderSvg() {
+        var svg = document.getElementById('svg');
+        var data = { addrs: addresses(), empty: state.empty, unparsed: state.unparsed, dirs: state.dirs };
+        svg.setAttribute('width', CANVAS_W + PAD * 2);
+        svg.setAttribute('height', LAYOUT_H + PAD * 2);
+        svg.setAttribute('viewBox', '-' + PAD + ' -' + PAD + ' ' + (CANVAS_W + PAD * 2) + ' ' + (LAYOUT_H + PAD * 2));
+        svg.innerHTML = defsSvg()
+          + borderSvg()
+          + edgesSvg()
+          + NODES.map(nodeSvg).join('')
+          + exitSvg(data);
+        bindSvg();
+      }
+
+      /* ---------- данные ---------- */
+
+      function factsAll() {
+        if (state.empty) return [];
+        return state.addressees === 2 ? FACTS.concat(DEMO_FACTS) : FACTS.slice();
+      }
+
+      function aggregate(name, facts) {
+        var out = 0, inc = 0, lastOut = '', lastIn = '', last = '';
+        facts.forEach(function (fact) {
+          if ((fact.counterpart || 'workflow') !== name) return;
+          if (!last) last = fact.time;
+          if (fact.dir === 'out') {
+            out += 1;
+            if (!lastOut) lastOut = fact.time;
+          } else {
+            inc += 1;
+            if (!lastIn) lastIn = fact.time;
+          }
+        });
+        var kind = out > 0 && inc > 0 ? 'two' : out > 0 ? 'out' : 'inc';
+        return {
+          name: name, out: out, inc: inc, lastOut: lastOut, lastIn: lastIn, last: last,
+          kind: kind,
+          kindWord: kind === 'two' ? 'двусторонняя' : kind === 'out' ? 'исходящая односторонняя' : 'входящая односторонняя'
+        };
+      }
+
+      function addresses() {
+        if (state.empty) return [];
+        var list = [aggregate('workflow', FACTS)];
+        if (state.addressees === 2) list.push(aggregate('kb-core', DEMO_FACTS));
+        list[list.length - 1].demo = state.addressees === 2;
+        return list;
+      }
+
+      function totals() {
+        var list = factsAll();
+        var out = 0, inc = 0;
+        list.forEach(function (fact) { if (fact.dir === 'out') out += 1; else inc += 1; });
+        return { all: list.length, out: out, inc: inc, unparsed: state.unparsed };
+      }
+
+      function filteredFacts() {
+        var list = factsAll();
+        if (state.filter === 'out') return list.filter(function (fact) { return fact.dir === 'out'; });
+        if (state.filter === 'in') return list.filter(function (fact) { return fact.dir === 'in'; });
+        if (state.filter === 'all') return list;
+        return list.filter(function (fact) { return (fact.counterpart || 'workflow') === state.filter; });
+      }
+
+      /* ---------- карточка «Внешняя связь» ---------- */
+
+      function cardHead(total) {
+        var parts = [];
+        parts.push('<div class="pg-card-head">');
+        parts.push('<b>Внешняя связь</b>');
+        parts.push('<span class="pg-hint">мы в обмене: structure</span>');
+        parts.push('<span class="grow"></span>');
+        parts.push('<button type="button" class="pg-btn" data-act="reload">Перечитать факты</button>');
+        if (!state.empty) {
+          parts.push('<button type="button" class="pg-btn" data-act="toggle" aria-expanded="' + (state.open ? 'true' : 'false') + '" aria-controls="fxBody">'
+            + (state.open ? 'Скрыть сообщения' : 'Сообщения (' + total.all + ')') + '</button>');
+        }
+        parts.push('</div>');
+        return parts.join('');
+      }
+
+      function summaryRows(addrs) {
+        return addrs.map(function (a) {
+          return '<div class="pg-link">'
+            + '<span class="pg-mono">' + esc(a.name) + '</span>'
+            + '<span class="pg-kind">' + esc(a.kindWord) + '</span>'
+            + '<span class="pg-hint">↗ ' + a.out + ' / ↙ ' + a.inc + (a.last ? ' · последнее ' + esc(a.last) : '') + '</span>'
+            + (a.demo ? '<span class="pg-badge">демо</span><span class="pg-hint">второй адресат добавлен переключателем — в данных его нет</span>' : '')
+            + '</div>';
+        }).join('');
+      }
+
+      function factRow(fact) {
+        var name = fact.counterpart || 'workflow';
+        var outgoing = fact.dir === 'out';
+        var glyph = outgoing ? '→' : '←';
+        var word = outgoing ? 'исходящее' : 'входящее';
+        var route = outgoing ? 'structure → ' + name : name + ' → structure';
+        return '<div class="pg-fact" title="время размещения: ' + esc(fact.iso) + '">'
+          + '<span class="pg-time">' + esc(fact.time) + '</span>'
+          + '<span class="pg-dir pg-dir--' + fact.dir + '">' + glyph + ' ' + word + '</span>'
+          + '<span class="pg-route">' + esc(route) + '</span>'
+          + '<span class="pg-thread">' + esc(fact.thread) + '</span>'
+          + '<span class="pg-status">' + esc(fact.status) + '</span>'
+          + (fact.demo ? '<span class="pg-badge">демо</span>' : '')
+          + '</div>';
+      }
+
+      function filterPills(total) {
+        var list = [
+          { key: 'all', label: 'все (' + total.all + ')' },
+          { key: 'out', label: 'исходящие (' + total.out + ')' },
+          { key: 'in', label: 'входящие (' + total.inc + ')' }
+        ];
+        addresses().forEach(function (a) { list.push({ key: a.name, label: a.name + ' (' + (a.out + a.inc) + ')' + (a.demo ? ' демо' : '') }); });
+        return list.map(function (item) {
+          return '<button type="button" class="pg-pill" data-filter="' + item.key + '" aria-pressed="' + (state.filter === item.key ? 'true' : 'false') + '">' + esc(item.label) + '</button>';
+        }).join('');
+      }
+
+      function expanded(total) {
+        var shown = filteredFacts();
+        return '<div class="pg-fx" id="fxBody">'
+          + '<div class="pg-list-head" id="fxHead" tabindex="-1"><b>Список обмена</b>'
+          + '<span class="pg-hint">' + total.all + ' фактов · ↗ ' + total.out + ' исходящих · ↙ ' + total.inc + ' входящих · не разобрано ' + total.unparsed + '</span></div>'
+          + '<div class="pg-filters" role="group" aria-label="Фильтр фактов обмена">' + filterPills(total) + '</div>'
+          + '<div class="pg-rows">' + (shown.length ? shown.map(factRow).join('') : '<div class="pg-hint">по этому фильтру фактов нет — нажмите «все»</div>') + '</div>'
+          + '<div class="pg-hint">Показываются только факты: время размещения, направление, участник, ветка, статус. Текст сообщения не читается — панель видит только шапку.</div>'
+          + '</div>';
+      }
+
+      function unparsedBlock(total) {
+        if (!total.unparsed) return '';
+        return '<div class="pg-hint pg-warn">не разобрано файлов без From/To/Date: ' + total.unparsed
+          + ' — они не считаются фактами и не показаны. Проверьте шапку From/To/Date в этих файлах.</div>';
+      }
+
+      function emptyBlock() {
+        return '<div class="pg-empty" id="fxHead" tabindex="-1">'
+          + '<b>Фактов обмена не найдено</b>'
+          + '<p>Папка coordination рядом с воркспейсом не найдена, и exchange в cordis.patch.yml не задан — читать нечего. Это не ошибка связи: источников обмена сейчас нет.</p>'
+          + '<p><b>Что сделать:</b> задайте путь к папке обмена в exchange (cordis.patch.yml) или положите папку coordination рядом с воркспейсом, затем нажмите «Перечитать факты».</p>'
+          + (state.unparsed ? '<p class="pg-warn">не разобрано файлов без From/To/Date: ' + state.unparsed + ' — они не считаются фактами; проверьте шапку From/To/Date.</p>' : '')
+          + '</div>';
+      }
+
+      function renderCard() {
+        var card = document.getElementById('exchangeCard');
+        if (!card) return;
+        var total = totals();
+        var body;
+        if (state.empty) {
+          body = emptyBlock();
+        } else {
+          body = summaryRows(addresses()) + (state.open ? expanded(total) : '') + unparsedBlock(total);
+        }
+        card.innerHTML = cardHead(total) + body;
+      }
+
+      /* ---------- демо-разметка направлений ---------- */
+
+      function renderBand() {
+        var band = document.getElementById('dirBand');
+        if (!band) return;
+        band.hidden = !state.dirs;
+        if (!state.dirs) { band.innerHTML = ''; return; }
+        var ticks = factsAll().map(function (fact) {
+          var outgoing = fact.dir === 'out';
+          return '<span class="pg-tick" aria-label="' + esc(fact.time + ', ' + (outgoing ? 'исходящее' : 'входящее') + ', ' + (fact.counterpart || 'workflow')) + '">'
+            + '<span aria-hidden="true">' + (outgoing ? '→' : '←') + '</span>'
+            + '<span>' + esc(fact.time) + '</span>'
+            + '<b>' + (outgoing ? 'исх.' : 'вх.') + '</b></span>';
+        }).join('');
+        band.innerHTML = '<p class="pg-band-title"><b>Направления (демо-разметка):</b> ← входящее · → исходящее · на линии и в строках — наконечник</p>'
+          + '<div class="pg-ticks">' + (ticks || '<span class="pg-hint">фактов нет</span>') + '</div>'
+          + '<p class="pg-hint">Порядок — по времени размещения сообщения, свежее первым. Цвет ничего не решает: направление читается словом и глифом, на линии — наконечником.</p>';
+      }
+
+      /* ---------- пульт и состояние ---------- */
+
+      function syncControls() {
+        Array.prototype.forEach.call(document.querySelectorAll('[data-addr]'), function (button) {
+          button.setAttribute('aria-pressed', Number(button.getAttribute('data-addr')) === state.addressees ? 'true' : 'false');
+        });
+        Array.prototype.forEach.call(document.querySelectorAll('[data-self]'), function (button) {
+          button.setAttribute('aria-pressed', button.getAttribute('data-self') === state.self ? 'true' : 'false');
+        });
+        var empty = document.getElementById('chkEmpty');
+        var unparsed = document.getElementById('chkUnparsed');
+        var dirs = document.getElementById('chkDirs');
+        if (empty) empty.checked = state.empty;
+        if (unparsed) unparsed.checked = state.unparsed > 0;
+        if (dirs) dirs.checked = state.dirs;
+        var open = document.getElementById('btnOpen');
+        if (open) open.textContent = state.open ? 'Свернуть список фактов' : 'Открыть список фактов';
+        Array.prototype.forEach.call(document.querySelectorAll('.pg-exit'), function (exit) {
+          exit.setAttribute('aria-expanded', state.open ? 'true' : 'false');
+          if (exit.hasAttribute('data-filter')) {
+            exit.setAttribute('aria-pressed', state.open && state.filter === exit.getAttribute('data-filter') ? 'true' : 'false');
+          }
+        });
+        var picked = document.getElementById('pickInfo');
+        if (picked) {
+          if (!state.selected) {
+            picked.textContent = 'выбран: —';
+          } else {
+            var node = NODES.filter(function (item) { return item.id === state.selected; })[0];
+            picked.textContent = 'выбран: ' + node.id + ' — ' + node.role + ' · ' + node.model;
+          }
+        }
+      }
+
+      function announce(message) {
+        var live = document.getElementById('live');
+        if (!live) return;
+        live.textContent = '';
+        window.setTimeout(function () { live.textContent = message; }, 30);
+      }
+
+      function scrollCard() {
+        var card = document.getElementById('exchangeCard');
+        if (card && card.scrollIntoView) card.scrollIntoView({ block: 'nearest' });
+      }
+
+      function setList(open, returnFocus) {
+        if (open && state.empty) {
+          scrollCard();
+          var explanation = document.getElementById('fxHead');
+          if (explanation) explanation.focus();
+          announce('фактов обмена нет: список пуст. Причина и рецепт — в карточке под схемой.');
+          return;
+        }
+        state.open = open;
+        renderCard();
+        syncControls();
+        if (open) {
+          scrollCard();
+          var head = document.getElementById('fxHead');
+          if (head) head.focus();
+          announce('список обмена: ' + totals().all + ' фактов, открыт');
+        } else if (returnFocus) {
+          var exit = document.querySelector('.pg-exit[data-exit="' + (state.lastExit || 'all') + '"]') || document.querySelector('.pg-exit');
+          if (exit) exit.focus();
+        }
+      }
+
+      /* Выход открывает весь список; чип веера — список по своему адресату. */
+      function activateExit(exit) {
+        state.lastExit = exit.getAttribute('data-exit') || 'all';
+        var filter = exit.getAttribute('data-filter');
+        if (!filter || filter === 'all') {
+          setList(!state.open);
+          return;
+        }
+        if (state.open && state.filter === filter) {
+          setList(false);
+          return;
+        }
+        state.filter = filter;
+        renderCard();
+        setList(true);
+      }
+
+      function selectNode(id) {
+        state.selected = state.selected === id ? null : id;
+        renderSvg();
+        syncControls();
+        announce(state.selected ? 'выбран узел ' + id : 'выбор узла снят');
+      }
+
+      function reload() {
+        state.empty = false;
+        state.unparsed = 0;
+        state.addressees = 1;
+        state.filter = 'all';
+        render();
+        announce('факты перечитаны: 11, не разобрано 0');
+      }
+
+      function bindSvg() {
+        Array.prototype.forEach.call(document.querySelectorAll('.pg-exit'), function (exit) {
+          exit.addEventListener('click', function () { activateExit(exit); });
+          exit.addEventListener('keydown', function (event) {
+            if (event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar') {
+              event.preventDefault();
+              activateExit(exit);
+            }
+          });
+          exit.addEventListener('focus', function () { exit.classList.add('is-focus'); });
+          exit.addEventListener('blur', function () { exit.classList.remove('is-focus'); });
+          exit.addEventListener('mouseenter', function () { exit.classList.add('is-hot'); });
+          exit.addEventListener('mouseleave', function () { exit.classList.remove('is-hot'); });
+        });
+        Array.prototype.forEach.call(document.querySelectorAll('[data-node]'), function (group) {
+          group.addEventListener('click', function () { selectNode(group.getAttribute('data-node')); });
+        });
+        Array.prototype.forEach.call(document.querySelectorAll('[data-row]'), function (group) {
+          group.addEventListener('click', function () { setList(true); });
+          group.addEventListener('keydown', function (event) {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault();
+              setList(true);
+            }
+          });
+          group.addEventListener('focus', function () { group.classList.add('is-focus'); });
+          group.addEventListener('blur', function () { group.classList.remove('is-focus'); });
+        });
+      }
+
+      function render() {
+        var active = document.activeElement;
+        var focusedExit = active && active.getAttribute ? active.getAttribute('data-exit') : null;
+        renderSvg();
+        renderCard();
+        renderBand();
+        syncControls();
+        if (focusedExit) {
+          var again = document.querySelector('.pg-exit[data-exit="' + focusedExit + '"]');
+          if (again) again.focus();
+        }
+      }
+
+      function init() {
+        render();
+
+        var side = document.getElementById('side');
+        side.addEventListener('click', function (event) {
+          var button = event.target.closest('button');
+          if (!button) return;
+          var addr = button.getAttribute('data-addr');
+          if (addr) {
+            state.addressees = Number(addr);
+            if (state.filter === 'kb-core' && state.addressees === 1) state.filter = 'all';
+            render();
+            announce(state.addressees === 2
+              ? 'адресатов: 2. kb-core — демо, в данных его нет'
+              : 'адресатов: 1 — workflow');
+            return;
+          }
+          var self = button.getAttribute('data-self');
+          if (self) {
+            state.self = self;
+            render();
+            announce('состояние coordinator: ' + STATE[self].word);
+          }
+        });
+
+        var empty = document.getElementById('chkEmpty');
+        empty.addEventListener('change', function () {
+          state.empty = empty.checked;
+          if (state.empty) state.open = false;
+          render();
+          announce(state.empty ? 'пустое состояние: источника обмена нет' : 'данные вернулись: 11 фактов');
+        });
+
+        var unparsed = document.getElementById('chkUnparsed');
+        unparsed.addEventListener('change', function () {
+          state.unparsed = unparsed.checked ? 3 : 0;
+          render();
+          announce(state.unparsed ? 'не разобрано: 3 файла без From/To/Date' : 'не разобрано: 0');
+        });
+
+        var dirs = document.getElementById('chkDirs');
+        dirs.addEventListener('change', function () {
+          state.dirs = dirs.checked;
+          render();
+          announce(state.dirs ? 'показаны направления: демо-разметка включена' : 'демо-разметка направлений выключена');
+        });
+
+        document.getElementById('btnOpen').addEventListener('click', function () { setList(!state.open); });
+        document.getElementById('btnRefresh').addEventListener('click', reload);
+
+        document.getElementById('exchangeCard').addEventListener('click', function (event) {
+          var act = event.target.closest('[data-act]');
+          if (act) {
+            if (act.getAttribute('data-act') === 'toggle') setList(!state.open);
+            else reload();
+            return;
+          }
+          var filter = event.target.closest('[data-filter]');
+          if (filter) {
+            state.filter = filter.getAttribute('data-filter');
+            renderCard();
+            syncControls();
+            announce('фильтр: ' + state.filter + ', фактов ' + filteredFacts().length);
+          }
+        });
+
+        document.addEventListener('keydown', function (event) {
+          if (event.key === 'Escape' && state.open) {
+            event.preventDefault();
+            setList(false, true);
+          }
+        });
+      }
+
+      init();
+    </script>
+  </body>
+</html>
