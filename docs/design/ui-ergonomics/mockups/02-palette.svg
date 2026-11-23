@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="1200" viewBox="0 0 1440 1200" font-family="'Segoe UI Variable Display','Segoe UI',Inter,Arial,sans-serif" role="img" aria-label="Макет 2: палитра узлов со своим scroll и нижней границей">
+<title>02 · Палитра узлов: своя высота и свой scroll</title>
+<desc>Макет для утверждения: коробка 250 × clamp(320, 100vh−192, 560) px, внутренний scroll списка, липкие заголовки групп, нижняя граница.</desc>
+<defs><clipPath id="listClip"><rect x="77" y="402" width="340" height="644"/></clipPath></defs>
+<rect x="0" y="0" width="1440" height="1200" fill="#141518"/>
+<rect x="0" y="0" width="1440" height="56" fill="#0f1013"/>
+<line x1="0" y1="56" x2="1440" y2="56" stroke="#22252b"/>
+<rect x="40" y="20" width="16" height="16" rx="4" fill="#4d7cf3"/>
+<text x="66" y="33" fill="#a8aeb8" font-size="13" font-weight="400" >DeepSeek Harness</text>
+<text x="196" y="33" fill="#626974" font-size="13" font-weight="400" >/</text>
+<text x="212" y="33" fill="#a8aeb8" font-size="13" font-weight="400" >дизайн · UI-эргономика панели</text>
+<text x="1400" y="33" fill="#626974" font-size="12" font-weight="400" text-anchor="end" >Задание 0333 · макет 2 из 4 · v1</text>
+
+<text x="40" y="94" fill="#e9ebee" font-size="30" font-weight="600" >02 · Палитра узлов: своя высота и свой scroll</text>
+<text x="40" y="122" fill="#626974" font-size="13" font-weight="400" >Макет 2 из 4 · раздел 2 спеки docs/design/ui-ergonomics/2026-11-22-ergonomics.md · на утверждение заказчику</text>
+
+<rect x="40" y="140" width="1360" height="108" rx="12" fill="#1b1e24" stroke="#2a2f37"/>
+<text x="58" y="168" fill="#4d7cf3" font-size="14" font-weight="700" >Что утверждаем</text>
+<text x="58" y="194" fill="#e9ebee" font-size="13" font-weight="400" >1. Высота палитры ограничена: H = clamp(320 px, calc(100vh − 192 px), 560 px); коробка overflow: hidden, ширина 250 px не меняется.</text>
+<text x="58" y="216" fill="#e9ebee" font-size="13" font-weight="400" >2. Прокручивается только список: flex: 1 1 auto + min-height: 0 + overflow-y: auto. Шапка 40 px, поиск 36 px, подсказка 40 px — вне прокрутки.</text>
+<text x="58" y="238" fill="#e9ebee" font-size="13" font-weight="400" >3. Нижняя граница: padding 0 2px 12px 0, 12 px до следующего блока; карточка не обрезается по низу, H не зависит от содержимого.</text>
+
+<text x="40" y="272" fill="#e9ebee" font-size="18" font-weight="700" >Палитра 250 × H: масштаб 1.45, реальные размеры в px</text>
+<line x1="44" y1="292" x2="44" y2="1104" stroke="#3c434f"/>
+<line x1="39" y1="292" x2="49" y2="292" stroke="#3c434f"/>
+<line x1="39" y1="1104" x2="49" y2="1104" stroke="#3c434f"/>
+<text x="30" y="698" fill="#a8aeb8" font-size="11" font-weight="600" text-anchor="middle" transform="rotate(-90 30 698)">H = 560 px</text>
+
+<rect x="60" y="292" width="363" height="812" rx="23" fill="#1b1e24" stroke="#2a2f37"/>
+<text x="77" y="321" fill="#e9ebee" font-size="17" font-weight="700" >Библиотека узлов</text>
+<rect x="272" y="302" width="34" height="26" rx="13" fill="#262b33"/>
+<text x="289" y="320" fill="#a8aeb8" font-size="12" font-weight="600" text-anchor="middle">12</text>
+<text x="394" y="321" fill="#626974" font-size="18" font-weight="700" text-anchor="middle">‹</text>
+<line x1="77" y1="350" x2="406" y2="350" stroke="#2a2f37"/>
+
+<rect x="77" y="356" width="328" height="40" rx="9" fill="#232830" stroke="#3c434f"/>
+<text x="89" y="383" fill="#626974" font-size="14" font-weight="400" >⌕</text>
+<text x="104" y="382" fill="#626974" font-size="12.5" font-weight="400" >Найти узел: роль, имя или связь</text>
+
+<g clip-path="url(#listClip)">
+<rect x="77" y="402" width="328" height="41" fill="#1b1e24"/>
+<text x="91" y="428" fill="#626974" font-size="11" font-weight="700" letter-spacing="0.08em">▾  ОСНОВНЫЕ РОЛИ</text>
+<text x="393" y="428" fill="#626974" font-size="11" font-weight="700" text-anchor="end">3</text>
+<line x1="77" y1="443" x2="405" y2="443" stroke="#2a2f37"/>
+<rect x="77" y="443" width="328" height="200" rx="14" fill="#20242b" stroke="#2a2f37"/><text x="91" y="474" fill="#e9ebee" font-size="15" font-weight="600" >Критик</text><rect x="91" y="484" width="255" height="90" rx="10" fill="#262b33"/><text x="103" y="536" fill="#a8aeb8" font-size="15" font-weight="400" font-family="'Cascadia Mono','Consolas',monospace">critic</text><text x="91" y="596" fill="#a8aeb8" font-size="12" font-weight="400" >критик · work</text><text x="91" y="617" fill="#4d7cf3" font-size="11" font-weight="400" >возврат report координатору</text><text x="91" y="636" fill="#626974" font-size="10.5" font-weight="400" >проверяет работу и возвращает отчёт координатору</text>
+<rect x="77" y="657" width="328" height="41" fill="#1b1e24"/>
+<text x="91" y="683" fill="#626974" font-size="11" font-weight="700" letter-spacing="0.08em">▸  ПРОВЕРКА И ПРИЁМКА</text>
+<text x="393" y="683" fill="#626974" font-size="11" font-weight="700" text-anchor="end">5</text>
+<line x1="77" y1="698" x2="405" y2="698" stroke="#2a2f37"/>
+<rect x="77" y="698" width="328" height="200" rx="14" fill="#20242b" stroke="#2a2f37"/><text x="91" y="729" fill="#e9ebee" font-size="15" font-weight="600" >Ревьюер</text><rect x="91" y="739" width="255" height="90" rx="10" fill="#262b33"/><text x="103" y="791" fill="#a8aeb8" font-size="15" font-weight="400" font-family="'Cascadia Mono','Consolas',monospace">reviewer</text><text x="91" y="851" fill="#a8aeb8" font-size="12" font-weight="400" >ревьюер · work</text><text x="91" y="872" fill="#4d7cf3" font-size="11" font-weight="400" >проверка · review</text><text x="91" y="891" fill="#626974" font-size="10.5" font-weight="400" >смотрит диф воркера и отдаёт вердикт</text>
+<rect x="77" y="912" width="328" height="41" fill="#1b1e24"/>
+<text x="91" y="938" fill="#626974" font-size="11" font-weight="700" letter-spacing="0.08em">▸  РАБОТА С ЗАДАЧЕЙ</text>
+<text x="393" y="938" fill="#626974" font-size="11" font-weight="700" text-anchor="end">3</text>
+<line x1="77" y1="953" x2="405" y2="953" stroke="#2a2f37"/>
+<rect x="77" y="953" width="328" height="200" rx="14" fill="#20242b" stroke="#2a2f37"/><text x="91" y="984" fill="#e9ebee" font-size="15" font-weight="600" >Дизайнер</text><rect x="91" y="994" width="255" height="90" rx="10" fill="#262b33"/><text x="103" y="1046" fill="#a8aeb8" font-size="15" font-weight="400" font-family="'Cascadia Mono','Consolas',monospace">designer</text><text x="91" y="1106" fill="#a8aeb8" font-size="12" font-weight="400" >дизайнер · work</text><text x="91" y="1127" fill="#4d7cf3" font-size="11" font-weight="400" >поручение · delegate</text><text x="91" y="1146" fill="#626974" font-size="10.5" font-weight="400" >делает графику и макеты по брифу</text>
+</g>
+<rect x="409" y="402" width="12" height="644" rx="6" fill="#1a1d22"/>
+<rect x="411" y="404" width="8" height="170" rx="4" fill="#3c434f"/>
+
+<line x1="77" y1="1046" x2="405" y2="1046" stroke="#2a2f37"/>
+<text x="77" y="1072" fill="#a8aeb8" font-size="11.5" font-weight="400" >Перетащите карточку на схему.</text>
+<text x="77" y="1090" fill="#626974" font-size="10.5" font-weight="400" >или возьмите её с клавиатуры.</text>
+<rect x="378" y="1064" width="23" height="23" rx="6" fill="none" stroke="#3c434f"/>
+<text x="389.5" y="1080" fill="#a8aeb8" font-size="12" font-weight="700" text-anchor="middle">?</text>
+<line x1="60" y1="1104" x2="423" y2="1104" stroke="#3c434f"/>
+<text x="60" y="1122" fill="#626974" font-size="10.5" font-weight="400" >низ палитры: 12 px до следующего блока · 24 px до низа окна</text>
+
+<rect x="470" y="292" width="930" height="90" rx="12" fill="#1b1e24" stroke="#2a2f37"/>
+<text x="486" y="318" fill="#e9ebee" font-size="13" font-weight="700" >Высота: H = clamp(320 px, calc(100vh − 192 px), 560 px)</text>
+<text x="486" y="342" fill="#a8aeb8" font-size="11.5" font-weight="400" >При окне ≥ 752 px — H = 560 px. При окне &lt; 512 px — H = 320 px (минимум), страница прокручивается, но у палитры остаётся свой scroll.</text>
+<text x="486" y="364" fill="#a8aeb8" font-size="11.5" font-weight="400" >Список при H = 560: 560 − 40 (шапка) − 36 (поиск) − 40 (подсказка) = 444 px. При H = 320 — 204 px (одна карточка целиком + заголовки).</text>
+
+<rect x="470" y="394" width="450" height="120" rx="12" fill="#1b1e24" stroke="#2a2f37"/>
+<text x="486" y="418" fill="#e9ebee" font-size="13" font-weight="700" >Слоты и прокрутка (H = 560)</text>
+<text x="486" y="442" fill="#a8aeb8" font-size="11.5" font-weight="400" >Шапка</text><text x="620" y="442" fill="#e9ebee" font-size="11.5" font-weight="400" >40 px · нет прокрутки · «Библиотека узлов» + счётчик</text>
+<text x="486" y="464" fill="#a8aeb8" font-size="11.5" font-weight="400" >Поиск</text><text x="620" y="464" fill="#e9ebee" font-size="11.5" font-weight="400" >36 px · нет прокрутки · поле 28 px + зазор 8 px</text>
+<text x="486" y="486" fill="#a8aeb8" font-size="11.5" font-weight="400" >Список</text><text x="620" y="486" fill="#4d7cf3" font-size="11.5" font-weight="400" >444 px · ДА · overflow-y: auto, scrollbar 8 px</text>
+<text x="486" y="508" fill="#a8aeb8" font-size="11.5" font-weight="400" >Подсказка</text><text x="620" y="508" fill="#e9ebee" font-size="11.5" font-weight="400" >40 px · нет прокрутки · 2 строки + «?» 16 × 16</text>
+
+<rect x="940" y="394" width="460" height="120" rx="12" fill="#1b1e24" stroke="#2a2f37"/>
+<text x="956" y="418" fill="#e9ebee" font-size="13" font-weight="700" >Почему 192 px</text>
+<text x="956" y="442" fill="#a8aeb8" font-size="11.5" font-weight="400" >96 px сверху: полоса 38 + зазор 10 + «Добавить узел» 40 + зазор 8.</text>
+<text x="956" y="464" fill="#a8aeb8" font-size="11.5" font-weight="400" >96 px снизу: низ палитры не упирается в край, остаётся место подсказке/легенде.</text>
+<text x="956" y="486" fill="#a8aeb8" font-size="11.5" font-weight="400" >H &lt; 400 px — подсказка в одну строку; список всё равно прокручивается.</text>
+<text x="956" y="508" fill="#626974" font-size="11" font-weight="400" >Меньше 320 px не опускаемся: палитра остаётся читаемой.</text>
+
+<rect x="470" y="526" width="930" height="140" rx="12" fill="#1b1e24" stroke="#2a2f37"/>
+<text x="486" y="550" fill="#e9ebee" font-size="13" font-weight="700" >Свой scroll: правила, иначе дефект возвращается</text>
+<text x="486" y="576" fill="#a8aeb8" font-size="11.5" font-weight="400" >1. box-sizing: border-box; overflow: hidden на коробке.</text>
+<text x="486" y="598" fill="#a8aeb8" font-size="11.5" font-weight="400" >2. У списка min-height: 0 — только это разрешает сжатие.</text>
+<text x="486" y="620" fill="#a8aeb8" font-size="11.5" font-weight="400" >3. overflow-y: auto; overscroll-behavior: contain.</text>
+<text x="486" y="642" fill="#a8aeb8" font-size="11.5" font-weight="400" >4. scrollbar-gutter: stable; полоса 8 px, цвет T.border2.</text>
+<line x1="770" y1="560" x2="770" y2="650" stroke="#2a2f37"/>
+<text x="786" y="576" fill="#a8aeb8" font-size="11.5" font-weight="400" >5. padding: 0 2px 12px 0 — последняя карточка не упирается.</text>
+<text x="786" y="598" fill="#a8aeb8" font-size="11.5" font-weight="400" >6. scroll-margin-top: 28 px; scroll-margin-bottom: 12 px.</text>
+<text x="786" y="620" fill="#a8aeb8" font-size="11.5" font-weight="400" >7. 12 px до следующего блока, ≥ 24 px до низа окна.</text>
+<text x="786" y="642" fill="#a8aeb8" font-size="11.5" font-weight="400" >8. Высота карточки не зависит от H; обрезка по низу запрещена.</text>
+
+<text x="470" y="690" fill="#e9ebee" font-size="13" font-weight="700" >Сейчас и после: куда уходит палитра (схема, не в масштабе)</text>
+<rect x="470" y="702" width="450" height="158" rx="10" fill="#101216" stroke="#2a2f37"/>
+<text x="486" y="724" fill="#626974" font-size="10" font-weight="700" letter-spacing="0.08em">СЕЙЧАС · высота не задана</text>
+<rect x="486" y="734" width="418" height="112" rx="6" fill="#20242b" stroke="#2a2f37"/>
+<rect x="486" y="734" width="418" height="20" rx="6" fill="#0f1013"/>
+<rect x="498" y="762" width="118" height="84" rx="8" fill="#1b1e24" stroke="#e5484d" stroke-dasharray="4 4"/>
+<rect x="506" y="768" width="102" height="20" rx="4" fill="#262b33"/><rect x="506" y="794" width="102" height="20" rx="4" fill="#262b33"/><rect x="506" y="820" width="102" height="20" rx="4" fill="#262b33"/>
+<text x="632" y="786" fill="#a8aeb8" font-size="11" font-weight="400" >12 карточек ≈ 1780 px</text>
+<text x="632" y="806" fill="#a8aeb8" font-size="11" font-weight="400" >нижние карточки и подсказка</text>
+<text x="632" y="826" fill="#e5484d" font-size="11" font-weight="400" >уходят за край окна</text>
+<text x="486" y="854" fill="#626974" font-size="10" font-weight="400" >страница прокручивается целиком — у палитры нет своей границы</text>
+
+<rect x="940" y="702" width="460" height="158" rx="10" fill="#101216" stroke="#2a2f37"/>
+<text x="956" y="724" fill="#4d7cf3" font-size="10" font-weight="700" letter-spacing="0.08em">ПОСЛЕ · H = 560 px, свой scroll</text>
+<rect x="956" y="734" width="428" height="112" rx="6" fill="#20242b" stroke="#2a2f37"/>
+<rect x="956" y="734" width="428" height="20" rx="6" fill="#0f1013"/>
+<rect x="968" y="762" width="118" height="84" rx="8" fill="#1b1e24" stroke="#31c46e"/>
+<rect x="968" y="762" width="118" height="13" rx="4" fill="#262b33"/>
+<text x="974" y="773" fill="#626974" font-size="7.5" font-weight="400" >40 / 36</text>
+<rect x="976" y="780" width="102" height="46" rx="4" fill="#262b33"/>
+<rect x="1073" y="780" width="6" height="46" rx="3" fill="#3c434f"/>
+<text x="974" y="840" fill="#626974" font-size="7.5" font-weight="400" >40 · подсказка</text>
+<text x="1100" y="786" fill="#a8aeb8" font-size="11" font-weight="400" >коробка 250 × 560 px</text>
+<text x="1100" y="806" fill="#a8aeb8" font-size="11" font-weight="400" >список 444 px — свой scroll</text>
+<text x="1100" y="826" fill="#31c46e" font-size="11" font-weight="400" >низ палитры виден</text>
+<text x="956" y="854" fill="#626974" font-size="10" font-weight="400" >следующий блок через 12 px; страница не прячет палитру</text>
+<rect x="470" y="882" width="930" height="222" rx="12" fill="#1b1e24" stroke="#2a2f37"/>
+<text x="486" y="906" fill="#e9ebee" font-size="13" font-weight="700" >Состояния палитры и клавиатура</text>
+<text x="486" y="930" fill="#a8aeb8" font-size="10.5" font-weight="400" >Развёрнута — шапка, поиск, список, подсказка.</text>
+<text x="486" y="952" fill="#a8aeb8" font-size="10.5" font-weight="400" >Свёрнута — корешок 44 px, 3 иконки 32 × 32.</text>
+<text x="486" y="974" fill="#a8aeb8" font-size="10.5" font-weight="400" >Поиск — «4/12», группы развёрнуты, пустые скрыты.</text>
+<text x="486" y="996" fill="#a8aeb8" font-size="10.5" font-weight="400" >Ничего не найдено — строка + «Сбросить».</text>
+<text x="486" y="1018" fill="#a8aeb8" font-size="10.5" font-weight="400" >Группа свёрнута — только заголовок 28 px.</text>
+<text x="486" y="1040" fill="#a8aeb8" font-size="10.5" font-weight="400" >Карточка в руке — палитра не меняет высоту.</text>
+<text x="486" y="1062" fill="#a8aeb8" font-size="10.5" font-weight="400" >Ошибка чтения — палитра не рисуется.</text>
+<line x1="768" y1="920" x2="768" y2="1076" stroke="#2a2f37"/>
+<text x="786" y="930" fill="#a8aeb8" font-size="10.5" font-weight="400" >Tab — шапка → поиск → заголовки → карточки открытых групп.</text>
+<text x="786" y="952" fill="#a8aeb8" font-size="10.5" font-weight="400" >«/» — фокус в поиск; Esc — очистить, затем выйти.</text>
+<text x="786" y="974" fill="#a8aeb8" font-size="10.5" font-weight="400" >Стрелки — roving tabindex; Home/End — крайние.</text>
+<text x="786" y="996" fill="#a8aeb8" font-size="10.5" font-weight="400" >PageDown — высота списка минус 40 px; Enter/Space — взять.</text>
+<text x="786" y="1018" fill="#a8aeb8" font-size="10.5" font-weight="400" >role="list", карточка — listitem, заголовок — role="button".</text>
+<text x="786" y="1040" fill="#a8aeb8" font-size="10.5" font-weight="400" >заголовок: aria-expanded, aria-controls="pg-group-&lt;id&gt;".</text>
+<text x="786" y="1062" fill="#a8aeb8" font-size="10.5" font-weight="400" >Фокус 2 px T.link через box-shadow — overflow не обрезает.</text>
+<line x1="40" y1="1146" x2="1400" y2="1146" stroke="#2a2f37"/>
+<text x="40" y="1170" fill="#626974" font-size="11.5" font-weight="400" >Исходник: docs/design/ui-ergonomics/mockups/02-palette.svg · превью: preview.html</text>
+<text x="1400" y="1170" fill="#626974" font-size="11.5" font-weight="400" text-anchor="end" >1440 × 1200 px · SVG · проверка node docs/tasks/0333/check.mjs c1</text>
+<a href="preview.html"><rect x="40" y="1146" width="380" height="34" fill="transparent"/></a>
+</svg>

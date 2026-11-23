@@ -1,0 +1,2992 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Библиотека узлов: палитра слева (макет 0009)</title>
+    <!--
+      МАКЕТ, а не рабочий экран. Один файл, без сети и внешних файлов: открывается двойным щелчком.
+      Панель Structure нарисована по текущему коду (lib/client.js, lib/graph.js): карточки 176 x 62
+      со скруглением 10, связи delegate (синяя), review (оранжевый пунктир), report (серый пунктир),
+      peer (серый редкий пунктир), пунктирная граница воркспейса.
+
+      Что показывает. Слева — библиотека из трёх готовых элементов: Критик, Воркер, Папка общего
+      обмена. Элемент выносят на схему: pointerdown, призрак карточки под курсором, линия связи по
+      умолчанию ещё до сброса, сброс на канву — узел появляется в точке сброса и получает связь по
+      текущей логике структуры. Внизу экрана — редактор узла: id, роль, модель, назначение,
+      расписание (у критика), путь и участники (у папки обмена), связи с добавлением и удалением,
+      Сохранить и Отмена, состояния «новый», «существующий», «ошибка валидации с рецептом».
+
+      Почему палитра слева. Библиотека — это те же карточки, что на схеме, только ещё не поставленные.
+      Постоянная колонка слева читается как ящик с деталями: видно все три элемента и их связи по
+      умолчанию одновременно, не открывая меню. Цена — минус 236 px ширины у канвы; на узком экране
+      колонка уходит наверх.
+
+      Связь по умолчанию. Критик: report к координатору и ежедневное расписание 09:00 в карточке.
+      Воркер: delegate от координатора. Папка обмена: peer-связи с воркспейсами structure и workflow,
+      пометка «общий обмен» на карточке и на линиях. Слова, а не только цвет: у выбранного узла связи
+      подписаны, кнопка «Подписи» показывает все.
+    -->
+    <style>
+      :root {
+        --text: #1b1b1f;
+        --muted: #5b5b66;
+        --tertiary: #6f6f7a;
+        --caption: #8b8b96;
+        --line: #dcdde3;
+        --line-strong: #c6c8d1;
+        --accent: #4176e6;
+        --accent-soft: #eef2ff;
+        --warn: #f59e0b;
+        --warn-text: #8a5300;
+        --danger: #ec1313;
+        --ok: #15803d;
+        --panel: #fff;
+        --bg: #eef0f5;
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+      }
+
+      body {
+        padding: 1.1rem;
+        font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+        color: var(--text);
+        background: var(--bg);
+        font-size: 15px;
+      }
+
+      body.is-dragging {
+        cursor: grabbing;
+        user-select: none;
+      }
+
+      .sheet {
+        max-width: 1280px;
+        margin: 0 auto;
+      }
+
+      .kicker {
+        margin: 0 0 0.25rem;
+        font-size: 0.74rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--accent);
+      }
+
+      h1 {
+        margin: 0 0 0.35rem;
+        font-size: 1.45rem;
+        letter-spacing: -0.01em;
+      }
+
+      .lead {
+        margin: 0 0 1rem;
+        max-width: 66rem;
+        color: var(--muted);
+        font-size: 0.92rem;
+        line-height: 1.55;
+      }
+
+      .lead b {
+        color: var(--text);
+      }
+
+      .stage {
+        display: grid;
+        grid-template-columns: 250px minmax(0, 1fr);
+        gap: 1rem;
+        align-items: start;
+      }
+
+      /* ================= Библиотека слева ================= */
+
+      .library {
+        padding: 12px 12px 14px;
+        border-radius: 16px;
+        background: var(--panel);
+        box-shadow: 0 8px 22px rgb(20 20 45 / 6%);
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        position: sticky;
+        top: 12px;
+      }
+
+      .library-head {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      /*
+       * Сворачивание палитры: в свёрнутом виде остаётся узкая полоса с иконками,
+       * схема получает больше места. Кнопка названа словами, а не «×».
+       */
+      .library.is-collapsed {
+        width: 108px;
+        padding: 8px 6px;
+      }
+
+      .library.is-collapsed .library-hint,
+      .library.is-collapsed .library-key,
+      .library.is-collapsed .library-head h2,
+      .library.is-collapsed .library-head .chip,
+      .library.is-collapsed .lib-caption,
+      .library.is-collapsed .lib-note,
+      .library.is-collapsed .lib-sub,
+      .library.is-collapsed .lib-rule {
+        display: none;
+      }
+
+      .library.is-collapsed .library-list {
+        flex-direction: column;
+      }
+
+      .library.is-collapsed .lib-item {
+        width: 100%;
+      }
+
+      .library.is-collapsed .lib-card {
+        padding: 8px 6px;
+      }
+
+      .library.is-collapsed .lib-id {
+        font-size: 0.72rem;
+      }
+
+      .library-toggle {
+        margin-left: auto;
+      }
+
+      .library.is-collapsed .library-toggle {
+        margin-left: 0;
+        width: 100%;
+        padding: 6px 0;
+        font-size: 0.72rem;
+      }
+
+      .library-head h2 {
+        margin: 0;
+        font-size: 0.98rem;
+      }
+
+      .library-head .chip {
+        margin-left: auto;
+      }
+
+      .library-hint {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.76rem;
+        line-height: 1.45;
+      }
+
+      .library-list {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .lib-item {
+        position: relative;
+        display: block;
+        width: 100%;
+        padding: 0;
+        border: 0;
+        background: none;
+        text-align: left;
+        cursor: grab;
+        border-radius: 12px;
+      }
+
+      .lib-item:active {
+        cursor: grabbing;
+      }
+
+      .lib-item:focus,
+      .lib-item:focus-visible {
+        outline: 3px solid var(--accent);
+        outline-offset: 3px;
+      }
+
+      .lib-card {
+        position: relative;
+        display: block;
+        width: 176px;
+        height: 62px;
+        border-radius: 10px;
+        background: #efeff3;
+        border: 1px solid var(--line-strong);
+        overflow: hidden;
+        transition: border-color 0.12s ease, box-shadow 0.12s ease;
+      }
+
+      .lib-item:hover .lib-card,
+      .lib-item:focus-visible .lib-card {
+        border-color: var(--accent);
+        box-shadow: 0 4px 12px rgb(65 118 230 / 18%);
+      }
+
+      .lib-stripe {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 4px;
+        height: 100%;
+        border-radius: 2px;
+      }
+
+      .lib-id {
+        position: absolute;
+        left: 14px;
+        top: 9px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 12.5px;
+        font-weight: 600;
+      }
+
+      .lib-sub {
+        position: absolute;
+        left: 14px;
+        top: 26px;
+        right: 8px;
+        font-size: 10.5px;
+        color: var(--tertiary);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .lib-rule {
+        position: absolute;
+        left: 14px;
+        top: 41px;
+        right: 8px;
+        font-size: 9.5px;
+        font-weight: 600;
+        color: var(--muted);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .lib-plus {
+        position: absolute;
+        right: 7px;
+        top: 7px;
+        width: 16px;
+        height: 16px;
+        border-radius: 999px;
+        border: 1px solid var(--line-strong);
+        background: #fff;
+        color: var(--accent);
+        font-size: 12px;
+        line-height: 14px;
+        text-align: center;
+        font-weight: 700;
+      }
+
+      .lib-item:hover .lib-plus {
+        border-color: var(--accent);
+        background: var(--accent-soft);
+      }
+
+      .lib-caption {
+        display: block;
+        margin-top: 4px;
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--text);
+      }
+
+      .lib-note {
+        display: block;
+        margin-top: 1px;
+        font-size: 10.5px;
+        line-height: 1.4;
+        color: var(--muted);
+      }
+
+      .library-key {
+        border-top: 1px solid var(--line);
+        padding-top: 8px;
+        color: var(--muted);
+        font-size: 11px;
+        line-height: 1.5;
+      }
+
+      .library-key p {
+        margin: 0 0 5px;
+      }
+
+      .library-key p:last-child {
+        margin-bottom: 0;
+      }
+
+      .library-key b {
+        color: var(--text);
+      }
+
+      .library-key kbd {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 10px;
+        padding: 0 3px;
+        border: 1px solid var(--line);
+        border-bottom-width: 2px;
+        border-radius: 4px;
+        background: #f7f7f9;
+      }
+
+      /* ================= Панель Structure ================= */
+
+      .panel {
+        min-width: 0;
+        padding: 12px 12px 14px;
+        border-radius: 14px;
+        background: var(--panel);
+        box-shadow: 0 8px 22px rgb(20 20 45 / 6%);
+        display: flex;
+        flex-direction: column;
+        gap: 9px;
+      }
+
+      .panel-bar,
+      .demo-bar {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+        font-size: 13px;
+      }
+
+      .panel-title {
+        font-size: 15px;
+        font-weight: 600;
+      }
+
+      .chip {
+        padding: 2px 8px;
+        border-radius: 999px;
+        background: #efeff3;
+        color: var(--muted);
+        font-size: 11px;
+      }
+
+      .grow {
+        flex: 1 1 auto;
+      }
+
+      .btn,
+      .seg {
+        padding: 3px 10px;
+        border-radius: 6px;
+        border: 1px solid var(--line);
+        background: #f7f7f9;
+        color: var(--text);
+        cursor: pointer;
+        font: inherit;
+        font-size: 12px;
+      }
+
+      .btn:hover,
+      .seg:hover {
+        border-color: #b9c4e8;
+        background: var(--accent-soft);
+      }
+
+      .btn:focus,
+      .btn:focus-visible,
+      .seg:focus,
+      .seg:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 1px;
+      }
+
+      .seg[aria-pressed='true'] {
+        border-color: var(--accent);
+        background: var(--accent-soft);
+        color: #1b3f8f;
+        font-weight: 600;
+      }
+
+      .demo-bar {
+        padding: 5px 8px;
+        border: 1px dashed var(--line-strong);
+        border-radius: 8px;
+        background: #fbfbfd;
+      }
+
+      .demo-label {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      .demo-hint {
+        font-size: 10.5px;
+        color: var(--caption);
+      }
+
+      .pg-canvas {
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: #f7f7f9;
+        overflow: auto;
+        min-height: 240px;
+      }
+
+      .pg-canvas:focus,
+      .pg-canvas:focus-visible {
+        outline: 3px solid var(--accent);
+        outline-offset: 2px;
+      }
+
+      .pg-canvas svg {
+        display: block;
+        width: 100%;
+        height: auto;
+        min-width: 760px;
+      }
+
+      .pg-legend {
+        display: flex;
+        gap: 14px;
+        flex-wrap: wrap;
+        color: var(--tertiary);
+        font-size: 11px;
+        line-height: 1.45;
+      }
+
+      .pg-key {
+        font-weight: 700;
+      }
+
+      .pg-key--delegate {
+        color: var(--accent);
+      }
+
+      .pg-key--review {
+        color: var(--warn);
+      }
+
+      .pg-key--report {
+        color: var(--muted);
+      }
+
+      .pg-key--peer {
+        color: var(--line-strong);
+      }
+
+      .pg-key--border {
+        color: var(--line-strong);
+      }
+
+      .toast {
+        min-height: 18px;
+        font-size: 11.5px;
+        line-height: 1.45;
+        color: var(--muted);
+      }
+
+      .toast.is-error {
+        color: var(--danger);
+      }
+
+      .toast.is-ok {
+        color: var(--ok);
+      }
+
+      /* ================= Редактор узла внизу ================= */
+
+      .editor {
+        margin-top: 1rem;
+        padding: 14px 16px 12px;
+        border-radius: 16px;
+        background: var(--panel);
+        box-shadow: 0 8px 22px rgb(20 20 45 / 6%);
+      }
+
+      .editor-head {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+        padding-bottom: 8px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .editor-head h2 {
+        margin: 0;
+        font-size: 1rem;
+      }
+
+      .state-chip {
+        padding: 2px 9px;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        background: #f7f7f9;
+        color: var(--muted);
+        font-size: 10.5px;
+        font-weight: 700;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+      }
+
+      .state-chip.is-new {
+        border-color: #b9c4e8;
+        background: var(--accent-soft);
+        color: #1b3f8f;
+      }
+
+      .state-chip.is-error {
+        border-color: #f3b0b0;
+        background: #fff1f1;
+        color: var(--danger);
+      }
+
+      .state-chip.is-saved {
+        border-color: #b7e1c3;
+        background: #f0fbf3;
+        color: var(--ok);
+      }
+
+      .editor-where {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 10.5px;
+        color: var(--caption);
+      }
+
+      .editor-body {
+        display: grid;
+        grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+        gap: 18px;
+        padding-top: 10px;
+      }
+
+      .editor-fields {
+        display: flex;
+        flex-direction: column;
+        gap: 9px;
+        min-width: 0;
+      }
+
+      .editor-side {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        min-width: 0;
+      }
+
+      .field {
+        display: grid;
+        grid-template-columns: 130px minmax(0, 1fr);
+        gap: 8px;
+        align-items: start;
+      }
+
+      .field-label {
+        padding-top: 5px;
+        font-size: 11.5px;
+        font-weight: 700;
+        color: var(--muted);
+        line-height: 1.35;
+      }
+
+      .field-label .req {
+        display: block;
+        font-weight: 400;
+        font-size: 9.5px;
+        color: var(--caption);
+      }
+
+      .field-control {
+        min-width: 0;
+      }
+
+      .input,
+      .select,
+      .textarea {
+        width: 100%;
+        padding: 5px 8px;
+        border: 1px solid var(--line-strong);
+        border-radius: 7px;
+        background: #fff;
+        color: var(--text);
+        font: inherit;
+        font-size: 12px;
+      }
+
+      .input:focus,
+      .input:focus-visible,
+      .select:focus,
+      .select:focus-visible,
+      .textarea:focus,
+      .textarea:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 1px;
+        border-color: var(--accent);
+      }
+
+      .input[readonly] {
+        background: #f7f7f9;
+        color: var(--muted);
+      }
+
+      .textarea {
+        resize: vertical;
+        min-height: 46px;
+        line-height: 1.4;
+      }
+
+      .field-hint {
+        margin: 3px 0 0;
+        font-size: 10.5px;
+        line-height: 1.4;
+        color: var(--caption);
+      }
+
+      .field-error {
+        margin: 3px 0 0;
+        font-size: 10.5px;
+        line-height: 1.4;
+        color: var(--danger);
+      }
+
+      .field.has-error .input,
+      .field.has-error .select,
+      .field.has-error .textarea {
+        border-color: #e58b8b;
+        background: #fffafa;
+      }
+
+      .inline-row {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+
+      .inline-row .input,
+      .inline-row .select {
+        width: auto;
+        min-width: 96px;
+      }
+
+      .inline-row .input--time {
+        width: 74px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      }
+
+      .inline-row .input--path {
+        flex: 1 1 240px;
+        min-width: 180px;
+      }
+
+      .mini-card-wrap {
+        padding: 10px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: #fbfbfd;
+      }
+
+      .mini-card-wrap h3 {
+        margin: 0 0 8px;
+        font-size: 11px;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      .mini-card {
+        position: relative;
+        width: 176px;
+        height: 62px;
+        border-radius: 10px;
+        background: #efeff3;
+        border: 1px solid var(--line-strong);
+        overflow: hidden;
+        font-size: 11px;
+      }
+
+      .mini-card .stripe {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 4px;
+        height: 100%;
+        border-radius: 2px;
+      }
+
+      .mini-card .mc-id {
+        position: absolute;
+        left: 14px;
+        top: 8px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 12.5px;
+        font-weight: 600;
+      }
+
+      .mini-card .mc-sub {
+        position: absolute;
+        left: 14px;
+        top: 25px;
+        right: 8px;
+        font-size: 10.5px;
+        color: var(--tertiary);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .mini-card .mc-state {
+        position: absolute;
+        left: 14px;
+        top: 39px;
+        font-size: 10px;
+        font-weight: 600;
+        color: var(--tertiary);
+      }
+
+      .mini-card .mc-extra {
+        position: absolute;
+        left: 14px;
+        top: 49px;
+        right: 8px;
+        font-size: 8.5px;
+        color: var(--tertiary);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .mini-card.is-exchange {
+        background: #fffdf5;
+        border-style: dashed;
+        border-color: #e6c98a;
+      }
+
+      .mini-card.is-exchange .mc-state {
+        color: var(--warn-text);
+      }
+
+      .preview-note {
+        margin: 8px 0 0;
+        font-size: 10.5px;
+        line-height: 1.45;
+        color: var(--caption);
+      }
+
+      .conn-box {
+        padding: 10px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: #fbfbfd;
+      }
+
+      .conn-box h3 {
+        margin: 0 0 6px;
+        font-size: 11px;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      .conn-hint {
+        margin: 0 0 7px;
+        font-size: 10.5px;
+        line-height: 1.45;
+        color: var(--caption);
+      }
+
+      .conn-list {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        margin-bottom: 8px;
+      }
+
+      .conn-row {
+        display: flex;
+        gap: 7px;
+        align-items: center;
+        flex-wrap: wrap;
+        padding: 4px 6px;
+        border-radius: 7px;
+        background: #fff;
+        border: 1px solid #e7e8ee;
+        font-size: 11px;
+      }
+
+      .conn-row .kind {
+        padding: 0 6px;
+        border-radius: 999px;
+        font-size: 9.5px;
+        font-weight: 700;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+      }
+
+      .kind--delegate {
+        background: #eaf0ff;
+        color: #2b5bd7;
+      }
+
+      .kind--review {
+        background: #fff6e5;
+        color: var(--warn-text);
+      }
+
+      .kind--report {
+        background: #f0f0f4;
+        color: var(--muted);
+      }
+
+      .kind--peer {
+        background: #f4f4f7;
+        color: var(--tertiary);
+      }
+
+      .conn-row .mono {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 10.5px;
+        font-weight: 600;
+      }
+
+      .conn-row .conn-word {
+        color: var(--caption);
+        font-size: 10.5px;
+      }
+
+      .conn-row .remove {
+        margin-left: auto;
+        padding: 1px 6px;
+        border-radius: 5px;
+        border: 1px solid var(--line);
+        background: #fff;
+        color: var(--muted);
+        font: inherit;
+        font-size: 10px;
+        cursor: pointer;
+      }
+
+      .conn-row .remove:hover {
+        border-color: #e58b8b;
+        color: var(--danger);
+      }
+
+      .conn-row .remove:focus-visible,
+      .conn-add .btn:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 1px;
+      }
+
+      .conn-empty {
+        padding: 6px 7px;
+        border: 1px dashed var(--line-strong);
+        border-radius: 7px;
+        background: #fff;
+        font-size: 10.5px;
+        line-height: 1.5;
+        color: var(--muted);
+      }
+
+      .conn-add {
+        display: flex;
+        gap: 5px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+
+      .conn-add .select {
+        width: auto;
+        min-width: 78px;
+        font-size: 11px;
+      }
+
+      .conn-add .btn {
+        font-size: 11px;
+      }
+
+      .editor-error {
+        margin-top: 10px;
+        padding: 9px 11px;
+        border: 1px solid #f3b0b0;
+        border-radius: 10px;
+        background: #fff6f6;
+      }
+
+      .editor-error h3 {
+        margin: 0 0 5px;
+        font-size: 12px;
+        color: var(--danger);
+      }
+
+      .editor-error ol {
+        margin: 0;
+        padding-left: 18px;
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+      }
+
+      .editor-error li {
+        font-size: 11px;
+        line-height: 1.5;
+        color: #5a2a2a;
+      }
+
+      .editor-error li b {
+        color: var(--danger);
+      }
+
+      .editor-error li .fix {
+        color: #2f4a2f;
+      }
+
+      .editor-note {
+        font-size: 11px;
+        line-height: 1.45;
+        color: var(--muted);
+      }
+
+      .editor-note.is-ok {
+        color: var(--ok);
+      }
+
+      .editor-actions {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+        padding-top: 10px;
+        margin-top: 10px;
+        border-top: 1px solid var(--line);
+      }
+
+      .primary {
+        padding: 6px 16px;
+        border: 0;
+        border-radius: 8px;
+        background: var(--accent);
+        color: #fff;
+        font: inherit;
+        font-size: 12.5px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .primary:hover {
+        background: #3567d6;
+      }
+
+      .primary:focus,
+      .primary:focus-visible {
+        outline: 2px solid #1b3f8f;
+        outline-offset: 2px;
+      }
+
+      .primary[disabled],
+      .btn[disabled] {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      .editor-empty {
+        padding: 16px 4px 6px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        max-width: 58rem;
+      }
+
+      .editor-empty b {
+        font-size: 13px;
+      }
+
+      .editor-empty p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.5;
+      }
+
+      /* ================= Пояснения ================= */
+
+      .notes {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 1rem;
+        margin-top: 1rem;
+      }
+
+      .panel-note {
+        padding: 1rem 1.1rem 1.1rem;
+        border-radius: 16px;
+        background: var(--panel);
+        box-shadow: 0 8px 22px rgb(20 20 45 / 6%);
+      }
+
+      .panel-note h2 {
+        margin: 0 0 0.5rem;
+        font-size: 0.95rem;
+      }
+
+      .panel-note p,
+      .panel-note li {
+        font-size: 0.8rem;
+        line-height: 1.5;
+        color: #3c3c48;
+      }
+
+      .panel-note p {
+        margin: 0 0 0.5rem;
+      }
+
+      .panel-note p:last-child {
+        margin-bottom: 0;
+      }
+
+      .panel-note ul {
+        margin: 0;
+        padding-left: 1.1rem;
+      }
+
+      .sr {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+      }
+
+      /* ================= SVG: карточка и фокус ================= */
+
+      .pg-node {
+        cursor: pointer;
+        outline: none;
+      }
+
+      .pg-node-frame {
+        transition: stroke-width 0.12s ease;
+      }
+
+      .pg-node:hover .pg-node-frame {
+        stroke-width: 2;
+      }
+
+      .pg-node:focus .pg-node-frame,
+      .pg-node:focus-visible .pg-node-frame {
+        stroke: var(--accent);
+        stroke-width: 2;
+      }
+
+      /* ================= Призрак карточки ================= */
+
+      .ghost {
+        position: fixed;
+        z-index: 50;
+        width: 176px;
+        height: 62px;
+        transform: translate(-50%, -50%);
+        border-radius: 10px;
+        border: 2px dashed var(--accent);
+        background: rgb(255 255 255 / 94%);
+        box-shadow: 0 10px 26px rgb(20 20 45 / 22%);
+        pointer-events: none;
+        padding: 8px 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+      }
+
+      .ghost[hidden] {
+        display: none;
+      }
+
+      .ghost-name {
+        font-size: 12.5px;
+        font-weight: 700;
+      }
+
+      .ghost-note {
+        font-size: 9.5px;
+        color: var(--muted);
+      }
+
+      .ghost-rule {
+        font-size: 9.5px;
+        font-weight: 600;
+        color: var(--accent);
+      }
+
+      @media (max-width: 1120px) {
+        .stage {
+          grid-template-columns: 1fr;
+        }
+
+        .library {
+          position: static;
+        }
+
+        .library-list {
+          flex-direction: row;
+          flex-wrap: wrap;
+        }
+
+        .lib-item {
+          width: auto;
+        }
+
+        .editor-body {
+          grid-template-columns: 1fr;
+        }
+
+        .notes {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 640px) {
+        body {
+          padding: 0.6rem;
+        }
+
+        .field {
+          grid-template-columns: 1fr;
+        }
+
+        .field-label {
+          padding-top: 0;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="sheet">
+      <header class="intro">
+        <p class="kicker">Structure · заказ 0009 · вариант 1 из 2</p>
+        <h1>Палитра узлов слева</h1>
+        <p class="lead">
+          Библиотека — три готовых элемента: <b>Критик</b>, <b>Воркер</b>, <b>Папка общего обмена</b>.
+          Элемент выносят на схему: <code>pointerdown</code>, призрак карточки под курсором, линия
+          связи по умолчанию ещё до сброса. Сброс на канву — узел встаёт в точке сброса и получает
+          связь по текущей логике: Критик — <b>report</b> к координатору и ежедневное расписание,
+          Воркер — <b>delegate</b> от координатора, Папка обмена — <b>peer</b> с воркспейсами и
+          пометка «общий обмен». Внизу — редактор узла: поля, расписание или путь с участниками,
+          связи, «Сохранить» и «Отмена».
+        </p>
+      </header>
+
+      <div class="stage">
+        <aside class="library" aria-labelledby="libTitle">
+          <div class="library-head">
+            <h2 id="libTitle">Библиотека узлов</h2>
+            <span class="chip">3 элемента</span>
+            <button type="button" class="btn library-toggle" id="libToggle" aria-expanded="true"
+              aria-controls="libraryList" title="свернуть палитру, чтобы дать место схеме">Свернуть</button>
+          </div>
+          <p class="library-hint">
+            Вынесите элемент на схему — узел появится в точке сброса. Связь по умолчанию видна
+            сразу и подписана словами.
+          </p>
+          <div class="library-list" id="libraryList" role="group" aria-label="Готовые элементы структуры"></div>
+          <div class="library-key">
+            <p><b>С клавиатуры.</b> <kbd>Tab</kbd> до элемента, <kbd>Enter</kbd> — взять, стрелки —
+            двигать, <kbd>Enter</kbd> — поставить, <kbd>Esc</kbd> — отмена.</p>
+            <p><b>Связь по умолчанию</b> правится в редакторе: её можно удалить и добавить свою —
+            delegate, review, report или peer.</p>
+          </div>
+        </aside>
+
+        <div class="panel" role="region" aria-label="Макет панели Structure">
+          <div class="panel-bar">
+            <span class="panel-title">Structure</span>
+            <span class="chip" id="chipNodes">5 узлов</span>
+            <span class="chip" id="chipEdges">6 связей</span>
+            <span class="grow"></span>
+            <button type="button" class="btn" id="btnLabels" aria-pressed="false">Подписи: у выбранного</button>
+            <button type="button" class="btn" id="btnReset">Сбросить схему</button>
+          </div>
+
+          <div class="demo-bar" role="group" aria-label="Показать состояние редактора">
+            <span class="demo-label">Редактор:</span>
+            <button type="button" class="seg" data-demo="new" aria-pressed="false">новый узел</button>
+            <button type="button" class="seg" data-demo="existing" aria-pressed="true">существующий</button>
+            <button type="button" class="seg" data-demo="error" aria-pressed="false">ошибка</button>
+            <span class="demo-hint">демо-кнопки меняют состояние редактора, схема остаётся живой</span>
+          </div>
+
+          <div
+            class="pg-canvas"
+            id="canvasWrap"
+            tabindex="0"
+            role="group"
+            aria-label="Канва структуры. Выберите узел или вынесите элемент из библиотеки; стрелки двигают взятую карточку, Enter ставит её, Esc отменяет."
+          >
+            <svg id="svg" role="group" aria-label="Схема структуры: пять узлов, шесть связей, пунктирная граница воркспейса"></svg>
+          </div>
+
+          <div class="pg-legend" aria-label="Виды связей и граница воркспейса">
+            <span><span class="pg-key pg-key--delegate">—</span> delegate: поручение</span>
+            <span><span class="pg-key pg-key--review">– –</span> review: проверка</span>
+            <span><span class="pg-key pg-key--report">· ·</span> report: возврат</span>
+            <span><span class="pg-key pg-key--peer">┄</span> peer: общий обмен</span>
+            <span><span class="pg-key pg-key--border">┊</span> граница воркспейса</span>
+          </div>
+
+          <div class="toast" id="toast" role="status"></div>
+        </div>
+      </div>
+
+      <section class="editor" id="editor" aria-labelledby="editorTitle">
+        <div class="editor-head">
+          <h2 id="editorTitle">Редактор узла</h2>
+          <span class="state-chip" id="editorState">существующий узел</span>
+          <span class="grow"></span>
+          <span class="editor-where" id="editorWhere"></span>
+        </div>
+        <div id="editorBody"></div>
+        <div class="editor-actions">
+          <button type="button" class="primary" id="saveBtn">Сохранить</button>
+          <button type="button" class="btn" id="cancelBtn">Отмена</button>
+          <span class="editor-note" id="editorNote"></span>
+        </div>
+      </section>
+
+      <div class="notes">
+        <section class="panel-note">
+          <h2>Почему палитра, а не меню</h2>
+          <p>
+            Библиотека — это те же карточки 176 × 62, что на схеме, только ещё не поставленные.
+            Постоянная колонка слева читается как ящик с деталями: все три элемента и их связи по
+            умолчанию видны одновременно. Цена — 250 px ширины у канвы; на узком экране колонка
+            уходит наверх.
+          </p>
+          <p>
+            Призрак — настоящая карточка с именем и будущей связью, а не курсор с плюсом: человек
+            видит, что именно встанет и куда пойдёт линия, ещё до сброса.
+          </p>
+        </section>
+        <section class="panel-note">
+          <h2>Связь по умолчанию словами</h2>
+          <p>
+            Критик приходит с <b>report</b> к координатору и ежедневным расписанием 09:00 в карточке.
+            Воркер — с <b>delegate</b> от координатора. Папка обмена — с <b>peer</b>-связями к
+            воркспейсам structure и workflow и пометкой «общий обмен» на карточке и на линиях.
+          </p>
+          <p>
+            Вид связи читается словом в подписи и в редакторе, цвет только дублирует. Кнопка
+            «Подписи» показывает все связи, по умолчанию подписаны связи выбранного узла.
+          </p>
+        </section>
+        <section class="panel-note">
+          <h2>Ошибка = причина + рецепт</h2>
+          <p>
+            Валидация говорит тремя частями: что случилось, почему и что сделать. Например: id
+            занят — в структуре уже есть узел с таким id — возьмите свободный id или переименуйте
+            существующий. Ошибка стоит и в шапке редактора, и у поля, фокус уходит в первое
+            неверное поле.
+          </p>
+          <p>
+            Пустые значения не показываются прочерком: «роль не задана — узел читается как
+            исполнитель без специализации», «расписание выкл — запускается только по поручению».
+          </p>
+        </section>
+      </div>
+    </div>
+
+    <div id="ghost" class="ghost" hidden aria-hidden="true"></div>
+    <div id="live" class="sr" aria-live="polite"></div>
+
+    <script>
+      'use strict';
+
+      /*
+       * Макет на чистом DOM: ни сборки, ни зависимостей, ни сети. Схема строится теми же числами,
+       * что в lib/graph.js: карточка 176 x 62, скругление 10, слои по delegate. В рабочем клиенте
+       * это React.createElement и SVG — здесь та же геометрия и тот же визуальный язык.
+       */
+
+      var T = {
+        text: '#1b1b1f',
+        secondary: '#5b5b66',
+        tertiary: '#6f6f7a',
+        caption: '#8b8b96',
+        bg1: '#f7f7f9',
+        bg2: '#efeff3',
+        border1: '#dcdde3',
+        border2: '#c6c8d1',
+        link: '#4176e6',
+        success: '#22c55e',
+        successText: '#15803d',
+        warn: '#f59e0b',
+        warnText: '#8a5300',
+        danger: '#ec1313',
+        mono: 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace'
+      };
+
+      var NODE_W = 176, NODE_H = 62;
+      var CANVAS_W = 880, CANVAS_H = 430, PAD = 16;
+      var BORDER = { x: 8, y: 8, w: 660, h: 410 };
+      var TAG_X = 704, TAG_W = 152, TAG_H = 96, TAG_TOP = 52, TAG_GAP = 112;
+
+      var NODE_ID = /^[a-z0-9][a-z0-9._-]*$/i;
+      var TIMEZONES = ['Europe/Moscow', 'UTC', 'Asia/Vladivostok', 'Europe/Berlin'];
+      var MODELS = {
+        work: { provider: 'opencode', model: 'deepseek-v4.1-flash', family: 'deepseek' },
+        critic: { provider: 'opencode', model: 'glm-5.3-flash', family: 'zhipu' },
+        designer: { provider: 'opencode', model: 'deepseek-v4.1-flash', family: 'deepseek' }
+      };
+      var WORKSPACES = ['structure', 'workflow', 'design', 'kb-core'];
+      var KIND_WORD = { delegate: 'поручение', review: 'проверка', report: 'возврат', peer: 'общий обмен' };
+      var KIND_MEANING = {
+        delegate: 'источник передаёт работу цели',
+        review: 'цель оценивает работу источника',
+        report: 'цель принимает результат источника без оценки',
+        peer: 'равные участники, направление не задано'
+      };
+
+      var TEMPLATES = {
+        critic: {
+          key: 'critic',
+          title: 'Критик',
+          role: 'критик',
+          model: 'critic',
+          brief: 'разбирает итоги дня по расписанию и возвращает аналитику координатору',
+          baseId: 'critic',
+          schedule: { at: '09:00', timeZone: 'Europe/Moscow' },
+          rule: 'report → coordinator · ежедневно 09:00',
+          ruleLong: 'связь report к координатору и ежедневное расписание 09:00'
+        },
+        worker: {
+          key: 'worker',
+          title: 'Воркер',
+          role: 'исполнитель',
+          model: 'work',
+          brief: 'делает основную работу по поручению координатора',
+          baseId: 'worker',
+          rule: 'delegate ← coordinator',
+          ruleLong: 'связь delegate от координатора'
+        },
+        exchange: {
+          key: 'exchange',
+          title: 'Папка общего обмена',
+          role: 'обмен',
+          model: '',
+          brief: 'общая папка обмена файлами между воркспейсами',
+          baseId: 'exchange',
+          path: 'C:/Users/Goryachev/Documents/deepseek-harness/coordination',
+          participants: ['structure', 'workflow'],
+          rule: 'только сообщения · по соглашению',
+          ruleLong: 'прямого обмена между агентами нет: папка хранит сообщения, с агентами узел не соединяется'
+        }
+      };
+
+      function initialNodes() {
+        return [
+          { id: 'coordinator', role: 'координатор', model: 'work', brief: 'ведёт план и раздаёт работу', x: 140, y: 24, self: true },
+          { id: 'worker', role: 'исполнитель', model: 'work', brief: 'делает основную работу', x: 20, y: 182, type: 'worker' },
+          { id: 'designer', role: 'исполнитель', model: 'designer', brief: 'делает графику', x: 260, y: 182 },
+          { id: 'judge', role: 'приёмщик', model: 'critic', brief: 'проверяет работу отдельной сессией', x: 140, y: 340 },
+          {
+            id: 'critic',
+            role: 'критик',
+            model: 'critic',
+            brief: 'разбирает итоги дня по расписанию и возвращает аналитику координатору',
+            schedule: { at: '09:00', timeZone: 'Europe/Moscow' },
+            x: 260,
+            y: 340,
+            type: 'critic'
+          }
+        ];
+      }
+
+      function initialEdges() {
+        return [
+          { from: 'coordinator', to: 'worker', kind: 'delegate', fromSide: 'bottom', toSide: 'top' },
+          { from: 'coordinator', to: 'designer', kind: 'delegate', fromSide: 'bottom', toSide: 'top', offset: -9 },
+          { from: 'worker', to: 'judge', kind: 'review', fromSide: 'bottom', toSide: 'top' },
+          { from: 'designer', to: 'coordinator', kind: 'report', fromSide: 'top', toSide: 'bottom', offset: 9 },
+          { from: 'judge', to: 'coordinator', kind: 'report', fromSide: 'top', toSide: 'bottom' },
+          { from: 'critic', to: 'coordinator', kind: 'report', fromSide: 'top', toSide: 'bottom' }
+        ];
+      }
+
+      var NODES = initialNodes();
+      var EDGES = initialEdges();
+
+      var state = {
+        selected: 'critic',
+        labelsAll: false,
+        editor: null,
+        drag: null,
+        flash: null,
+        suppressClick: 0,
+        demoKey: null
+      };
+
+      /* ---------- маленькие помощники ---------- */
+
+      function esc(value) {
+        return String(value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+      }
+
+      function clone(value) {
+        return JSON.parse(JSON.stringify(value));
+      }
+
+      function clamp(value, min, max) {
+        return Math.max(min, Math.min(max, value));
+      }
+
+      function mk(name, map, inner) {
+        var list = [];
+        for (var key in map) {
+          if (!Object.prototype.hasOwnProperty.call(map, key)) continue;
+          var value = map[key];
+          if (value === null || value === undefined || value === false) continue;
+          list.push(key + '="' + String(value) + '"');
+        }
+        var open = '<' + name + (list.length ? ' ' + list.join(' ') : '');
+        if (inner === undefined) return open + '/>';
+        return open + '>' + inner + '</' + name + '>';
+      }
+
+      function truncate(value, length) {
+        var text = String(value || '');
+        return text.length > length ? text.slice(0, length - 1) + '…' : text;
+      }
+
+      function nodeById(id) {
+        return NODES.filter(function (node) { return node.id === id; })[0];
+      }
+
+      function isExchange(node) {
+        return Boolean(node) && node.type === 'exchange';
+      }
+
+      function uniqueId(base) {
+        if (!nodeById(base)) return base;
+        var index = 2;
+        while (nodeById(base + '-' + index)) index += 1;
+        return base + '-' + index;
+      }
+
+      var ROLE_COLORS = [T.link, T.success, T.warn, '#a855f7', '#06b6d4', '#f472b6', '#84cc16', '#fb7185'];
+
+      function roleColor(role) {
+        var value = String(role || '');
+        var hash = 0;
+        for (var index = 0; index < value.length; index += 1) hash = (hash * 31 + value.charCodeAt(index)) % 100000;
+        return ROLE_COLORS[hash % ROLE_COLORS.length];
+      }
+
+      function nodeState(node) {
+        if (node && node.self) return { key: 'running', word: 'работает', color: T.successText, hint: 'координатор ведёт план' };
+        return { key: 'idle', word: 'свободен', color: T.tertiary, hint: 'по этому узлу сейчас никто не работает' };
+      }
+
+      function nodeSubtitle(node) {
+        if (isExchange(node)) return 'обмен · папка общего обмена';
+        var role = node.role || 'роль не задана';
+        var model = node.model || 'модель не задана';
+        return truncate(role + ' · ' + model, 27);
+      }
+
+      function nodeExtra(node) {
+        if (isExchange(node)) return (node.participants || []).join(', ');
+        if (node.schedule) return '◷ ежедневно ' + node.schedule.at;
+        return '';
+      }
+
+      function nodeTip(node) {
+        var st = nodeState(node);
+        var lines = [node.id];
+        lines.push('роль: ' + (node.role || 'не задана — узел читается как исполнитель без специализации'));
+        lines.push('модель: ' + (node.model ? (MODELS[node.model] ? node.model + ' → ' + MODELS[node.model].provider + '/' + MODELS[node.model].model : node.model + ' — алиас не объявлен') : 'не задана — агента по узлу запустить нельзя'));
+        lines.push('состояние: ' + st.word + ' — ' + st.hint);
+        if (node.schedule) lines.push('расписание: ежедневно ' + node.schedule.at + ' (' + node.schedule.timeZone + ')');
+        else lines.push('расписание: выкл — узел запускается только по поручению');
+        if (isExchange(node)) lines.push('общий обмен: участники ' + (node.participants || []).join(', ') + '; путь ' + (node.path || 'не задан'));
+        lines.push('позиция на канве: x ' + Math.round(node.x) + ', y ' + Math.round(node.y));
+        lines.push(node.brief || 'назначение не задано');
+        return lines.join('\n');
+      }
+
+      function edgeStroke(kind) {
+        if (kind === 'delegate') return T.link;
+        if (kind === 'review') return T.warn;
+        if (kind === 'report') return T.secondary;
+        return T.border2;
+      }
+
+      function edgeDash(kind) {
+        if (kind === 'review') return '5 4';
+        if (kind === 'peer') return '2 4';
+        if (kind === 'report') return '1 4';
+        return null;
+      }
+
+      function edgeMarker(kind) {
+        if (kind === 'delegate') return 'url(#pg-arrow-delegate)';
+        if (kind === 'review') return 'url(#pg-arrow-review)';
+        if (kind === 'report') return 'url(#pg-arrow-report)';
+        return 'url(#pg-arrow-peer)';
+      }
+
+      function marker(id, color) {
+        return '<marker id="' + id + '" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">'
+          + '<path d="M 0 0 L 10 5 L 0 10 z" fill="' + color + '"/></marker>';
+      }
+
+      function defsSvg() {
+        return '<defs>'
+          + marker('pg-arrow-delegate', T.link)
+          + marker('pg-arrow-review', T.warn)
+          + marker('pg-arrow-report', T.secondary)
+          + marker('pg-arrow-peer', T.border2)
+          + '</defs>';
+      }
+
+      /* ---------- геометрия ---------- */
+
+      function anchor(node, side) {
+        if (side === 'top') return { x: node.x + NODE_W / 2, y: node.y };
+        if (side === 'bottom') return { x: node.x + NODE_W / 2, y: node.y + NODE_H };
+        if (side === 'left') return { x: node.x, y: node.y + NODE_H / 2 };
+        return { x: node.x + NODE_W, y: node.y + NODE_H / 2 };
+      }
+
+      function autoSides(a, b) {
+        var dx = (b.x + NODE_W / 2) - (a.x + NODE_W / 2);
+        var dy = (b.y + NODE_H / 2) - (a.y + NODE_H / 2);
+        if (Math.abs(dx) >= Math.abs(dy)) return dx >= 0 ? ['right', 'left'] : ['left', 'right'];
+        return dy >= 0 ? ['bottom', 'top'] : ['top', 'bottom'];
+      }
+
+      function edgePoints(edge) {
+        var a = nodeById(edge.from);
+        var b = nodeById(edge.to);
+        if (!a || !b) return null;
+        var sides = autoSides(a, b);
+        var fromSide = edge.fromSide || sides[0];
+        var toSide = edge.toSide || sides[1];
+        var p1 = anchor(a, fromSide);
+        var p2 = anchor(b, toSide);
+        var off = edge.offset || 0;
+        var dx = p2.x - p1.x;
+        var dy = p2.y - p1.y;
+        var len = Math.sqrt(dx * dx + dy * dy) || 1;
+        var ox = (-dy / len) * off;
+        var oy = (dx / len) * off;
+        return { x1: p1.x + ox, y1: p1.y + oy, x2: p2.x + ox, y2: p2.y + oy };
+      }
+
+      function workspaceAnchor(node, name) {
+        var cx = node.x + NODE_W / 2;
+        var cy = node.y + NODE_H / 2;
+        if (name === 'structure') {
+          var candidates = [
+            { x: clamp(cx, BORDER.x + 16, BORDER.x + BORDER.w - 16), y: BORDER.y, d: Math.abs(cy - BORDER.y) },
+            { x: clamp(cx, BORDER.x + 16, BORDER.x + BORDER.w - 16), y: BORDER.y + BORDER.h, d: Math.abs(cy - (BORDER.y + BORDER.h)) },
+            { x: BORDER.x, y: clamp(cy, BORDER.y + 16, BORDER.y + BORDER.h - 16), d: Math.abs(cx - BORDER.x) },
+            { x: BORDER.x + BORDER.w, y: clamp(cy, BORDER.y + 16, BORDER.y + BORDER.h - 16), d: Math.abs(cx - (BORDER.x + BORDER.w)) }
+          ];
+          candidates.sort(function (left, right) { return left.d - right.d; });
+          var best = candidates[0];
+          /* Слишком короткая линия к границе читалась бы как обрезок: если папка стоит
+             вплотную, точка на границе сдвигается вдоль неё, и связь видно. */
+          if (best.d < 90) {
+            if (best.y === BORDER.y || best.y === BORDER.y + BORDER.h) {
+              var direction = cx < BORDER.x + BORDER.w / 2 ? 1 : -1;
+              best.x = clamp(best.x + direction * 110, BORDER.x + 24, BORDER.x + BORDER.w - 24);
+            } else {
+              var directionY = cy < BORDER.y + BORDER.h / 2 ? 1 : -1;
+              best.y = clamp(best.y + directionY * 110, BORDER.y + 24, BORDER.y + BORDER.h - 24);
+            }
+          }
+          return { x: best.x, y: best.y };
+        }
+        var index = Math.max(0, WORKSPACES.indexOf(name) - 1);
+        return { x: TAG_X, y: TAG_TOP + index * TAG_GAP + TAG_H / 2 };
+      }
+
+      /* ---------- связи: обычные и обменные ---------- */
+
+      function allEdgeViews() {
+        var views = [];
+        EDGES.forEach(function (edge) {
+          var points = edgePoints(edge);
+          if (!points) return;
+          views.push({
+            from: edge.from,
+            to: edge.to,
+            kind: edge.kind,
+            x1: points.x1,
+            y1: points.y1,
+            x2: points.x2,
+            y2: points.y2,
+            peer: false
+          });
+        });
+        NODES.forEach(function (node) {
+          if (!isExchange(node)) return;
+          (node.participants || []).forEach(function (name) {
+            var target = workspaceAnchor(node, name);
+            var side = target.x > node.x + NODE_W / 2 ? 'right' : target.x < node.x + NODE_W / 2 ? 'left' : target.y > node.y + NODE_H / 2 ? 'bottom' : 'top';
+            var start = anchor(node, side);
+            views.push({
+              from: node.id,
+              to: 'workspace:' + name,
+              kind: 'peer',
+              x1: start.x,
+              y1: start.y,
+              x2: target.x,
+              y2: target.y,
+              peer: true,
+              workspace: name
+            });
+          });
+        });
+        return views;
+      }
+
+      function edgeLabelText(view) {
+        return view.kind + ' · ' + KIND_WORD[view.kind] + (view.peer ? ' · ' + view.workspace : '');
+      }
+
+      function edgeTitle(view) {
+        if (view.peer) {
+          return 'общий обмен: папка ' + view.from + ' и воркспейс ' + view.workspace
+            + '. Файлы папки видят оба воркспейса; направление не задано.';
+        }
+        return view.kind + ' (' + KIND_WORD[view.kind] + '): ' + KIND_MEANING[view.kind]
+          + '. ' + view.from + ' → ' + view.to + '.';
+      }
+
+      function showLabel(view) {
+        if (state.labelsAll) return true;
+        if (state.selected && (view.from === state.selected || view.to === state.selected)) return true;
+        if (state.flash) {
+          if (state.flash.workspace && view.peer && view.from === state.flash.from) return true;
+          if (view.from === state.flash.from && view.to === state.flash.to && view.kind === state.flash.kind) return true;
+        }
+        return false;
+      }
+
+      function pointInNode(x, y, pad) {
+        return NODES.some(function (node) {
+          return x > node.x - pad && x < node.x + NODE_W + pad && y > node.y - pad && y < node.y + NODE_H + pad;
+        });
+      }
+
+      /* Подпись ищет свободное место у линии: середина может лежать на карточке,
+         тогда берётся точка ближе к концу или сдвиг на другую сторону линии. */
+      function labelPoint(view) {
+        var dx = view.x2 - view.x1;
+        var dy = view.y2 - view.y1;
+        var len = Math.sqrt(dx * dx + dy * dy) || 1;
+        var px = (-dy / len) * 12;
+        var py = (dx / len) * 12;
+        var fractions = [0.5, 0.38, 0.62, 0.28, 0.72];
+        var fallback = { x: view.x1 + dx * 0.5 + px, y: view.y1 + dy * 0.5 + py };
+        for (var index = 0; index < fractions.length; index += 1) {
+          var x = view.x1 + dx * fractions[index];
+          var y = view.y1 + dy * fractions[index];
+          if (!pointInNode(x + px, y + py, 12)) return { x: x + px, y: y + py };
+          if (!pointInNode(x - px, y - py, 12)) return { x: x - px, y: y - py };
+        }
+        return fallback;
+      }
+
+      function labelSvg(view) {
+        var point = labelPoint(view);
+        var fill = view.kind === 'review' ? T.warnText : view.kind === 'delegate' ? '#2b5bd7' : T.secondary;
+        return mk('text', {
+          x: point.x,
+          y: point.y,
+          'text-anchor': 'middle',
+          'font-size': 9,
+          fill: fill,
+          'paint-order': 'stroke',
+          stroke: T.bg1,
+          'stroke-width': 3,
+          'stroke-linejoin': 'round'
+        }, esc(edgeLabelText(view)));
+      }
+
+      function edgeSvg(view) {
+        return '<g><title>' + esc(edgeTitle(view)) + '</title>'
+          + mk('line', {
+            x1: view.x1,
+            y1: view.y1,
+            x2: view.x2,
+            y2: view.y2,
+            stroke: edgeStroke(view.kind),
+            'stroke-width': view.kind === 'peer' ? 1.2 : 1.5,
+            'stroke-dasharray': edgeDash(view.kind),
+            'marker-end': edgeMarker(view.kind),
+            'marker-start': view.kind === 'peer' ? edgeMarker(view.kind) : null,
+            opacity: view.kind === 'peer' ? 0.9 : 1
+          })
+          + '</g>';
+      }
+
+      /* ---------- граница и воркспейсы ---------- */
+
+      function borderSvg() {
+        return mk('rect', {
+          x: BORDER.x,
+          y: BORDER.y,
+          width: BORDER.w,
+          height: BORDER.h,
+          rx: 12,
+          fill: 'none',
+          stroke: T.border2,
+          'stroke-width': 1.2,
+          'stroke-dasharray': '6 5'
+        })
+          + mk('text', { x: BORDER.x + 10, y: BORDER.y + 16, 'font-size': 9, fill: T.caption }, 'воркспейс structure')
+          + mk('text', { x: BORDER.x + BORDER.w - 10, y: BORDER.y + 16, 'font-size': 9, fill: T.caption, 'text-anchor': 'end' }, 'граница воркспейса');
+      }
+
+      function usedWorkspaces() {
+        var used = {};
+        NODES.forEach(function (node) {
+          if (!isExchange(node)) return;
+          (node.participants || []).forEach(function (name) {
+            if (name !== 'structure') used[name] = true;
+          });
+        });
+        return used;
+      }
+
+      function tagSvg(name) {
+        var index = Math.max(0, WORKSPACES.indexOf(name) - 1);
+        var y = TAG_TOP + index * TAG_GAP;
+        return '<g class="pg-tag"><title>Воркспейс ' + esc(name) + ': участник общего обмена. Файлы папки видят оба воркспейса.</title>'
+          + mk('rect', { x: TAG_X, y: y, width: TAG_W, height: TAG_H, rx: 12, fill: '#fff', stroke: T.border2, 'stroke-width': 1.2, 'stroke-dasharray': '5 4' })
+          + mk('rect', { x: TAG_X + 5, y: y + 5, width: TAG_W - 10, height: TAG_H - 10, rx: 9, fill: 'none', stroke: T.border1, 'stroke-width': 1, 'stroke-dasharray': '2 3' })
+          + mk('text', { x: TAG_X + 12, y: y + 20, 'font-size': 9, fill: T.caption, 'letter-spacing': 1 }, 'ВНЕ · ВОРКСПЕЙС')
+          + mk('text', { x: TAG_X + 12, y: y + 39, 'font-size': 12, 'font-weight': 600, fill: T.text, style: 'font-family:' + T.mono }, esc(name))
+          + mk('text', { x: TAG_X + 12, y: y + 56, 'font-size': 9.5, fill: T.secondary }, 'участник общего обмена')
+          + mk('text', { x: TAG_X + 12, y: y + 72, 'font-size': 9.5, fill: T.caption }, 'файлы видят оба воркспейса')
+          + '</g>';
+      }
+
+      function tagsSvg() {
+        var used = usedWorkspaces();
+        var list = WORKSPACES.filter(function (name) { return name !== 'structure' && used[name]; });
+        if (!list.length) return '';
+        return mk('text', { x: TAG_X, y: TAG_TOP - 12, 'font-size': 9, fill: T.caption }, 'вне этого воркспейса')
+          + list.map(tagSvg).join('');
+      }
+
+      /* ---------- карточка узла ---------- */
+
+      function nodeSvg(node) {
+        var st = nodeState(node);
+        var selected = state.selected === node.id;
+        var running = st.key === 'running';
+        var clip = 'pg-clip-' + String(node.id).replace(/[^A-Za-z0-9_-]/g, '_');
+        var parts = [];
+        parts.push('<title>' + esc(nodeTip(node)) + '</title>');
+        parts.push('<defs><clipPath id="' + clip + '"><rect width="' + NODE_W + '" height="' + NODE_H + '" rx="10"/></clipPath></defs>');
+        parts.push(mk('rect', {
+          class: 'pg-node-frame',
+          width: NODE_W,
+          height: NODE_H,
+          rx: 10,
+          fill: isExchange(node) ? '#fffdf5' : T.bg2,
+          stroke: running ? T.success : selected ? T.link : T.border2,
+          'stroke-width': running ? 3 : selected ? 2 : 1,
+          'stroke-dasharray': isExchange(node) ? '6 4' : null
+        }));
+        parts.push('<g clip-path="url(#' + clip + ')"><rect width="4" height="' + NODE_H + '" rx="2" fill="' + roleColor(node.role) + '"/></g>');
+        if (running) {
+          parts.push('<circle cx="' + (NODE_W - 10) + '" cy="10" r="4" fill="' + T.success + '" stroke="#fff" stroke-width="1"><title>' + esc(st.hint) + '</title></circle>');
+        }
+        parts.push(mk('text', { x: 14, y: 22, 'font-size': 13, 'font-weight': 600, fill: T.text, 'font-family': T.mono }, esc(node.id)));
+        parts.push(mk('text', { x: 14, y: 38, 'font-size': 11, fill: T.tertiary }, esc(nodeSubtitle(node))));
+        if (isExchange(node)) {
+          parts.push(mk('text', { x: 14, y: 48, 'font-size': 10, 'font-weight': 700, fill: T.warnText }, '⇄ общий обмен'));
+          parts.push(mk('text', { x: 14, y: 59, 'font-size': 8.5, fill: T.tertiary }, esc(truncate((node.participants || []).join(', '), 28))));
+        } else {
+          parts.push(mk('text', { x: 14, y: 48, 'font-size': 10, 'font-weight': 600, fill: st.color }, esc(st.word)));
+          if (node.schedule) {
+            parts.push(mk('text', { x: 14, y: 59, 'font-size': 8.5, fill: T.tertiary }, '◷ ежедневно ' + esc(node.schedule.at)));
+          }
+        }
+        return '<g class="pg-node" transform="translate(' + node.x + ' ' + node.y + ')" data-node="' + esc(node.id) + '" tabindex="0" role="button" aria-label="'
+          + esc(node.id + ', ' + (node.role || 'роль не задана') + ', ' + st.word + (node.schedule ? ', ежедневно ' + node.schedule.at : '') + (isExchange(node) ? ', общий обмен: ' + (node.participants || []).join(', ') : ''))
+          + '">' + parts.join('') + '</g>';
+      }
+
+      /* ---------- призрак и предпросмотр связи ---------- */
+
+      function dragCardPos() {
+        if (!state.drag || !state.drag.pos) return null;
+        return {
+          x: clamp(state.drag.pos.x - NODE_W / 2, 4, CANVAS_W - NODE_W - 4),
+          y: clamp(state.drag.pos.y - NODE_H / 2, 4, CANVAS_H - NODE_H - 4)
+        };
+      }
+
+      function previewLabel(x1, y1, x2, y2, text) {
+        return mk('text', {
+          x: (x1 + x2) / 2,
+          y: (y1 + y2) / 2 - 5,
+          'text-anchor': 'middle',
+          'font-size': 9,
+          fill: T.secondary,
+          'paint-order': 'stroke',
+          stroke: T.bg1,
+          'stroke-width': 3
+        }, esc(text));
+      }
+
+      function previewSvg() {
+        var pos = dragCardPos();
+        if (!pos || !state.drag) return '';
+        var type = state.drag.type;
+        var tpl = TEMPLATES[type];
+        var cx = pos.x + NODE_W / 2;
+        var cy = pos.y + NODE_H / 2;
+        var parts = [];
+        if (type === 'critic') {
+          var coordinator = nodeById('coordinator');
+          if (coordinator) {
+            var start = anchor(coordinator, 'bottom');
+            parts.push(mk('line', { x1: start.x, y1: start.y, x2: cx, y2: cy, stroke: T.secondary, 'stroke-width': 2, 'stroke-dasharray': '6 5', 'marker-end': 'url(#pg-arrow-report)' }));
+            parts.push(previewLabel(start.x, start.y, cx, cy, 'report · возврат координатору'));
+          }
+        } else if (type === 'worker') {
+          var coord2 = nodeById('coordinator');
+          if (coord2) {
+            var target = anchor(coord2, 'bottom');
+            parts.push(mk('line', { x1: cx, y1: cy, x2: target.x, y2: target.y, stroke: T.link, 'stroke-width': 2, 'stroke-dasharray': '6 5', 'marker-end': 'url(#pg-arrow-delegate)' }));
+            parts.push(previewLabel(cx, cy, target.x, target.y, 'delegate · поручение от координатора'));
+          }
+        } else if (type === 'exchange') {
+          var fake = { x: pos.x, y: pos.y, participants: [] };
+          var borderPoint = workspaceAnchor(fake, 'structure');
+          parts.push(mk('line', { x1: cx, y1: cy, x2: borderPoint.x, y2: borderPoint.y, stroke: T.border2, 'stroke-width': 2, 'stroke-dasharray': '6 5', 'marker-end': 'url(#pg-arrow-peer)' }));
+          parts.push(previewLabel(cx, cy, borderPoint.x, borderPoint.y, 'peer · общий обмен · structure'));
+          var tagPoint = { x: TAG_X, y: TAG_TOP + TAG_H / 2 };
+          parts.push(mk('rect', { x: TAG_X, y: TAG_TOP, width: TAG_W, height: TAG_H, rx: 12, fill: '#fff', stroke: T.border2, 'stroke-width': 1.2, 'stroke-dasharray': '5 4', opacity: 0.85 }));
+          parts.push(mk('text', { x: TAG_X + 12, y: TAG_TOP + 39, 'font-size': 12, 'font-weight': 600, fill: T.text, style: 'font-family:' + T.mono }, 'workflow'));
+          parts.push(mk('text', { x: TAG_X + 12, y: TAG_TOP + 56, 'font-size': 9.5, fill: T.secondary }, 'участник общего обмена'));
+          parts.push(mk('line', { x1: cx, y1: cy, x2: tagPoint.x, y2: tagPoint.y, stroke: T.border2, 'stroke-width': 2, 'stroke-dasharray': '6 5', 'marker-end': 'url(#pg-arrow-peer)' }));
+          parts.push(previewLabel(cx, cy, tagPoint.x, tagPoint.y, 'peer · общий обмен · workflow'));
+        }
+        parts.push(mk('rect', { x: pos.x, y: pos.y, width: NODE_W, height: NODE_H, rx: 10, fill: 'rgba(65,118,230,0.08)', stroke: T.link, 'stroke-width': 2, 'stroke-dasharray': '6 4' }));
+        parts.push(mk('text', { x: pos.x + 14, y: pos.y + 23, 'font-size': 12.5, 'font-weight': 700, fill: T.text }, esc(tpl.title)));
+        parts.push(mk('text', { x: pos.x + 14, y: pos.y + 41, 'font-size': 9.5, fill: T.secondary }, 'здесь появится узел'));
+        parts.push(mk('text', { x: pos.x + 14, y: pos.y + 54, 'font-size': 9, fill: T.link }, esc(tpl.rule)));
+        return parts.join('');
+      }
+
+      /* ---------- отрисовка схемы ---------- */
+
+      function renderSvg() {
+        var svg = document.getElementById('svg');
+        if (!svg) return;
+        var active = document.activeElement && document.activeElement.getAttribute ? document.activeElement.getAttribute('data-node') : null;
+        var width = CANVAS_W + PAD * 2;
+        var height = CANVAS_H + PAD * 2;
+        svg.setAttribute('width', width);
+        svg.setAttribute('height', height);
+        svg.setAttribute('viewBox', '-' + PAD + ' -' + PAD + ' ' + width + ' ' + height);
+        var views = allEdgeViews();
+        svg.innerHTML = defsSvg()
+          + borderSvg()
+          + tagsSvg()
+          + views.map(edgeSvg).join('')
+          + NODES.map(nodeSvg).join('')
+          + views.filter(showLabel).map(labelSvg).join('')
+          + previewSvg();
+        bindSvg();
+        if (active) {
+          var again = svg.querySelector('[data-node="' + active.replace(/"/g, '') + '"]');
+          if (again) again.focus();
+        }
+      }
+
+      function bindSvg() {
+        var svg = document.getElementById('svg');
+        if (!svg) return;
+        Array.prototype.forEach.call(svg.querySelectorAll('[data-node]'), function (group) {
+          var id = group.getAttribute('data-node');
+          group.addEventListener('click', function (event) {
+            event.stopPropagation();
+            if (Date.now() < state.suppressClick) return;
+            selectNode(id);
+          });
+          group.addEventListener('keydown', function (event) {
+            if (event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar') {
+              event.preventDefault();
+              selectNode(id);
+            }
+          });
+        });
+      }
+
+      /* ---------- панель и пульт ---------- */
+
+      function syncPanel() {
+        var nodesChip = document.getElementById('chipNodes');
+        var edgesChip = document.getElementById('chipEdges');
+        if (nodesChip) nodesChip.textContent = NODES.length + ' узлов';
+        if (edgesChip) edgesChip.textContent = allEdgeViews().length + ' связей';
+        var labels = document.getElementById('btnLabels');
+        if (labels) {
+          labels.textContent = state.labelsAll ? 'Подписи: все' : 'Подписи: у выбранного';
+          labels.setAttribute('aria-pressed', state.labelsAll ? 'true' : 'false');
+        }
+        syncDemo();
+      }
+
+      function syncDemo() {
+        var mode = !state.editor ? 'none' : state.editor.errors.length ? 'error' : state.editor.isNew ? 'new' : 'existing';
+        Array.prototype.forEach.call(document.querySelectorAll('[data-demo]'), function (button) {
+          button.setAttribute('aria-pressed', button.getAttribute('data-demo') === mode ? 'true' : 'false');
+        });
+      }
+
+      function toast(message, kind) {
+        var el = document.getElementById('toast');
+        if (!el) return;
+        el.textContent = message;
+        el.className = 'toast' + (kind ? ' is-' + kind : '');
+      }
+
+      function announce(message) {
+        var live = document.getElementById('live');
+        if (!live) return;
+        live.textContent = '';
+        window.setTimeout(function () { live.textContent = message; }, 30);
+      }
+
+      /* ---------- библиотека ---------- */
+
+      function libAria(tpl) {
+        var who = tpl.model ? 'Роль ' + tpl.role + ', модель ' + tpl.model : 'Не агент: папка обмена';
+        return tpl.title + '. ' + who + '. По умолчанию: ' + tpl.ruleLong + '. Enter — взять, стрелки — двигать, Enter — поставить, Esc — отмена.';
+      }
+
+      function renderLibrary() {
+        var host = document.getElementById('libraryList');
+        if (!host) return;
+        host.innerHTML = Object.keys(TEMPLATES).map(function (key) {
+          var tpl = TEMPLATES[key];
+          return '<button type="button" class="lib-item" data-lib="' + key + '" aria-label="' + esc(libAria(tpl)) + '">'
+            + '<span class="lib-card">'
+            + '<span class="lib-stripe" style="background:' + roleColor(tpl.role) + '"></span>'
+            + '<span class="lib-plus" aria-hidden="true">+</span>'
+            + '<span class="lib-id">' + esc(tpl.baseId) + '</span>'
+            + '<span class="lib-sub">' + esc(tpl.role) + ' · ' + esc(tpl.model || 'не агент') + '</span>'
+            + '<span class="lib-rule">' + esc(tpl.rule) + '</span>'
+            + '</span>'
+            + '<span class="lib-caption">' + esc(tpl.title) + '</span>'
+            + '<span class="lib-note">' + esc(tpl.ruleLong) + '</span>'
+            + '</button>';
+        }).join('');
+      }
+
+      function showGhost(type, clientX, clientY) {
+        var ghost = document.getElementById('ghost');
+        if (!ghost) return;
+        if (ghost.hidden || ghost.getAttribute('data-type') !== type) {
+          var tpl = TEMPLATES[type];
+          ghost.innerHTML = '<span class="ghost-name">' + esc(tpl.title) + '</span>'
+            + '<span class="ghost-rule">' + esc(tpl.rule) + '</span>'
+            + '<span class="ghost-note">отпустите на канве</span>';
+          ghost.setAttribute('data-type', type);
+        }
+        ghost.hidden = false;
+        ghost.style.left = clientX + 'px';
+        ghost.style.top = clientY + 'px';
+      }
+
+      function hideGhost() {
+        var ghost = document.getElementById('ghost');
+        if (!ghost) return;
+        ghost.hidden = true;
+        ghost.removeAttribute('data-type');
+      }
+
+      function clientToCanvas(clientX, clientY) {
+        var svg = document.getElementById('svg');
+        var rect = svg.getBoundingClientRect();
+        var scale = (CANVAS_W + PAD * 2) / rect.width;
+        return { x: (clientX - rect.left) * scale - PAD, y: (clientY - rect.top) * scale - PAD };
+      }
+
+      function freeSpot() {
+        var best = null;
+        var bestDistance = 1e9;
+        for (var y = 24; y <= CANVAS_H - NODE_H - 24; y += 32) {
+          for (var x = 24; x <= BORDER.w - NODE_W - 24; x += 32) {
+            var free = true;
+            for (var index = 0; index < NODES.length; index += 1) {
+              var node = NODES[index];
+              if (Math.abs(node.x - x) < NODE_W + 16 && Math.abs(node.y - y) < NODE_H + 16) {
+                free = false;
+                break;
+              }
+            }
+            if (!free) continue;
+            var distance = Math.abs(x + NODE_W / 2 - CANVAS_W / 2) + Math.abs(y + NODE_H / 2 - CANVAS_H / 2);
+            if (distance < bestDistance) {
+              bestDistance = distance;
+              best = { x: x, y: y };
+            }
+          }
+        }
+        return best || { x: 24, y: 24 };
+      }
+
+      /* ---------- постановка узла ---------- */
+
+      function makeNode(type, id, x, y) {
+        var tpl = TEMPLATES[type];
+        var node = { id: id, type: type, role: tpl.role, model: tpl.model, brief: tpl.brief, x: x, y: y, pending: true };
+        if (tpl.schedule) node.schedule = clone(tpl.schedule);
+        if (type === 'exchange') {
+          node.path = tpl.path;
+          node.participants = tpl.participants.slice();
+        }
+        return node;
+      }
+
+      function addEdge(from, to, kind) {
+        if (!nodeById(from) || !nodeById(to)) return null;
+        if (from === to) return null;
+        var exists = EDGES.some(function (edge) { return edge.from === from && edge.to === to && edge.kind === kind; });
+        if (exists) return null;
+        var edge = { from: from, to: to, kind: kind };
+        EDGES.push(edge);
+        return edge;
+      }
+
+      function dropTemplate(type, px, py) {
+        var tpl = TEMPLATES[type];
+        var x = clamp(px - NODE_W / 2, 4, CANVAS_W - NODE_W - 4);
+        var y = clamp(py - NODE_H / 2, 4, CANVAS_H - NODE_H - 4);
+        var id = uniqueId(tpl.baseId);
+        var node = makeNode(type, id, x, y);
+        NODES.push(node);
+        var edge = null;
+        if (type === 'critic') edge = addEdge(id, 'coordinator', 'report');
+        if (type === 'worker') edge = addEdge('coordinator', id, 'delegate');
+        state.selected = id;
+        state.flash = edge
+          ? { from: edge.from, to: edge.to, kind: edge.kind }
+          : type === 'exchange'
+            ? { from: id, kind: 'peer', workspace: true }
+            : null;
+        state.demoKey = null;
+        openEditor('new', id);
+        renderAll();
+        var words;
+        if (type === 'exchange') {
+          words = 'связи peer с воркспейсами structure и workflow, пометка «общий обмен»';
+        } else if (edge) {
+          words = 'связь ' + edge.kind + ' (' + KIND_WORD[edge.kind] + '): ' + edge.from + ' → ' + edge.to;
+        } else {
+          words = 'связь по умолчанию не создана: на схеме нет координатора — добавьте её в редакторе';
+        }
+        toast('Узел ' + id + ' поставлен в точке сброса. ' + words + '. Редактор открыт: проверьте поля и сохраните.', 'ok');
+        announce('Узел ' + id + ' поставлен. ' + words + '. Открыт редактор узла.');
+      }
+
+      function removeNode(id) {
+        NODES = NODES.filter(function (node) { return node.id !== id; });
+        EDGES = EDGES.filter(function (edge) { return edge.from !== id && edge.to !== id; });
+        if (state.selected === id) state.selected = null;
+        if (state.demoKey === id) state.demoKey = null;
+      }
+
+      function renameNodeId(oldId, newId) {
+        NODES.forEach(function (node) { if (node.id === oldId) node.id = newId; });
+        EDGES.forEach(function (edge) {
+          if (edge.from === oldId) edge.from = newId;
+          if (edge.to === oldId) edge.to = newId;
+        });
+        if (state.selected === oldId) state.selected = newId;
+        if (state.demoKey === oldId) state.demoKey = newId;
+      }
+
+      /* ---------- перетаскивание из библиотеки ---------- */
+
+      function startPointerDrag(type, event) {
+        if (event.button !== undefined && event.button !== 0) return;
+        event.preventDefault();
+        state.drag = {
+          type: type,
+          keyboard: false,
+          moved: false,
+          over: false,
+          pos: null,
+          startX: event.clientX,
+          startY: event.clientY
+        };
+        showGhost(type, event.clientX, event.clientY);
+        window.addEventListener('pointermove', onPointerMove);
+        window.addEventListener('pointerup', onPointerUp);
+        window.addEventListener('pointercancel', onPointerUp);
+        document.body.classList.add('is-dragging');
+        announce('Взят элемент «' + TEMPLATES[type].title + '». Отпустите на схеме — узел появится в точке сброса.');
+      }
+
+      function onPointerMove(event) {
+        var drag = state.drag;
+        if (!drag || drag.keyboard) return;
+        if (Math.abs(event.clientX - drag.startX) + Math.abs(event.clientY - drag.startY) > 4) drag.moved = true;
+        showGhost(drag.type, event.clientX, event.clientY);
+        var wrap = document.getElementById('canvasWrap');
+        var rect = wrap.getBoundingClientRect();
+        drag.over = event.clientX >= rect.left && event.clientX <= rect.right && event.clientY >= rect.top && event.clientY <= rect.bottom;
+        drag.pos = drag.over ? clientToCanvas(event.clientX, event.clientY) : null;
+        renderSvg();
+      }
+
+      function cleanupPointer() {
+        window.removeEventListener('pointermove', onPointerMove);
+        window.removeEventListener('pointerup', onPointerUp);
+        window.removeEventListener('pointercancel', onPointerUp);
+        document.body.classList.remove('is-dragging');
+        hideGhost();
+      }
+
+      function onPointerUp() {
+        var drag = state.drag;
+        if (!drag || drag.keyboard) return;
+        cleanupPointer();
+        state.drag = null;
+        if (drag.over && drag.pos) {
+          state.suppressClick = Date.now() + 400;
+          dropTemplate(drag.type, drag.pos.x, drag.pos.y);
+          return;
+        }
+        if (!drag.moved) {
+          state.suppressClick = Date.now() + 400;
+          startPlacement(drag.type);
+          return;
+        }
+        state.suppressClick = Date.now() + 400;
+        renderSvg();
+        toast('Бросок вне канвы: узел не создан. Перетащите элемент на схему — или нажмите на него и поставьте стрелками.', 'error');
+        announce('Бросок вне канвы: узел не создан. Перетащите элемент на схему.');
+      }
+
+      function startPlacement(type) {
+        var spot = freeSpot();
+        state.drag = { type: type, keyboard: true, moved: false, over: true, pos: { x: spot.x + NODE_W / 2, y: spot.y + NODE_H / 2 } };
+        hideGhost();
+        var wrap = document.getElementById('canvasWrap');
+        if (wrap) wrap.focus();
+        renderSvg();
+        toast('Элемент «' + TEMPLATES[type].title + '» взят. Стрелки двигают карточку, Enter ставит, Esc отменяет.', '');
+        announce('Элемент «' + TEMPLATES[type].title + '» взят. Стрелки двигают карточку, Enter ставит, Esc отменяет.');
+      }
+
+      /* ---------- выбор узла ---------- */
+
+      function selectNode(id) {
+        state.selected = id;
+        state.flash = null;
+        if (!id) {
+          state.editor = null;
+          renderEditor();
+          renderSvg();
+          syncPanel();
+          toast('Выбор снят. Выберите узел на схеме или вынесите элемент из библиотеки.', '');
+          announce('Выбор снят.');
+          return;
+        }
+        var node = nodeById(id);
+        if (!node) return;
+        openEditor(node.pending ? 'new' : 'existing', id);
+        renderSvg();
+        syncPanel();
+        toast('Выбран узел ' + id + ': ' + (node.role || 'роль не задана') + '. Редактор внизу показывает его поля и связи.', '');
+        announce('Выбран узел ' + id + '. Открыт редактор узла.');
+      }
+
+      /* ---------- редактор: состояние и поля ---------- */
+
+      function openEditor(mode, id) {
+        var node = nodeById(id);
+        if (!node) return;
+        state.editor = {
+          key: id,
+          isNew: mode === 'new' || Boolean(node.pending),
+          draft: clone(node),
+          errors: [],
+          linkError: null,
+          saved: false
+        };
+        renderEditor();
+      }
+
+      function errFor(field) {
+        if (!state.editor) return null;
+        return state.editor.errors.filter(function (error) { return error.field === field; })[0] || null;
+      }
+
+      function described(field) {
+        var error = errFor(field);
+        return ' aria-describedby="hint-' + field + (error ? ' err-' + field : '') + '"' + (error ? ' aria-invalid="true"' : '');
+      }
+
+      function fieldWrap(options) {
+        var error = errFor(options.field);
+        var forId = options.forId || 'f-' + options.field;
+        return '<div class="field' + (error ? ' has-error' : '') + '">'
+          + '<label class="field-label" for="' + forId + '">' + options.label
+          + (options.req ? ' <span class="req">' + options.req + '</span>' : '') + '</label>'
+          + '<div class="field-control">' + options.control
+          + (options.hint ? '<p class="field-hint" id="hint-' + options.field + '">' + options.hint + '</p>' : '')
+          + (error ? '<p class="field-error" id="err-' + options.field + '">' + esc(error.what) + ' — ' + esc(error.fix) + '</p>' : '')
+          + '</div></div>';
+      }
+
+      function modelOptions(current) {
+        var list = ['<option value="">без модели — узел описан, но агент не запускается</option>'];
+        Object.keys(MODELS).forEach(function (alias) {
+          var entry = MODELS[alias];
+          list.push('<option value="' + alias + '"' + (alias === current ? ' selected' : '') + '>' + alias + ' → ' + entry.provider + '/' + entry.model + '</option>');
+        });
+        return list.join('');
+      }
+
+      function scheduleFields(draft) {
+        if (!draft.schedule) {
+          return '<div class="field"><span class="field-label">расписание</span><div class="field-control">'
+            + '<p class="field-hint">Расписание выкл — узел запускается только по поручению.</p>'
+            + '<button type="button" class="btn" data-act="add-schedule">Задать расписание</button>'
+            + '</div></div>';
+        }
+        var zones = TIMEZONES.map(function (zone) {
+          return '<option value="' + zone + '"' + (zone === draft.schedule.timeZone ? ' selected' : '') + '>' + zone + '</option>';
+        }).join('');
+        return fieldWrap({
+          field: 'scheduleAt',
+          label: 'расписание',
+          req: 'ежедневно',
+          control: '<div class="inline-row">'
+            + '<input class="input input--time" id="f-scheduleAt" data-field="scheduleAt" value="' + esc(draft.schedule.at) + '" placeholder="09:00"' + described('scheduleAt') + ' />'
+            + '<select class="select" id="f-scheduleTz" data-field="scheduleTz" aria-label="часовой пояс расписания">' + zones + '</select>'
+            + '<span class="field-hint">ежедневно</span>'
+            + '<button type="button" class="btn" data-act="remove-schedule">Убрать расписание</button>'
+            + '</div>',
+          hint: 'Время строго HH:MM в поясе узла: хост запускает узел каждый день в это время. Критик из библиотеки приходит с 09:00 Europe/Moscow.'
+        });
+      }
+
+      function folderFields(draft) {
+        var chips = (draft.participants || []).map(function (name) {
+          return '<span class="conn-row"><span class="kind kind--peer">peer</span><span class="conn-word">общий обмен</span><span class="mono">' + esc(name) + '</span>'
+            + '<button type="button" class="remove" data-act="remove-participant" data-name="' + esc(name) + '" aria-label="Убрать участника ' + esc(name) + '">Убрать</button></span>';
+        }).join('');
+        var free = WORKSPACES.filter(function (name) { return (draft.participants || []).indexOf(name) === -1; });
+        var add = free.length
+          ? '<select class="select" id="f-participant" aria-label="Новый участник обмена">'
+            + free.map(function (name) { return '<option value="' + name + '">' + name + '</option>'; }).join('')
+            + '</select><button type="button" class="btn" id="participantAdd" data-act="add-participant">Добавить участника</button>'
+          : '<p class="field-hint">Все воркспейсы уже участники.</p>';
+        return fieldWrap({
+          field: 'path',
+          label: 'путь',
+          req: 'обязательно',
+          control: '<input class="input input--path" id="f-path" data-field="path" value="' + esc(draft.path || '') + '"' + described('path') + ' />',
+          hint: 'Абсолютный путь к папке, которую видят все участники. Например, C:/Users/Goryachev/Documents/deepseek-harness/coordination.'
+        })
+          + fieldWrap({
+            field: 'participants',
+            label: 'участники',
+            req: 'минимум один',
+            forId: 'participantAdd',
+            control: '<div class="conn-list">'
+              + (chips || '<p class="conn-empty">Участников нет: папка ни к кому не подключена. Добавьте structure и workflow.</p>')
+              + '</div><div class="conn-add">' + add + '</div>',
+            hint: 'Участник — воркспейс, который видит файлы папки. На схеме каждый участник — отдельная peer-связь с подписью «общий обмен».'
+          });
+      }
+
+      function fieldsHtml(draft, editor) {
+        var out = [];
+        var idHint = editor.isNew
+          ? 'Свободный id: ' + uniqueId(draft.type === 'exchange' ? 'exchange' : draft.type) + '. Латиница, цифры, точка, дефис, подчёркивание.'
+          : 'id не меняется: он записан в structure/graph.json; переименование — отдельная операция.';
+        out.push(fieldWrap({
+          field: 'id',
+          label: 'id',
+          req: 'обязательно',
+          control: '<input class="input" id="f-id" data-field="id" value="' + esc(draft.id) + '"' + (editor.isNew ? '' : ' readonly') + described('id') + ' />',
+          hint: idHint
+        }));
+        out.push(fieldWrap({
+          field: 'role',
+          label: 'роль',
+          control: '<input class="input" id="f-role" data-field="role" value="' + esc(draft.role || '') + '"' + described('role') + ' />',
+          hint: 'Пустая роль читается как «исполнитель без специализации».'
+        }));
+        if (draft.type === 'exchange') {
+          out.push('<div class="field"><span class="field-label">модель</span><div class="field-control"><p class="field-hint">Папке модель не нужна: она не агент, а место обмена файлами. Участники — воркспейсы, а не модели.</p></div></div>');
+        } else {
+          out.push(fieldWrap({
+            field: 'model',
+            label: 'модель',
+            control: '<select class="select" id="f-model" data-field="model"' + described('model') + '>' + modelOptions(draft.model) + '</select>',
+            hint: 'Алиас из models. Для критика — critic, для воркера — work. Без модели узел описан, но агента запустить нельзя.'
+          }));
+        }
+        out.push(fieldWrap({
+          field: 'brief',
+          label: 'назначение',
+          control: '<textarea class="textarea" id="f-brief" data-field="brief" rows="2"' + described('brief') + '>' + esc(draft.brief || '') + '</textarea>',
+          hint: 'Что узел делает и что от него ждать — одной фразой.'
+        }));
+        out.push(draft.type === 'exchange' ? folderFields(draft) : scheduleFields(draft));
+        return out.join('');
+      }
+
+      function miniCardHtml(draft) {
+        var label = draft.type === 'exchange' ? 'обмен · папка' : ((draft.role || 'роль не задана') + ' · ' + (draft.model || 'модель не задана'));
+        var stateLine = draft.type === 'exchange' ? '⇄ общий обмен' : 'свободен';
+        var extra = draft.type === 'exchange'
+          ? (draft.participants || []).join(', ')
+          : draft.schedule ? '◷ ежедневно ' + draft.schedule.at : '';
+        return '<div class="mini-card' + (draft.type === 'exchange' ? ' is-exchange' : '') + '">'
+          + '<span class="stripe" style="background:' + roleColor(draft.role) + '"></span>'
+          + '<span class="mc-id">' + esc(draft.id || 'без id') + '</span>'
+          + '<span class="mc-sub">' + esc(truncate(label, 26)) + '</span>'
+          + '<span class="mc-state">' + esc(stateLine) + '</span>'
+          + '<span class="mc-extra">' + esc(truncate(extra, 28)) + '</span>'
+          + '</div>';
+      }
+
+      function previewHtml(draft) {
+        return '<div class="mini-card-wrap"><h3>Карточка на схеме</h3><div id="miniCardHost">' + miniCardHtml(draft) + '</div>'
+          + '<p class="preview-note">Так узел будет выглядеть на канве после сохранения: карточка 176 × 62, скругление 10 — как в панели Structure.</p></div>';
+      }
+
+      function displayId(id) {
+        var editor = state.editor;
+        if (editor && id === editor.key) {
+          var draftId = String(editor.draft.id || '').trim();
+          return draftId || editor.key;
+        }
+        return id;
+      }
+
+      function connectionsHtml(draft, editor) {
+        if (draft.type === 'exchange') {
+          var used = draft.participants || [];
+          var free = WORKSPACES.filter(function (name) { return used.indexOf(name) === -1; });
+          var add = free.length
+            ? '<select class="select" id="f-participant-links" aria-label="Новый участник обмена">'
+              + free.map(function (name) { return '<option value="' + name + '">' + name + '</option>'; }).join('')
+              + '</select><button type="button" class="btn" data-act="add-participant">Добавить участника</button>'
+            : '<p class="conn-hint">Все воркспейсы уже участники.</p>';
+          return '<div class="conn-box"><h3>Связи</h3>'
+            + '<p class="conn-hint">У папки обмена связи — это участники: каждый даёт peer-связь «общий обмен». Добавлять и убирать можно здесь или в поле «участники» слева.</p>'
+            + '<div class="conn-list">' + used.map(function (name) {
+              return '<div class="conn-row"><span class="kind kind--peer">peer</span><span class="mono">' + esc(draft.id || 'exchange') + '</span><span aria-hidden="true">↔</span><span class="mono">' + esc(name) + '</span><span class="conn-word">общий обмен</span>'
+                + '<button type="button" class="remove" data-act="remove-participant" data-name="' + esc(name) + '" aria-label="Убрать участника ' + esc(name) + '">Убрать</button></div>';
+            }).join('') + '</div>'
+            + '<div class="conn-add">' + add + '</div>'
+            + '<p class="conn-hint">На канве это линии к границе воркспейса structure и к карточкам воркспейсов workflow, design, kb-core.</p></div>';
+        }
+        var list = [];
+        EDGES.forEach(function (edge, index) {
+          if (edge.from !== editor.key && edge.to !== editor.key) return;
+          list.push('<div class="conn-row">'
+            + '<span class="kind kind--' + edge.kind + '">' + edge.kind + '</span>'
+            + '<span class="mono">' + esc(displayId(edge.from)) + '</span><span aria-hidden="true">→</span><span class="mono">' + esc(displayId(edge.to)) + '</span>'
+            + '<span class="conn-word">' + esc(KIND_WORD[edge.kind]) + '</span>'
+            + '<button type="button" class="remove" data-act="remove-edge" data-index="' + index + '" aria-label="Удалить связь ' + edge.kind + ' ' + esc(displayId(edge.from)) + ' → ' + esc(displayId(edge.to)) + '">Удалить</button>'
+            + '</div>');
+        });
+        var others = NODES.filter(function (node) { return node.id !== editor.key; });
+        var coordinator = nodeById('coordinator');
+        var fallback = others[0] ? others[0].id : editor.key;
+        var defaultFrom = draft.type === 'critic' ? editor.key : coordinator ? 'coordinator' : fallback;
+        var defaultTo = draft.type === 'critic' ? (coordinator ? 'coordinator' : fallback) : editor.key;
+        var defaultKind = draft.type === 'critic' ? 'report' : draft.type === 'worker' ? 'delegate' : 'delegate';
+        var kinds = ['delegate', 'review', 'report', 'peer'].map(function (kind) {
+          return '<option value="' + kind + '"' + (kind === defaultKind ? ' selected' : '') + '>' + kind + ' — ' + KIND_WORD[kind] + '</option>';
+        }).join('');
+        var nodeOptions = function (selected) {
+          return NODES.map(function (node) {
+            return '<option value="' + esc(node.id) + '"' + (node.id === selected ? ' selected' : '') + '>' + esc(displayId(node.id)) + '</option>';
+          }).join('');
+        };
+        var linkError = editor.linkError
+          ? '<p class="field-error" role="alert"><b>Связь не добавлена.</b> ' + esc(editor.linkError.what) + ' Почему: ' + esc(editor.linkError.why) + ' Что сделать: ' + esc(editor.linkError.fix) + '</p>'
+          : '';
+        return '<div class="conn-box"><h3>Связи</h3>'
+          + '<p class="conn-hint">Связи видны на схеме и подписаны словами. Вид: delegate — поручение, review — проверка, report — возврат, peer — равные.</p>'
+          + '<div class="conn-list">' + (list.length ? list.join('') : '<p class="conn-empty">Связей нет: узел ни с кем не соединён. Добавьте delegate, review, report или peer — или оставьте так, если узел пока не в работе.</p>') + '</div>'
+          + '<div class="conn-add">'
+          + '<select class="select" id="edgeKind" aria-label="Вид новой связи">' + kinds + '</select>'
+          + '<select class="select" id="edgeFrom" aria-label="Начало новой связи">' + nodeOptions(defaultFrom) + '</select>'
+          + '<span aria-hidden="true">→</span>'
+          + '<select class="select" id="edgeTo" aria-label="Конец новой связи">' + nodeOptions(defaultTo) + '</select>'
+          + '<button type="button" class="btn" data-act="add-edge">Добавить связь</button>'
+          + '</div>'
+          + linkError
+          + '</div>';
+      }
+
+      function errorBlock(errors) {
+        return '<div class="editor-error" id="editorErrorBlock" role="alert" aria-labelledby="errTitle">'
+          + '<h3 id="errTitle">Проверка не прошла: ' + errors.length + '</h3><ol>'
+          + errors.map(function (error) {
+            return '<li data-error-field="' + error.field + '"><b>Что случилось:</b> ' + esc(error.what)
+              + ' <b>Почему:</b> ' + esc(error.why)
+              + ' <span class="fix"><b>Что сделать:</b> ' + esc(error.fix) + '</span></li>';
+          }).join('')
+          + '</ol></div>';
+      }
+
+      function renderEditor() {
+        var body = document.getElementById('editorBody');
+        var chip = document.getElementById('editorState');
+        var where = document.getElementById('editorWhere');
+        var note = document.getElementById('editorNote');
+        var save = document.getElementById('saveBtn');
+        var cancel = document.getElementById('cancelBtn');
+        if (!body) return;
+        var editor = state.editor;
+        if (!editor || !editor.draft) {
+          body.innerHTML = '<div class="editor-empty"><b>Редактор закрыт</b>'
+            + '<p>Выберите узел на схеме или вынесите элемент из библиотеки — редактор откроется с полями узла.</p>'
+            + '<p>Новый узел после сброса ещё не записан: «Сохранить» пишет его в structure/graph.json, «Отмена» убирает со схемы.</p>'
+            + '<button type="button" class="btn" data-act="open-existing">Открыть существующий узел critic</button></div>';
+          if (chip) { chip.textContent = 'нет узла'; chip.className = 'state-chip'; }
+          if (where) where.textContent = '';
+          if (note) { note.textContent = ''; note.className = 'editor-note'; }
+          if (save) save.disabled = true;
+          if (cancel) cancel.disabled = true;
+          syncDemo();
+          return;
+        }
+        if (save) save.disabled = false;
+        if (cancel) cancel.disabled = false;
+        var draft = editor.draft;
+        var errors = editor.errors;
+        var isError = errors.length > 0;
+        if (chip) {
+          chip.textContent = isError ? 'ошибка валидации' : editor.isNew ? 'новый узел' : 'существующий узел';
+          chip.className = 'state-chip' + (isError ? ' is-error' : editor.isNew ? ' is-new' : '');
+        }
+        if (where) where.textContent = editor.isNew
+          ? 'structure/graph.json · новый узел ещё не записан'
+          : 'structure/graph.json · правка узла, id не меняется';
+        if (note) {
+          note.className = 'editor-note' + (editor.saved ? ' is-ok' : '');
+          note.textContent = editor.saved
+            ? 'Сохранено: узел ' + draft.id + ' записан в structure/graph.json.'
+            : editor.isNew
+              ? 'Новый узел: «Отмена» уберёт его со схемы, «Сохранить» запишет.'
+              : 'Правки применяются к узлу после «Сохранить».';
+        }
+        body.innerHTML = (isError ? errorBlock(errors) : '')
+          + '<div class="editor-body">'
+          + '<div class="editor-fields">' + fieldsHtml(draft, editor) + '</div>'
+          + '<div class="editor-side">' + previewHtml(draft) + connectionsHtml(draft, editor) + '</div>'
+          + '</div>';
+        syncDemo();
+      }
+
+      function updateMiniCard() {
+        var host = document.getElementById('miniCardHost');
+        if (host && state.editor) host.innerHTML = miniCardHtml(state.editor.draft);
+      }
+
+      function syncEditorChip() {
+        var editor = state.editor;
+        if (!editor) return;
+        var chip = document.getElementById('editorState');
+        var isError = editor.errors.length > 0;
+        if (chip) {
+          chip.textContent = isError ? 'ошибка валидации' : editor.isNew ? 'новый узел' : 'существующий узел';
+          chip.className = 'state-chip' + (isError ? ' is-error' : editor.isNew ? ' is-new' : '');
+        }
+        var block = document.getElementById('editorErrorBlock');
+        if (block) {
+          if (!isError) block.remove();
+          else block.querySelector('h3').textContent = 'Проверка не прошла: ' + editor.errors.length;
+        }
+        syncDemo();
+      }
+
+      function focusField(field) {
+        var map = { participants: 'participantAdd', scheduleAt: 'f-scheduleAt', scheduleTz: 'f-scheduleTz' };
+        var id = map[field] || 'f-' + field;
+        var el = document.getElementById(id);
+        if (el && el.focus) el.focus();
+      }
+
+      /* ---------- валидация ---------- */
+
+      function validateDraft(draft, key) {
+        var errors = [];
+        var id = String(draft.id || '').trim();
+        if (!id) {
+          errors.push({
+            field: 'id',
+            what: 'id не задан',
+            why: 'без id узел некуда записать: structure/graph.json адресует узлы по id',
+            fix: 'Введите id латиницей, например ' + uniqueId('critic') + '.'
+          });
+        } else if (!NODE_ID.test(id)) {
+          errors.push({
+            field: 'id',
+            what: 'id «' + id + '» содержит недопустимые символы',
+            why: 'валидатор структуры принимает латиницу, цифры, точку, дефис и подчёркивание',
+            fix: 'Уберите пробелы и спецсимволы: например, critic-2.'
+          });
+        } else if (NODES.some(function (node) { return node.id !== key && node.id === id; })) {
+          errors.push({
+            field: 'id',
+            what: 'id «' + id + '» уже занят',
+            why: 'в structure/graph.json уже есть узел ' + id + ': два узла с одним id не читаются',
+            fix: 'Возьмите свободный id: ' + uniqueId(id) + ' — или переименуйте существующий узел.'
+          });
+        }
+        if (draft.model && !MODELS[draft.model]) {
+          errors.push({
+            field: 'model',
+            what: 'модель «' + draft.model + '» не объявлена',
+            why: 'в models нет алиаса ' + draft.model + ', агенту не на чем запускаться',
+            fix: 'Выберите алиас из списка: ' + Object.keys(MODELS).join(', ') + ' — или объявите модель в models.'
+          });
+        }
+        if (draft.type === 'exchange') {
+          var path = String(draft.path || '').trim();
+          if (!path) {
+            errors.push({
+              field: 'path',
+              what: 'путь к папке обмена пуст',
+              why: 'без пути папка не знает, где лежат файлы, и участники увидят пустоту',
+              fix: 'Укажите абсолютный путь, например C:/Users/.../coordination.'
+            });
+          } else if (!/^[A-Za-z]:[\\/]|^\//.test(path) && !/^\\\\/.test(path)) {
+            errors.push({
+              field: 'path',
+              what: 'путь «' + path + '» не абсолютный',
+              why: 'относительный путь считается от чужого каталога и у разных участников укажет в разные места',
+              fix: 'Начните путь с диска C:/... или с /... — абсолютный путь видят все участники.'
+            });
+          }
+          if (!draft.participants || draft.participants.length === 0) {
+            errors.push({
+              field: 'participants',
+              what: 'у папки обмена нет участников',
+              why: 'обмен — это связь воркспейсов; без участника папка ни к кому не подключена',
+              fix: 'Добавьте structure и workflow в списке участников.'
+            });
+          }
+        }
+        if (draft.schedule) {
+          var at = String(draft.schedule.at || '').trim();
+          if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(at)) {
+            errors.push({
+              field: 'scheduleAt',
+              what: 'время «' + at + '» не читается как время',
+              why: 'schedule.at в структуре — строго HH:MM, а «' + at + '» таким не является',
+              fix: 'Введите время в виде 09:00: часы 00–23, минуты 00–59.'
+            });
+          }
+          if (TIMEZONES.indexOf(draft.schedule.timeZone) === -1) {
+            errors.push({
+              field: 'scheduleTz',
+              what: 'часовой пояс «' + draft.schedule.timeZone + '» не поддерживается',
+              why: 'пояс должен быть известен Intl, иначе хост не знает, когда запускать',
+              fix: 'Выберите пояс из списка: ' + TIMEZONES.join(', ') + '.'
+            });
+          }
+        }
+        return errors;
+      }
+
+      /* ---------- сохранение и отмена ---------- */
+
+      function saveDraft() {
+        var editor = state.editor;
+        if (!editor) return;
+        var draft = editor.draft;
+        var key = editor.key;
+        var errors = validateDraft(draft, key);
+        editor.errors = errors;
+        editor.saved = false;
+        if (errors.length) {
+          renderAll();
+          focusField(errors[0].field);
+          toast('Проверка не прошла: ' + errors.length + '. У каждого сообщения есть причина и рецепт — в редакторе.', 'error');
+          announce('Проверка не прошла: ' + errors.length + ' сообщения. Фокус на первом неверном поле.');
+          return;
+        }
+        var node = nodeById(key);
+        if (!node) return;
+        var newId = String(draft.id).trim();
+        if (newId !== key) renameNodeId(key, newId);
+        node = nodeById(newId);
+        node.role = String(draft.role || '').trim();
+        node.model = draft.model || '';
+        node.brief = String(draft.brief || '').trim();
+        if (draft.schedule) node.schedule = clone(draft.schedule);
+        else delete node.schedule;
+        if (draft.type === 'exchange') {
+          node.path = String(draft.path || '').trim();
+          node.participants = (draft.participants || []).slice();
+        }
+        node.type = draft.type;
+        delete node.pending;
+        editor.key = newId;
+        editor.isNew = false;
+        editor.draft = clone(node);
+        editor.saved = true;
+        editor.errors = [];
+        editor.linkError = null;
+        state.selected = newId;
+        if (state.demoKey === key) state.demoKey = newId;
+        renderAll();
+        toast('Узел ' + newId + ' сохранён: ' + (node.role || 'роль не задана') + (node.schedule ? ', ежедневно ' + node.schedule.at : '') + '.', 'ok');
+        announce('Узел ' + newId + ' сохранён в structure/graph.json.');
+      }
+
+      function cancelDraft() {
+        var editor = state.editor;
+        if (!editor) return;
+        if (editor.isNew) {
+          var id = editor.key;
+          removeNode(id);
+          state.selected = null;
+          state.editor = null;
+          renderAll();
+          toast('Новый узел ' + id + ' убран со схемы: несохранённое не попало в structure/graph.json.', '');
+          announce('Новый узел ' + id + ' убран со схемы.');
+          return;
+        }
+        var node = nodeById(editor.key);
+        if (node) {
+          state.editor = {
+            key: node.id,
+            isNew: false,
+            draft: clone(node),
+            errors: [],
+            linkError: null,
+            saved: false
+          };
+        }
+        renderAll();
+        toast('Правки отменены: значения вернулись к сохранённым в structure/graph.json.', '');
+        announce('Правки отменены.');
+      }
+
+      /* ---------- события редактора ---------- */
+
+      function onEditorInput(event) {
+        var editor = state.editor;
+        if (!editor) return;
+        var el = event.target.closest ? event.target.closest('[data-field]') : null;
+        if (!el) return;
+        var field = el.getAttribute('data-field');
+        var value = el.value;
+        if (field === 'id') editor.draft.id = value;
+        else if (field === 'role') editor.draft.role = value;
+        else if (field === 'brief') editor.draft.brief = value;
+        else if (field === 'path') editor.draft.path = value;
+        else if (field === 'model') editor.draft.model = value;
+        else if (field === 'scheduleAt') { if (editor.draft.schedule) editor.draft.schedule.at = value; }
+        else if (field === 'scheduleTz') { if (editor.draft.schedule) editor.draft.schedule.timeZone = value; }
+        editor.saved = false;
+        editor.errors = editor.errors.filter(function (error) { return error.field !== field; });
+        var errorEl = document.getElementById('err-' + field);
+        if (errorEl) errorEl.remove();
+        var wrap = el.closest ? el.closest('.field') : null;
+        if (wrap) wrap.classList.remove('has-error');
+        el.removeAttribute('aria-invalid');
+        Array.prototype.forEach.call(document.querySelectorAll('[data-error-field="' + field + '"]'), function (item) { item.remove(); });
+        syncEditorChip();
+        updateMiniCard();
+        if (field === 'id' && event.type === 'change') renderEditor();
+      }
+
+      function addEdgeFromForm() {
+        var editor = state.editor;
+        if (!editor) return;
+        var kindEl = document.getElementById('edgeKind');
+        var fromEl = document.getElementById('edgeFrom');
+        var toEl = document.getElementById('edgeTo');
+        var kind = kindEl ? kindEl.value : 'delegate';
+        var from = fromEl ? fromEl.value : '';
+        var to = toEl ? toEl.value : '';
+        editor.linkError = null;
+        if (!from || !to) {
+          editor.linkError = { what: 'не выбраны концы связи', why: 'у связи обязательны from и to', fix: 'Выберите оба узла в списках.' };
+        } else if (from === to) {
+          editor.linkError = { what: 'узел соединён сам с собой', why: 'self-loop запрещён валидатором структуры', fix: 'Выберите разные узлы: например, ' + from + ' и ' + (NODES.filter(function (n) { return n.id !== from; })[0] || {}).id + '.' };
+        } else if (EDGES.some(function (edge) { return edge.from === from && edge.to === to && edge.kind === kind; })) {
+          editor.linkError = { what: 'такая связь уже есть', why: 'связь ' + from + ' → ' + to + ' (' + kind + ') объявлена дважды', fix: 'Измените вид связи или выберите другую пару узлов.' };
+        } else {
+          EDGES.push({ from: from, to: to, kind: kind });
+        }
+        renderAll();
+        if (!editor.linkError) {
+          toast('Связь ' + kind + ' (' + KIND_WORD[kind] + ') добавлена: ' + from + ' → ' + to + '.', 'ok');
+          announce('Связь ' + kind + ' добавлена.');
+        } else {
+          announce('Связь не добавлена: ' + editor.linkError.what + '.');
+        }
+      }
+
+      function onEditorClick(event) {
+        var editor = state.editor;
+        var button = event.target.closest ? event.target.closest('[data-act]') : null;
+        if (!button) return;
+        var act = button.getAttribute('data-act');
+        if (act === 'open-existing') { selectNode('critic'); return; }
+        if (!editor) return;
+        if (act === 'add-schedule') {
+          editor.draft.schedule = { at: '09:00', timeZone: 'Europe/Moscow' };
+          editor.saved = false;
+          renderEditor();
+          focusField('scheduleAt');
+          announce('Расписание включено: ежедневно 09:00 Europe/Moscow. Проверьте время.');
+          return;
+        }
+        if (act === 'remove-schedule') {
+          delete editor.draft.schedule;
+          editor.saved = false;
+          renderEditor();
+          announce('Расписание выключено: узел запускается только по поручению.');
+          return;
+        }
+        if (act === 'add-participant') {
+          var holder = button.parentNode;
+          var select = holder ? holder.querySelector('select') : null;
+          var name = select ? select.value : '';
+          editor.draft.participants = editor.draft.participants || [];
+          if (name && editor.draft.participants.indexOf(name) === -1) {
+            editor.draft.participants.push(name);
+            editor.linkError = null;
+            announce('Участник ' + name + ' добавлен: на схеме появится peer-связь «общий обмен».');
+          }
+          renderEditor();
+          return;
+        }
+        if (act === 'remove-participant') {
+          var removeName = button.getAttribute('data-name');
+          editor.draft.participants = (editor.draft.participants || []).filter(function (item) { return item !== removeName; });
+          announce('Участник ' + removeName + ' убран: связь «общий обмен» исчезнет после сохранения.');
+          renderEditor();
+          return;
+        }
+        if (act === 'add-edge') { addEdgeFromForm(); return; }
+        if (act === 'remove-edge') {
+          var index = Number(button.getAttribute('data-index'));
+          if (!isNaN(index) && EDGES[index]) {
+            var removed = EDGES[index];
+            EDGES.splice(index, 1);
+            renderAll();
+            toast('Связь ' + removed.kind + ' ' + removed.from + ' → ' + removed.to + ' удалена.', '');
+            announce('Связь удалена.');
+          }
+        }
+      }
+
+      /* ---------- демо-состояния и сброс ---------- */
+
+      function resetGraph() {
+        NODES = initialNodes();
+        EDGES = initialEdges();
+        state.selected = 'critic';
+        state.flash = null;
+        state.demoKey = null;
+        state.drag = null;
+        hideGhost();
+        cleanupPointer();
+        openEditor('existing', 'critic');
+        renderAll();
+        toast('Схема сброшена: 5 узлов и 6 связей — как в structure/graph.json.', 'ok');
+        announce('Схема сброшена.');
+      }
+
+      function demo(mode) {
+        if (mode === 'existing') {
+          selectNode('critic');
+          return;
+        }
+        if (mode === 'new') {
+          if (state.demoKey && nodeById(state.demoKey)) removeNode(state.demoKey);
+          var spot = freeSpot();
+          var id = uniqueId('critic');
+          var node = makeNode('critic', id, spot.x, spot.y);
+          NODES.push(node);
+          var edge = addEdge(id, 'coordinator', 'report');
+          state.demoKey = id;
+          state.selected = id;
+          state.flash = edge ? { from: edge.from, to: edge.to, kind: edge.kind } : null;
+          openEditor('new', id);
+          renderAll();
+          toast('Демо: новый узел ' + id + ' из библиотеки, ещё не сохранён. «Сохранить» запишет, «Отмена» уберёт.', '');
+          announce('Демо: новый узел ' + id + '. Открыт редактор.');
+          return;
+        }
+        if (mode === 'error') {
+          if (!state.demoKey || !nodeById(state.demoKey)) demo('new');
+          var editor = state.editor;
+          if (!editor) return;
+          editor.draft.id = 'critic';
+          editor.draft.schedule = { at: '25:00', timeZone: 'Europe/Moscow' };
+          editor.errors = validateDraft(editor.draft, editor.key);
+          editor.saved = false;
+          renderAll();
+          focusField(editor.errors.length ? editor.errors[0].field : 'id');
+          toast('Демо ошибки: id занят и время 25:00 не существует. У каждого сообщения есть причина и рецепт.', 'error');
+          announce('Ошибка валидации: ' + editor.errors.length + ' сообщения с рецептом. Фокус на первом неверном поле.');
+        }
+      }
+
+      /* ---------- общая отрисовка ---------- */
+
+      function renderAll() {
+        renderSvg();
+        renderEditor();
+        syncPanel();
+      }
+
+      /* ---------- запуск ---------- */
+
+      function init() {
+        renderLibrary();
+        openEditor('existing', 'critic');
+        renderAll();
+
+        var labels = document.getElementById('btnLabels');
+        if (labels) {
+          labels.addEventListener('click', function () {
+            state.labelsAll = !state.labelsAll;
+            renderSvg();
+            syncPanel();
+            announce(state.labelsAll ? 'Подписи всех связей включены.' : 'Подписаны связи выбранного узла.');
+          });
+        }
+        var toggle = document.getElementById('libToggle');
+        if (toggle) {
+          toggle.addEventListener('click', function () {
+            var aside = toggle.closest('.library');
+            var collapsed = aside.classList.toggle('is-collapsed');
+            toggle.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+            toggle.textContent = collapsed ? 'Развернуть' : 'Свернуть';
+            if (typeof announce === 'function') {
+              announce(collapsed ? 'Палитра свёрнута: схема шире.' : 'Палитра развёрнута.');
+            }
+          });
+        }
+        var reset = document.getElementById('btnReset');
+        if (reset) reset.addEventListener('click', resetGraph);
+        var save = document.getElementById('saveBtn');
+        if (save) save.addEventListener('click', saveDraft);
+        var cancel = document.getElementById('cancelBtn');
+        if (cancel) cancel.addEventListener('click', cancelDraft);
+
+        var library = document.getElementById('libraryList');
+        if (library) {
+          library.addEventListener('pointerdown', function (event) {
+            var item = event.target.closest ? event.target.closest('[data-lib]') : null;
+            if (!item) return;
+            startPointerDrag(item.getAttribute('data-lib'), event);
+          });
+          library.addEventListener('click', function (event) {
+            if (Date.now() < state.suppressClick) return;
+            var item = event.target.closest ? event.target.closest('[data-lib]') : null;
+            if (!item) return;
+            startPlacement(item.getAttribute('data-lib'));
+          });
+        }
+
+        var canvas = document.getElementById('canvasWrap');
+        if (canvas) {
+          canvas.addEventListener('click', function (event) {
+            if (Date.now() < state.suppressClick) return;
+            var drag = state.drag;
+            if (drag && drag.keyboard) {
+              var point = clientToCanvas(event.clientX, event.clientY);
+              state.drag = null;
+              dropTemplate(drag.type, point.x, point.y);
+              return;
+            }
+            if (event.target.closest && event.target.closest('[data-node]')) return;
+            selectNode(null);
+          });
+          canvas.addEventListener('keydown', function (event) {
+            var drag = state.drag;
+            if (!drag || !drag.keyboard) return;
+            var step = event.shiftKey ? 2 : 12;
+            if (event.key === 'ArrowLeft') { drag.pos.x = clamp(drag.pos.x - step, 0, CANVAS_W); event.preventDefault(); renderSvg(); }
+            else if (event.key === 'ArrowRight') { drag.pos.x = clamp(drag.pos.x + step, 0, CANVAS_W); event.preventDefault(); renderSvg(); }
+            else if (event.key === 'ArrowUp') { drag.pos.y = clamp(drag.pos.y - step, 0, CANVAS_H); event.preventDefault(); renderSvg(); }
+            else if (event.key === 'ArrowDown') { drag.pos.y = clamp(drag.pos.y + step, 0, CANVAS_H); event.preventDefault(); renderSvg(); }
+            else if (event.key === 'Enter') {
+              event.preventDefault();
+              var point = { x: drag.pos.x, y: drag.pos.y };
+              state.drag = null;
+              dropTemplate(drag.type, point.x, point.y);
+            } else if (event.key === 'Escape') {
+              event.preventDefault();
+              state.drag = null;
+              renderSvg();
+              toast('Постановка отменена: узел не создан.', '');
+              announce('Постановка отменена.');
+            }
+          });
+        }
+
+        var editorBody = document.getElementById('editorBody');
+        if (editorBody) {
+          editorBody.addEventListener('click', onEditorClick);
+          editorBody.addEventListener('input', onEditorInput);
+          editorBody.addEventListener('change', onEditorInput);
+        }
+
+        Array.prototype.forEach.call(document.querySelectorAll('[data-demo]'), function (button) {
+          button.addEventListener('click', function () { demo(button.getAttribute('data-demo')); });
+        });
+
+        document.addEventListener('keydown', function (event) {
+          if (event.key === 'Escape' && state.drag) {
+            state.drag = null;
+            cleanupPointer();
+            renderSvg();
+            toast('Постановка отменена: узел не создан.', '');
+            announce('Постановка отменена.');
+          }
+        });
+
+        announce('Макет 0009: библиотека узлов слева, схема Structure и редактор узла внизу. Выберите узел или вынесите элемент из библиотеки.');
+      }
+
+      init();
+    </script>
+  </body>
+</html>

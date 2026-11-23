@@ -1,0 +1,356 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Блоки обновления плагинов: structure и workflow — макет 2026-11-09</title>
+<link rel="stylesheet" href="sheet.css">
+</head>
+<body>
+<div class="sheet">
+<header class="sheet-head">
+  <p class="kicker">Макет · 09.11.2026 · код не менялся · приёмка 0178 идёт</p>
+  <h1>Обновления двух плагинов: structure и workflow — одна полоса, два блока рядом</h1>
+  <p class="lead">Сегодня версии живут в двух несвязанных местах: строка «Версия · структура неизвестно · релиз
+    не проверялся» с одной кнопкой «Проверить релиз» и отдельная карточка «Workflow · не установлен» с кнопкой
+    «Проверить Workflow». Ни одна из них не умеет <b>обновлять</b>, не различает «идёт проверка», «ошибка
+    с причиной» и «обновлено — перезапустите DSH», и не задаёт порядок, когда обновления есть у обоих.
+    Здесь — одна полоса «Обновления» под шапкой панели: два блока рядом, одинаковые состояния, честные кнопки.</p>
+  <div class="quote"><span class="qn">Заказчик</span> «Сделай макет двух блоков обновления рядом: structure и workflow.
+    Где живут, как не конфликтуют с вкладкой валидатора и верхней панелью A; состояния; кнопки; геометрия;
+    поведение на узкой панели; порядок при двух доступных обновлениях».</div>
+</header>
+
+<!-- ============================ 01 размещение ============================ -->
+<section class="scene" id="s01">
+  <h2><span class="no">01</span> Где живут: отдельная полоса под шапкой панели <span class="scene-note">38 px, вне канвы</span></h2>
+  <div class="panel">
+    <div class="p-top">
+      <span class="p-title">Структура проекта</span>
+      <span class="chip">структура</span>
+      <span class="chip">сборка 09.11 15:04</span>
+      <span class="panel-badge">01 · размещение</span>
+      <span class="spacer"></span>
+      <button class="btn">Обновить</button><button class="btn">Собрать</button><button class="btn">Добавить узел</button>
+    </div>
+    
+  <div class="upd">
+    <span class="upd-label">Обновления</span>
+    <div class="ub is-new"><span class="ub-ico">S</span><span class="ub-dot"></span><span class="ub-name">structure</span><span class="ub-ver">1.0.56 <span class="arrow">→</span> 1.0.57</span><span class="ub-state">доступна</span><span class="ub-acts"><button class="btn xs ghost">Проверить снова</button><button class="btn xs primary">Обновить</button></span></div>
+    <div class="ub is-new"><span class="ub-ico">W</span><span class="ub-dot"></span><span class="ub-name">workflow</span><span class="ub-ver">1.0.12 <span class="arrow">→</span> 1.0.13</span><span class="ub-state">доступна</span><span class="ub-acts"><button class="btn xs ghost">Проверить снова</button><button class="btn xs primary">Обновить</button></span></div>
+    <span class="spacer"></span>
+    <button class="btn xs">Проверить всё</button>
+  </div>
+    <div class="p-main">
+      <aside class="lib">
+        <div class="lib-title">Библиотека узлов</div>
+        <div class="lib-card"><span class="lib-ico">К</span><div><div class="lib-name">Координатор</div><div class="lib-role">ведёт план и раздаёт работу</div></div></div>
+        <div class="lib-card"><span class="lib-ico">И</span><div><div class="lib-name">Исполнитель</div><div class="lib-role">делает порученное</div></div></div>
+        <div class="lib-card"><span class="lib-ico">П</span><div><div class="lib-name">Приёмщик</div><div class="lib-role">проверяет работу</div></div></div>
+        <div style="margin-top:auto;font-size:9.5px;color:var(--muted);line-height:1.45">
+          Полоса обновлений — не узел и не карточка: она не участвует в схеме и не мешает вкладке валидатора,
+          потому что живёт выше канвы.
+        </div>
+      </aside>
+      <div class="canvas-shell">
+        <div class="c-head">
+          <strong>Structure</strong><span class="chip">4 узла</span><span class="chip">3 связи</span>
+          <span class="spacer"></span><button class="btn">Сбросить схему</button>
+        </div>
+        <div class="canvas">
+          <div class="card" style="left:40px;top:26px"><i></i><span class="cs" style="background:var(--accent)"></span>
+            <span class="c-id">coordinator</span><span class="c-role">координатор · deepseek-v4.1</span><span class="c-state">свободен</span></div>
+          <div class="vt" style="left:215px;top:35px"><b>✓</b></div>
+          <div class="card" style="left:420px;top:26px"><i></i><span class="cs" style="background:var(--success)"></span>
+            <span class="c-id">worker</span><span class="c-role">исполнитель · deepseek-v4.1</span><span class="c-state">свободен</span></div>
+          <div class="callout" style="left:300px;top:120px;white-space:normal;width:420px;line-height:1.5">
+            <b>Вкладка валидатора живёт здесь</b> — внутри канвы, у карточки координатора (14 × 44).
+            Полоса обновлений выше канвы и с ней не пересекается: разные родители, разные слои,
+            общий только правый край панели.
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="callout" style="left:640px;top:134px;white-space:normal;width:520px;line-height:1.45">
+      <b>38 px</b> под шапкой, во всю ширину: два блока по <b>≤ 360 px</b>, справа «Проверить всё».
+      Порядок фиксирован: <b>structure</b> слева, <b>workflow</b> справа.
+    </div>
+  </div>
+</section>
+
+<!-- ============================ 02 все состояния ============================ -->
+<section class="scene" id="s02">
+  <h2><span class="no">02</span> Пять состояний каждого блока <span class="scene-note">оба блока независимы: у одного проверка, у другого ошибка — это норма</span></h2>
+  <div class="shot" style="padding:14px 16px">
+    <div class="state-row"><span class="state-name">1 · актуально</span><div class="zoom2" style="transform:scale(1.12)"><div class="ub is-ok"><span class="ub-ico">S</span><span class="ub-dot"></span><span class="ub-name">structure</span><span class="ub-ver">1.0.56</span><span class="ub-state">актуально</span><span class="ub-acts"><button class="btn xs ghost">Проверить снова</button><button class="btn xs" disabled title="нет новой версии: 1.0.56 — последняя известная">Обновить</button></span></div><div class="ub is-ok"><span class="ub-ico">W</span><span class="ub-dot"></span><span class="ub-name">workflow</span><span class="ub-ver">1.0.12</span><span class="ub-state">актуально</span><span class="ub-acts"><button class="btn xs ghost">Проверить снова</button><button class="btn xs" disabled title="нет новой версии: 1.0.12 — последняя известная">Обновить</button></span></div></div></div>
+    <div class="state-row"><span class="state-name">2 · доступна новая</span><div class="zoom2" style="transform:scale(1.12)"><div class="ub is-new"><span class="ub-ico">S</span><span class="ub-dot"></span><span class="ub-name">structure</span><span class="ub-ver">1.0.56 <span class="arrow">→</span> 1.0.57</span><span class="ub-state">доступна</span><span class="ub-acts"><button class="btn xs ghost">Проверить снова</button><button class="btn xs primary">Обновить</button></span></div><div class="ub is-new"><span class="ub-ico">W</span><span class="ub-dot"></span><span class="ub-name">workflow</span><span class="ub-ver">1.0.12 <span class="arrow">→</span> 1.0.13</span><span class="ub-state">доступна</span><span class="ub-acts"><button class="btn xs ghost">Проверить снова</button><button class="btn xs primary">Обновить</button></span></div></div></div>
+    <div class="state-row"><span class="state-name">3 · идёт проверка</span><div class="zoom2" style="transform:scale(1.12)"><div class="ub is-check"><span class="ub-ico">S</span><span class="ub-dot"></span><span class="ub-name">structure</span><span class="ub-ver">1.0.56</span><span class="ub-state">проверка…</span><span class="ub-acts"><button class="btn xs ghost" disabled title="идёт проверка реестра">Проверить снова</button><button class="btn xs" disabled title="пока проверка не закончилась, обновлять нечего">Обновить</button></span></div><div class="ub is-check"><span class="ub-ico">W</span><span class="ub-dot"></span><span class="ub-name">workflow</span><span class="ub-ver">1.0.12</span><span class="ub-state">проверка…</span><span class="ub-acts"><button class="btn xs ghost" disabled title="идёт проверка реестра">Проверить снова</button><button class="btn xs" disabled title="пока проверка не закончилась, обновлять нечего">Обновить</button></span></div></div></div>
+    <div class="state-row"><span class="state-name">4 · ошибка с причиной</span><div class="zoom2" style="transform:scale(1.12)"><div class="ub is-err"><span class="ub-ico">S</span><span class="ub-dot"></span><span class="ub-name">structure</span><span class="ub-ver">1.0.56</span><span class="ub-state">ошибка проверки</span><span class="ub-acts"><button class="btn xs ghost">Проверить снова</button><button class="btn xs" disabled title="store v10 ≠ v11 — выполните pnpm install">Обновить</button></span></div><div class="ub is-err"><span class="ub-ico">W</span><span class="ub-dot"></span><span class="ub-name">workflow</span><span class="ub-ver">1.0.12</span><span class="ub-state">сеть недоступна</span><span class="ub-acts"><button class="btn xs ghost">Проверить снова</button><button class="btn xs" disabled title="сеть недоступна — обновление невозможно">Обновить</button></span></div></div></div>
+    <div class="state-row" style="border-bottom:0"><span class="state-name">5 · обновлено</span><div class="zoom2" style="transform:scale(1.12)"><div class="ub is-done"><span class="ub-ico">S</span><span class="ub-dot"></span><span class="ub-name">structure</span><span class="ub-ver">1.0.57</span><span class="ub-state">обновлено</span><span class="ub-acts"><button class="btn xs ghost" disabled title="перезапуск DSH перезагрузит плагин">Проверить снова</button><button class="btn xs primary">Перезапустить DSH</button></span></div><div class="ub is-done"><span class="ub-ico">W</span><span class="ub-dot"></span><span class="ub-name">workflow</span><span class="ub-ver">1.0.13</span><span class="ub-state">обновлено</span><span class="ub-acts"><button class="btn xs ghost" disabled title="перезапуск DSH перезагрузит плагин">Проверить снова</button><button class="btn xs primary">Перезапустить DSH</button></span></div></div></div>
+    <p class="note" style="margin:12px 0 0">Состояние показывается словом, точкой и цветом — цвет не единственный носитель:
+      «актуально» / «1.0.56 → 1.0.57 доступна» / «проверка…» / «ошибка проверки» / «обновлено».</p>
+  </div>
+</section>
+
+
+<!-- ============================ 03..07 по одному состоянию ============================ -->
+<section class="scene" id="s03">
+  <h2><span class="no">03</span> Состояние «актуально»</h2>
+  <div class="shot" style="padding:14px 16px">
+    <div style="height:52px"><div style="transform:scale(1.22);transform-origin:0 0;width:1000px;display:flex;gap:8px">
+      <div class="ub is-ok"><span class="ub-ico">S</span><span class="ub-dot"></span><span class="ub-name">structure</span><span class="ub-ver">1.0.56</span><span class="ub-state">актуально</span><span class="ub-acts"><button class="btn xs ghost">Проверить снова</button><button class="btn xs" disabled>Обновить</button></span></div>
+      <div class="ub is-ok"><span class="ub-ico">W</span><span class="ub-dot"></span><span class="ub-name">workflow</span><span class="ub-ver">1.0.12</span><span class="ub-state">актуально</span><span class="ub-acts"><button class="btn xs ghost">Проверить снова</button><button class="btn xs" disabled>Обновить</button></span></div>
+    </div></div>
+    <table>
+      <tr><th style="width:26%">Что</th><th>Как</th></tr>
+      <tr><td>Кнопка «Проверить снова»</td><td>активна: перечитывает реестр версий, не трогает файлы</td></tr>
+      <tr><td>Кнопка «Обновить»</td><td><b>disabled</b>; подсказка: «нет новой версии: 1.0.56 — последняя известная». Неактивная кнопка не врёт, что обновление идёт</td></tr>
+      <tr><td>Что видно</td><td>зелёная точка, слово «актуально», версия моноширинным. Ни пульса, ни «проверено 5 минут назад» на полосе</td></tr>
+      <tr><td>Когда само</td><td>раз в сутки и после правки файла плагина; ручная проверка — по кнопке</td></tr>
+    </table>
+  </div>
+</section>
+
+<section class="scene" id="s04">
+  <h2><span class="no">04</span> Состояние «доступна новая версия»</h2>
+  <div class="shot" style="padding:14px 16px">
+    <div style="height:52px"><div style="transform:scale(1.22);transform-origin:0 0;width:1000px;display:flex;gap:8px">
+      <div class="ub is-new"><span class="ub-ico">S</span><span class="ub-dot"></span><span class="ub-name">structure</span><span class="ub-ver">1.0.56 <span class="arrow">→</span> 1.0.57</span><span class="ub-state">доступна</span><span class="ub-acts"><button class="btn xs ghost">Проверить снова</button><button class="btn xs primary">Обновить</button></span></div>
+      <div class="ub is-new"><span class="ub-ico">W</span><span class="ub-dot"></span><span class="ub-name">workflow</span><span class="ub-ver">1.0.12 <span class="arrow">→</span> 1.0.13</span><span class="ub-state">доступна</span><span class="ub-acts"><button class="btn xs ghost">Проверить снова</button><button class="btn xs primary">Обновить</button></span></div>
+    </div></div>
+    <table>
+      <tr><th style="width:26%">Что</th><th>Как</th></tr>
+      <tr><td>Кнопка «Обновить»</td><td><b>primary</b>, активна: скачивает в стор, сверяет целостность, переписывает плагин. По завершении блок сам уходит в «обновлено»</td></tr>
+      <tr><td>Кнопка «Проверить снова»</td><td>активна: перед обновлением полезно перепроверить, не вышла ли ещё новее</td></tr>
+      <tr><td>Два доступных сразу</td><td>«Обновить всё» (в поповере) идёт <b>по очереди, structure первой</b>: пока панель старая, она же неправильно показывает состояние workflow</td></tr>
+      <tr><td>Перезапуск</td><td>один на оба обновления; просить два раза за один заход — плохо</td></tr>
+    </table>
+  </div>
+</section>
+
+<section class="scene" id="s05">
+  <h2><span class="no">05</span> Состояние «идёт проверка»</h2>
+  <div class="shot" style="padding:14px 16px">
+    <div style="height:52px"><div style="transform:scale(1.22);transform-origin:0 0;width:1000px;display:flex;gap:8px">
+      <div class="ub is-check"><span class="ub-ico">S</span><span class="ub-dot"></span><span class="ub-name">structure</span><span class="ub-ver">1.0.56</span><span class="ub-state">проверка…</span><span class="ub-acts"><button class="btn xs ghost" disabled>Проверить снова</button><button class="btn xs" disabled>Обновить</button></span></div>
+      <div class="ub is-ok"><span class="ub-ico">W</span><span class="ub-dot"></span><span class="ub-name">workflow</span><span class="ub-ver">1.0.12</span><span class="ub-state">актуально</span><span class="ub-acts"><button class="btn xs ghost">Проверить снова</button><button class="btn xs" disabled>Обновить</button></span></div>
+    </div></div>
+    <table>
+      <tr><th style="width:26%">Что</th><th>Как</th></tr>
+      <tr><td>Обе кнопки</td><td><b>disabled</b>: «идёт проверка реестра» / «пока проверка не закончилась, обновлять нечего»</td></tr>
+      <tr><td>Индикатор</td><td>синяя точка + слово «проверка…». Анимация — только точка (120 мс), полоса не дёргается</td></tr>
+      <tr><td>Таймаут</td><td>15 с → состояние «ошибка проверки» с причиной «нет ответа реестра»; кнопки возвращаются сами</td></tr>
+      <tr><td>Второй блок</td><td>не блокируется: у workflow своё состояние. Общий «Проверить всё» ждёт оба, но не мешает частным кнопкам</td></tr>
+    </table>
+  </div>
+</section>
+
+<section class="scene" id="s06">
+  <h2><span class="no">06</span> Состояние «ошибка с причиной»</h2>
+  <div class="shot" style="padding:14px 16px">
+    <div style="height:52px"><div style="transform:scale(1.22);transform-origin:0 0;width:1000px;display:flex;gap:8px">
+      <div class="ub is-err"><span class="ub-ico">S</span><span class="ub-dot"></span><span class="ub-name">structure</span><span class="ub-ver">1.0.56</span><span class="ub-state">ошибка проверки</span><span class="ub-acts"><button class="btn xs ghost">Проверить снова</button><button class="btn xs" disabled>Обновить</button></span></div>
+      <div class="ub is-err"><span class="ub-ico">W</span><span class="ub-dot"></span><span class="ub-name">workflow</span><span class="ub-ver">1.0.12</span><span class="ub-state">сеть недоступна</span><span class="ub-acts"><button class="btn xs ghost">Проверить снова</button><button class="btn xs" disabled>Обновить</button></span></div>
+    </div></div>
+    <table>
+      <tr><th style="width:26%">Что</th><th>Как</th></tr>
+      <tr><td>Кнопка «Проверить снова»</td><td>активна всегда: это единственный выход из ошибки, поэтому она не гаснет</td></tr>
+      <tr><td>Кнопка «Обновить»</td><td><b>disabled</b>, причина — в подсказке и в поповере дословно: «store v10 ≠ v11 — выполните pnpm install» / «сеть недоступна»</td></tr>
+      <tr><td>Почему не «Обновить всё равно»</td><td>обновление поверх несогласованного стора — это второй дефект вместо одного. Кнопка не уговаривает</td></tr>
+      <tr><td>Причина на полосе</td><td>короткая (2–3 слова), полная — в поповере: строка «почему» + «Что сделать»</td></tr>
+    </table>
+  </div>
+</section>
+
+<section class="scene" id="s07">
+  <h2><span class="no">07</span> Состояние «обновлено — перезапустите DSH»</h2>
+  <div class="shot" style="padding:14px 16px">
+    <div style="height:52px"><div style="transform:scale(1.22);transform-origin:0 0;width:1000px;display:flex;gap:8px">
+      <div class="ub is-done"><span class="ub-ico">S</span><span class="ub-dot"></span><span class="ub-name">structure</span><span class="ub-ver">1.0.57</span><span class="ub-state">обновлено</span><span class="ub-acts"><button class="btn xs ghost" disabled>Проверить снова</button><button class="btn xs primary">Перезапустить DSH</button></span></div>
+      <div class="ub is-done"><span class="ub-ico">W</span><span class="ub-dot"></span><span class="ub-name">workflow</span><span class="ub-ver">1.0.13</span><span class="ub-state">обновлено</span><span class="ub-acts"><button class="btn xs ghost" disabled>Проверить снова</button><button class="btn xs primary">Перезапустить DSH</button></span></div>
+    </div></div>
+    <table>
+      <tr><th style="width:26%">Что</th><th>Как</th></tr>
+      <tr><td>Текст</td><td>«обновлено» + версия уже новая; в поповере — «перезапустите DSH: плагин читается при старте»</td></tr>
+      <tr><td>Кнопка</td><td>«Перезапустить DSH» — <b>primary</b> одна на оба блока; второй такой же кнопки рядом нет (перезапуск один)</td></tr>
+      <tr><td>«Проверить снова»</td><td><b>disabled</b>: до перезапуска проверять нечего, версия в файле уже новая</td></tr>
+      <tr><td>После перезапуска</td><td>блок сам возвращается в «актуально»; состояние хранится в structure/updates.json и переживает закрытие панели</td></tr>
+    </table>
+  </div>
+</section>
+
+
+<!-- ============================ 08 поповер ============================ -->
+<section class="scene" id="s08">
+  <h2><span class="no">08</span> Поповер: подробности, причина, порядок <span class="scene-note">открывается по блоку и по «Проверить всё»</span></h2>
+  <div class="shot" style="padding:0;overflow:hidden">
+    <div style="position:relative;height:520px;background:var(--canvas)">
+      <div class="upd" style="position:relative;z-index:25">
+        <span class="upd-label">Обновления</span>
+        <div class="ub is-new"><span class="ub-ico">S</span><span class="ub-dot"></span><span class="ub-name">structure</span><span class="ub-ver">1.0.56 <span class="arrow">→</span> 1.0.57</span><span class="ub-state">доступна</span><span class="ub-acts"><button class="btn xs ghost">Проверить снова</button><button class="btn xs primary">Обновить</button></span></div>
+        <div class="ub is-err"><span class="ub-ico">W</span><span class="ub-dot"></span><span class="ub-name">workflow</span><span class="ub-ver">1.0.12</span><span class="ub-state">ошибка проверки</span><span class="ub-acts"><button class="btn xs ghost">Проверить снова</button><button class="btn xs" disabled>Обновить</button></span></div>
+        <span class="spacer"></span>
+        <button class="btn xs">Проверить всё</button>
+      </div>
+      <div class="pop" style="left:14px;top:44px">
+        <div class="pop-h"><b>Обновления плагинов</b><span class="spacer"></span><span class="chip">проверено 09.11 15:04</span></div>
+        <div class="pop-row">
+          <span class="ub-ico">S</span>
+          <div style="flex:1 1 auto;min-width:0">
+            <div style="display:flex;align-items:baseline;gap:8px"><span class="ub-name">structure</span>
+              <span class="ub-ver">1.0.56 <span class="arrow">→</span> 1.0.57</span>
+              <span class="ub-state" style="color:var(--warn)">· доступна</span></div>
+            <div class="pop-why" style="margin-top:3px">dsh-project-graph · канал stable · релиз 1.0.57 от 08.11</div>
+          </div>
+          <button class="btn xs primary">Обновить</button>
+        </div>
+        <div class="pop-row">
+          <span class="ub-ico">W</span>
+          <div style="flex:1 1 auto;min-width:0">
+            <div style="display:flex;align-items:baseline;gap:8px"><span class="ub-name">workflow</span>
+              <span class="ub-ver">1.0.12</span>
+              <span class="ub-state" style="color:var(--danger)">· ошибка проверки</span></div>
+            <div class="pop-why" style="margin-top:3px">dsh-workflow-console · store v10 ≠ v11 — выполните <span class="mono">pnpm install</span>
+              · сеть недоступна</div>
+            <div class="pop-why" style="margin-top:2px;color:var(--text)">Что сделать: обновить стор плагина и повторить проверку.
+              «Обновить» недоступно, пока причина не устранена.</div>
+          </div>
+          <button class="btn xs" disabled title="store v10 ≠ v11 — выполните pnpm install">Обновить</button>
+        </div>
+        <div class="pop-f" style="white-space:nowrap">
+          <button class="btn xs primary">Обновить всё</button>
+          <button class="btn xs">Проверить всё</button>
+          <span class="spacer"></span>
+          <span class="note" style="font-size:10.5px">порядок: structure → workflow, перезапуск один</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <table style="margin-top:12px">
+    <tr><th style="width:30%">Правило</th><th>Почему так</th></tr>
+    <tr><td>Порядок фиксирован</td><td>structure → workflow всегда, не по «кто первый обновился»: место и порядок не должны прыгать между проверками</td></tr>
+    <tr><td>Приоритет при двух доступных</td><td>structure первым: пока панель старая, она же неправильно показывает состояние workflow</td></tr>
+    <tr><td>Ошибка не блокирует соседа</td><td>workflow в ошибке не мешает обновить structure; «Обновить всё» честно говорит, что обновит один из двух</td></tr>
+    <tr><td>Один перезапуск</td><td>после пачки обновлений — одна кнопка и одно сообщение, а не по кнопке на блок</td></tr>
+    <tr><td>Слой</td><td>поповер z 40: ниже меню (46) и модальных окон (60) панели, выше канвы — окно валидатора всегда сверху</td></tr>
+  </table>
+</section>
+
+<!-- ============================ 09 узкая панель ============================ -->
+<section class="scene" id="s09">
+  <h2><span class="no">09</span> Узкая панель <span class="scene-note">одни и те же данные, три плотности</span></h2>
+  <div class="shot" style="padding:14px 16px;display:flex;flex-direction:column;gap:16px">
+    <div>
+      <div class="state-name" style="margin-bottom:6px">1248 · полная полоса</div>
+      <div class="upd" style="border:1px solid var(--line);border-radius:8px">
+        <span class="upd-label">Обновления</span>
+        <div class="ub is-new"><span class="ub-ico">S</span><span class="ub-dot"></span><span class="ub-name">structure</span><span class="ub-ver">1.0.56 <span class="arrow">→</span> 1.0.57</span><span class="ub-state">доступна</span><span class="ub-acts"><button class="btn xs ghost">Проверить снова</button><button class="btn xs primary">Обновить</button></span></div>
+        <div class="ub is-ok"><span class="ub-ico">W</span><span class="ub-dot"></span><span class="ub-name">workflow</span><span class="ub-ver">1.0.12</span><span class="ub-state">актуально</span><span class="ub-acts"><button class="btn xs ghost">Проверить снова</button><button class="btn xs" disabled>Обновить</button></span></div>
+        <span class="spacer"></span><button class="btn xs">Проверить всё</button>
+      </div>
+    </div>
+    <div>
+      <div class="state-name" style="margin-bottom:6px">1020 · без кнопок в блоках</div>
+      <div class="upd" style="width:1020px;border:1px solid var(--line);border-radius:8px">
+        <span class="upd-label">Обновления</span>
+        <div class="ub is-new"><span class="ub-ico">S</span><span class="ub-dot"></span><span class="ub-name">structure</span><span class="ub-ver">1.0.56 <span class="arrow">→</span> 1.0.57</span><span class="ub-state">доступна</span></div>
+        <div class="ub is-ok"><span class="ub-ico">W</span><span class="ub-dot"></span><span class="ub-name">workflow</span><span class="ub-ver">1.0.12</span><span class="ub-state">актуально</span></div>
+        <span class="spacer"></span><button class="btn xs">Проверить всё</button>
+      </div>
+    </div>
+    <div>
+      <div class="state-name" style="margin-bottom:6px">820 · один чип со счётом</div>
+      <div class="upd" style="width:820px;border:1px solid var(--line);border-radius:8px">
+        <span class="upd-label">Обновления</span>
+        <div class="ub is-new"><span class="ub-ico">2</span><span class="ub-dot"></span><span class="ub-name">2 обновления</span><span class="ub-state">structure · workflow</span></div>
+        <span class="spacer"></span><button class="btn xs">Открыть</button>
+      </div>
+    </div>
+    <p class="note" style="margin:0">Правило: сначала исчезают кнопки (действия живут в поповере), потом версии, потом имена —
+      остаётся счётчик и точка приоритета. Полоса никогда не переносится на вторую строку: высота 38 фиксирована,
+      иначе канва «прыгает» при появлении обновления.</p>
+  </div>
+</section>
+
+<!-- ============================ 10 спека ============================ -->
+<section class="scene" id="s10">
+  <h2><span class="no">10</span> Спека: геометрия, правила, было/стало, правки для воркера</h2>
+  <div class="cols">
+    <div class="col" style="flex:1 1 600px">
+      <table>
+        <tr><th style="width:40%">Геометрия</th><th>Значение</th></tr>
+        <tr><td>Полоса</td><td>высота <span class="mono">38</span>, во всю ширину, <span class="mono">padding 0 14</span>, <span class="mono">gap 8</span>, фон <span class="mono">--layer1</span>, нижняя линия <span class="mono">1 px</span></td></tr>
+        <tr><td>Блок</td><td>высота <span class="mono">28</span>, радиус <span class="mono">8</span>, рамка <span class="mono">1 px</span>, <span class="mono">padding 0 6 0 5</span>, <span class="mono">min-width 300</span>, <span class="mono">max-width 360</span></td></tr>
+        <tr><td>Иконка</td><td><span class="mono">18 × 18</span>, радиус <span class="mono">6</span>, буква «S» / «W» — не логотип, а различитель</td></tr>
+        <tr><td>Точка состояния</td><td><span class="mono">6 px</span>, цвет = состояние; слово рядом дублирует цвет</td></tr>
+        <tr><td>Шрифты</td><td>имя <span class="mono">11 · 700</span>, версия <span class="mono">10,5 mono</span>, состояние <span class="mono">10,5 · 600</span></td></tr>
+        <tr><td>Кнопки</td><td><span class="mono">22 px</span>, радиус <span class="mono">6</span>, <span class="mono">padding 2 8</span>, шрифт <span class="mono">10,5</span>; primary — только «Обновить» и «Перезапустить DSH»</td></tr>
+        <tr><td>Поповер</td><td><span class="mono">480</span> ширина, радиус <span class="mono">12</span>, <span class="mono">top = 38 + 6</span>, тень <span class="mono">0 18px 48px / 18 %</span>, <span class="mono">z 40</span></td></tr>
+        <tr><td>Слой</td><td>полоса выше канвы и вне её прокрутки; меню 46 и модальные окна 60 — поверх полосы</td></tr>
+      </table>
+    </div>
+    <div class="col" style="flex:1 1 520px">
+      <table>
+        <tr><th style="width:44%">Правило</th><th>Значение</th></tr>
+        <tr><td>Порядок</td><td><span class="mono">structure</span> → <span class="mono">workflow</span>, всегда</td></tr>
+        <tr><td>Приоритет</td><td>structure первым (панель показывает состояние workflow — она должна быть свежей)</td></tr>
+        <tr><td>Автопроверка</td><td>при старте, раз в сутки, после правки файла плагина</td></tr>
+        <tr><td>Таймаут проверки</td><td><span class="mono">15 с</span> → «ошибка проверки: нет ответа реестра»</td></tr>
+        <tr><td>Хранение</td><td><span class="mono">structure/updates.json</span>: версия, время проверки, доступная версия, причина ошибки</td></tr>
+        <tr><td>Кнопки в блоке</td><td>«Проверить снова» — всегда, кроме «обновлено»; «Обновить» — только когда есть новая; «Перезапустить DSH» — только после обновления</td></tr>
+        <tr><td>Пусто / не установлен</td><td>блок показывает «не установлен» и «Установить», а не «актуально»</td></tr>
+        <tr><td>Вкладка валидатора</td><td>не конфликтует: другая область (канва) и другой слой; полоса не перекрывает карточку координатора</td></tr>
+      </table>
+      <div class="shot" style="margin-top:12px;padding:10px 12px">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--tertiary);margin-bottom:6px">Сверху вниз: кто где</div>
+        <ul class="tight" style="margin:0">
+          <li><b>Верхняя панель A</b> (хост DSH) — вне панели Structure; полоса начинается ниже её границы.</li>
+          <li><b>Шапка панели</b> 46 px — имя, сборка, действия; полоса обновлений идёт отдельной строкой под ней.</li>
+          <li><b>Полоса обновлений</b> 38 px — два блока и «Проверить всё».</li>
+          <li><b>Канва</b> — карточки, рёбра и вкладка валидатора (14 × 44) у координатора.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:14px" class="shot">
+    <table>
+      <tr><th style="width:22%">Что</th><th style="width:39%">Было</th><th>Стало</th></tr>
+      <tr><td>Место</td><td>строка «Версия · структура неизвестно · релиз не проверялся» и отдельная карточка «Workflow · не установлен» в разных местах</td><td>одна полоса под шапкой: два блока рядом</td></tr>
+      <tr><td>Кнопки</td><td>«Проверить релиз» и «Проверить Workflow» — по одной на блок, обе только проверяют</td><td>«Проверить снова» / «Обновить» / «Перезапустить DSH» — по состоянию</td></tr>
+      <tr><td>Состояния</td><td>фактически два: «неизвестно» и «не установлен»</td><td>пять: актуально, доступна, проверка, ошибка с причиной, обновлено</td></tr>
+      <tr><td>Причина ошибки</td><td>нет места: текст ошибки некуда положить</td><td>короткая на полосе, полная в поповере + «что сделать»</td></tr>
+      <tr><td>Порядок</td><td>не задан</td><td>structure → workflow, «Обновить всё» по очереди, один перезапуск</td></tr>
+      <tr><td>Узкая панель</td><td>карточка workflow занимает всю ширину и толкает канву вниз</td><td>чип со счётом; высота полосы фиксирована 38</td></tr>
+    </table>
+  </div>
+
+  <div style="margin-top:14px" class="shot" style="padding:12px 16px">
+    <div style="font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--accent);margin-bottom:8px">Правки для воркера — по пунктам</div>
+    <ol style="margin:0;padding-left:1.2rem;font-size:12.5px;line-height:1.55;color:var(--muted)">
+      <li><b style="color:var(--text)">Одна полоса.</b> Заменить строку «Версия…» и карточку Workflow одним компонентом <span class="mono">renderUpdatesBar()</span> под шапкой панели; высота фиксирована 38.</li>
+      <li><b style="color:var(--text)">Данные.</b> <span class="mono">GET /api/updates</span> → <span class="mono">{ blocks: [{ id:'structure', name, installed, available, state, reason, checkedAt }, …] }</span>; состояние — <span class="mono">state:'ok'|'new'|'checking'|'error'|'updated'</span>.</li>
+      <li><b style="color:var(--text)">Порядок.</b> Блоки рендерятся в фиксированном порядке <span class="mono">['structure','workflow']</span>, а не в порядке ответа.</li>
+      <li><b style="color:var(--text)">Кнопки.</b> «Обновить» активна только при <span class="mono">available &amp;&amp; state==='new'</span>; у disabled всегда есть <span class="mono">title</span> с причиной (см. §04–07).</li>
+      <li><b style="color:var(--text)">Проверка.</b> <span class="mono">POST /api/updates/check</span> с таймаутом 15 с; во время проверки состояние <span class="mono">checking</span> на этом блоке, сосед не блокируется.</li>
+      <li><b style="color:var(--text)">Обновление.</b> <span class="mono">POST /api/updates/apply</span> по одному блоку; «Обновить всё» — последовательность, structure первой, один итоговый «перезапустите DSH».</li>
+      <li><b style="color:var(--text)">Хранение.</b> <span class="mono">structure/updates.json</span> (вне <span class="mono">graph.json</span>): чтобы состояние переживало закрытие панели.</li>
+      <li><b style="color:var(--text)">Узкая панель.</b> Медиа-правила: ≥ 1100 — полный блок; 1000–1100 — без кнопок; &lt; 1000 — один чип со счётом; высота полосы всегда 38.</li>
+      <li><b style="color:var(--text)">Слой.</b> <span class="mono">z-index</span> полосы ниже меню (46) и модальных окон (60); поповер <span class="mono">z 40</span>; канву не перекрывать.</li>
+      <li><b style="color:var(--text)">Тесты.</b> <span class="mono">[data-updates-bar]</span>, <span class="mono">[data-update-block="structure|workflow"]</span>, <span class="mono">[data-update-state]</span>; проверки на порядок блоков и на <span class="mono">title</span> у каждой disabled-кнопки.</li>
+    </ol>
+  </div>
+</section>
+
+</div>
+<script>
+  var scene = new URLSearchParams(location.search).get('scene');
+  if (scene) {
+    document.body.classList.add('scene');
+    Array.prototype.forEach.call(document.querySelectorAll('.scene'), function (n) { n.classList.remove('on'); });
+    var t = document.getElementById('s' + scene);
+    if (t) t.classList.add('on');
+  }
+</script>
+</body>
+</html>

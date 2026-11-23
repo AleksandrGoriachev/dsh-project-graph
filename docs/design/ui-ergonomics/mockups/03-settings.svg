@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="1200" viewBox="0 0 1440 1200" font-family="'Segoe UI Variable Display','Segoe UI',Inter,Arial,sans-serif" role="img" aria-label="Макет 3: подвижное окно настроек узла">
+<title>03 · Окно настроек: перетаскивание и видимые изменения</title>
+<desc>Макет для утверждения: окно 560 × 520 px, drag-handle в шапке 37 px, подложка 0.22, слои 60/61, сохранение позиции в uiStore v4, свёрнутая пилюля 220 × 36.</desc>
+<defs>
+<filter id="winShadow" x="-30%" y="-30%" width="160%" height="170%"><feDropShadow dx="0" dy="18" stdDeviation="24" flood-color="#000" flood-opacity="0.55"/></filter>
+<marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="#4d7cf3"/></marker>
+<marker id="arOk" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="#31c46e"/></marker>
+</defs>
+<rect x="0" y="0" width="1440" height="1200" fill="#141518"/>
+<rect x="0" y="0" width="1440" height="56" fill="#0f1013"/>
+<line x1="0" y1="56" x2="1440" y2="56" stroke="#22252b"/>
+<rect x="40" y="20" width="16" height="16" rx="4" fill="#4d7cf3"/>
+<text x="66" y="33" fill="#a8aeb8" font-size="13" font-weight="400" >DeepSeek Harness</text>
+<text x="196" y="33" fill="#626974" font-size="13" font-weight="400" >/</text>
+<text x="212" y="33" fill="#a8aeb8" font-size="13" font-weight="400" >дизайн · UI-эргономика панели</text>
+<text x="1400" y="33" fill="#626974" font-size="12" font-weight="400" text-anchor="end" >Задание 0333 · макет 3 из 4 · v1</text>
+
+<text x="40" y="94" fill="#e9ebee" font-size="30" font-weight="600" >03 · Окно настроек: двигается и показывает изменения</text>
+<text x="40" y="122" fill="#626974" font-size="13" font-weight="400" >Макет 3 из 4 · раздел 3 спеки docs/design/ui-ergonomics/2026-11-22-ergonomics.md · на утверждение заказчику</text>
+
+<rect x="40" y="140" width="1360" height="108" rx="12" fill="#1b1e24" stroke="#2a2f37"/>
+<text x="58" y="168" fill="#4d7cf3" font-size="14" font-weight="700" >Что утверждаем</text>
+<text x="58" y="194" fill="#e9ebee" font-size="13" font-weight="400" >1. Окно 560 × 520 px остаётся модальным, но двигается за всю шапку 37 px: ручка 12 × 12 (6 точек), курсор grab/grabbing, порог 3 px, 1:1 к курсору.</text>
+<text x="58" y="216" fill="#e9ebee" font-size="13" font-weight="400" >2. Подложка светлее — rgba(20,22,26,0.22), схема за окном читается; позиция хранится в uiStore v4 (windows.node / windows.folder), клампится 8 px от краёв.</text>
+<text x="58" y="238" fill="#e9ebee" font-size="13" font-weight="400" >3. Изменения видны без закрытия: строка «сохранено: … · схема обновлена», подсветка узла 2 px T.success 1200 ms, кнопка «Свернуть» уводит окно в пилюлю 220 × 36.</text>
+
+<rect x="40" y="292" width="1360" height="588" rx="14" fill="#16191e" stroke="#2a2f37"/>
+<rect x="40" y="292" width="1360" height="38" fill="#0f1013"/>
+<text x="60" y="316" fill="#e9ebee" font-size="13" font-weight="600" >Структура проекта</text>
+<text x="190" y="316" fill="#626974" font-size="11" font-weight="400" >4 узла · 5 связей</text>
+<rect x="300" y="300" width="74" height="22" rx="6" fill="#262b33"/>
+<text x="337" y="315" fill="#a8aeb8" font-size="10.5" font-weight="400" text-anchor="middle" >Обновить</text>
+<rect x="382" y="300" width="104" height="22" rx="6" fill="#4d7cf3"/>
+<text x="434" y="315" fill="#ffffff" font-size="10.5" font-weight="400" text-anchor="middle" >Добавить узел</text>
+<rect x="494" y="300" width="86" height="22" rx="6" fill="none" stroke="#3c434f"/>
+<text x="537" y="315" fill="#a8aeb8" font-size="10.5" font-weight="400" text-anchor="middle" >Сбросить</text>
+
+<g stroke="#1c2026" stroke-width="1">
+<line x1="40" y1="330" x2="40" y2="880"/><line x1="110" y1="330" x2="110" y2="880"/><line x1="180" y1="330" x2="180" y2="880"/><line x1="250" y1="330" x2="250" y2="880"/><line x1="320" y1="330" x2="320" y2="880"/><line x1="390" y1="330" x2="390" y2="880"/><line x1="460" y1="330" x2="460" y2="880"/><line x1="530" y1="330" x2="530" y2="880"/><line x1="600" y1="330" x2="600" y2="880"/><line x1="670" y1="330" x2="670" y2="880"/><line x1="740" y1="330" x2="740" y2="880"/><line x1="810" y1="330" x2="810" y2="880"/><line x1="880" y1="330" x2="880" y2="880"/><line x1="950" y1="330" x2="950" y2="880"/><line x1="1020" y1="330" x2="1020" y2="880"/><line x1="1090" y1="330" x2="1090" y2="880"/><line x1="1160" y1="330" x2="1160" y2="880"/><line x1="1230" y1="330" x2="1230" y2="880"/><line x1="1300" y1="330" x2="1300" y2="880"/><line x1="1370" y1="330" x2="1370" y2="880"/>
+<line x1="40" y1="330" x2="1400" y2="330"/><line x1="40" y1="400" x2="1400" y2="400"/><line x1="40" y1="470" x2="1400" y2="470"/><line x1="40" y1="540" x2="1400" y2="540"/><line x1="40" y1="610" x2="1400" y2="610"/><line x1="40" y1="680" x2="1400" y2="680"/><line x1="40" y1="750" x2="1400" y2="750"/><line x1="40" y1="820" x2="1400" y2="820"/>
+</g>
+
+<path d="M930 440 C965 470 985 505 1020 540" fill="none" stroke="#4d7cf3" stroke-width="1.5" marker-end="url(#ar)"/>
+<path d="M1110 580 C1150 566 1162 520 1165 484" fill="none" stroke="#e0a33e" stroke-width="1.5" marker-end="url(#ar)"/>
+<path d="M940 606 C850 646 812 566 836 486" fill="none" stroke="#31c46e" stroke-width="1.5" stroke-dasharray="6 4" marker-end="url(#arOk)"/>
+
+<g>
+<rect x="760" y="400" width="170" height="80" rx="12" fill="#262b33" stroke="#2a2f37"/>
+<text x="776" y="428" fill="#e9ebee" font-size="13" font-weight="600" >coordinator</text>
+<text x="776" y="448" fill="#a8aeb8" font-size="10.5" font-weight="400" >координатор · work</text>
+<circle cx="784" cy="466" r="3.5" fill="#a8aeb8"/>
+<text x="794" y="470" fill="#a8aeb8" font-size="10.5" font-weight="400" >свободен</text>
+</g>
+<g>
+<rect x="1120" y="400" width="170" height="80" rx="12" fill="#262b33" stroke="#2a2f37"/>
+<text x="1136" y="428" fill="#e9ebee" font-size="13" font-weight="600" >judge</text>
+<text x="1136" y="448" fill="#a8aeb8" font-size="10.5" font-weight="400" >приёмщик · work</text>
+<circle cx="1144" cy="466" r="3.5" fill="#31c46e"/>
+<text x="1154" y="470" fill="#a8aeb8" font-size="10.5" font-weight="400" >завершил</text>
+</g>
+<rect x="936" y="536" width="178" height="88" rx="14" fill="none" stroke="#31c46e" stroke-width="2"/>
+<rect x="940" y="540" width="170" height="80" rx="12" fill="#262b33" stroke="#2a2f37"/>
+<text x="956" y="568" fill="#e9ebee" font-size="13" font-weight="600" >worker</text>
+<text x="956" y="588" fill="#a8aeb8" font-size="10.5" font-weight="400" >воркер · work</text>
+<circle cx="964" cy="606" r="3.5" fill="#31c46e"/>
+<text x="974" y="610" fill="#a8aeb8" font-size="10.5" font-weight="400" >работает</text>
+<text x="940" y="652" fill="#31c46e" font-size="10.5" font-weight="400" >подсветка 2 px T.success · 1200 ms</text>
+
+<rect x="40" y="330" width="1360" height="550" fill="#141518" opacity="0.22"/>
+
+<g transform="translate(0,24)">
+<g filter="url(#winShadow)">
+<rect x="140" y="312" width="560" height="520" rx="12" fill="#1b1e24" stroke="#3c434f"/>
+<rect x="140" y="312" width="560" height="37" rx="12" fill="#262b33"/>
+<rect x="140" y="337" width="560" height="12" fill="#262b33"/>
+</g>
+<circle cx="152" cy="322" r="1.5" fill="#626974"/><circle cx="158" cy="322" r="1.5" fill="#626974"/><circle cx="152" cy="328" r="1.5" fill="#626974"/><circle cx="158" cy="328" r="1.5" fill="#626974"/><circle cx="152" cy="334" r="1.5" fill="#626974"/><circle cx="158" cy="334" r="1.5" fill="#626974"/>
+<text x="176" y="336" fill="#e9ebee" font-size="14" font-weight="600" >Узел worker</text>
+<rect x="646" y="318" width="21" height="21" rx="5" fill="none" stroke="#3c434f"/>
+<text x="656.5" y="333" fill="#a8aeb8" font-size="13" font-weight="700" text-anchor="middle">–</text>
+<rect x="674" y="318" width="21" height="21" rx="5" fill="none" stroke="#3c434f"/>
+<text x="684.5" y="333" fill="#a8aeb8" font-size="13" font-weight="700" text-anchor="middle">×</text>
+
+<line x1="140" y1="349" x2="700" y2="349" stroke="#2a2f37"/>
+<text x="156" y="369" fill="#4d7cf3" font-size="12" font-weight="600" >Сведения</text>
+<text x="242" y="369" fill="#a8aeb8" font-size="12" font-weight="400" >Состояние</text>
+<text x="334" y="369" fill="#a8aeb8" font-size="12" font-weight="400" >Настройки</text>
+<line x1="156" y1="378" x2="216" y2="378" stroke="#4d7cf3" stroke-width="2"/>
+
+<text x="156" y="402" fill="#626974" font-size="10" font-weight="400" >роль</text>
+<rect x="156" y="410" width="150" height="28" rx="6" fill="#232830" stroke="#3c434f"/>
+<text x="166" y="429" fill="#e9ebee" font-size="12" font-weight="400" >worker</text>
+<path d="M290 422 l5 5 l5 -5" fill="none" stroke="#626974" stroke-width="1.5"/>
+<text x="330" y="402" fill="#626974" font-size="10" font-weight="400" >модель</text>
+<rect x="330" y="410" width="180" height="28" rx="6" fill="#232830" stroke="#3c434f"/>
+<text x="340" y="429" fill="#e9ebee" font-size="12" font-weight="400" >work</text>
+<text x="156" y="462" fill="#626974" font-size="10" font-weight="400" >назначение</text>
+<rect x="156" y="470" width="344" height="56" rx="6" fill="#232830" stroke="#3c434f"/>
+<text x="166" y="492" fill="#e9ebee" font-size="11.5" font-weight="400" >делает диф по задаче и возвращает отчёт</text>
+<text x="166" y="510" fill="#626974" font-size="11" font-weight="400" >координатору; работа идёт по одной ветке.</text>
+<text x="156" y="548" fill="#626974" font-size="10" font-weight="400" >расписание</text>
+<text x="156" y="568" fill="#a8aeb8" font-size="11.5" font-weight="400" >ежедневно 09:00 (Europe/Moscow) · следующий запуск — завтра</text>
+<text x="156" y="600" fill="#e9ebee" font-size="12" font-weight="600" >Связи этого узла</text>
+<text x="156" y="620" fill="#a8aeb8" font-size="11" font-weight="400" >→ judge · review · приёмщик проверяет работу</text>
+<text x="156" y="640" fill="#a8aeb8" font-size="11" font-weight="400" >← coordinator · delegate · координатор поручает</text>
+
+<line x1="140" y1="788" x2="700" y2="788" stroke="#2a2f37"/>
+<rect x="156" y="796" width="88" height="28" rx="6" fill="#4d7cf3"/>
+<text x="200" y="814" fill="#ffffff" font-size="11.5" font-weight="600" text-anchor="middle">Сохранить</text>
+<text x="256" y="814" fill="#a8aeb8" font-size="10" font-weight="400" >сохранено: 3 поля · 4 узла · 5 связей — схема обновлена</text>
+<text x="684" y="814" fill="#e5484d" font-size="10.5" font-weight="600" text-anchor="end">Удалить узел</text>
+</g>
+
+<rect x="1172" y="836" width="220" height="36" rx="18" fill="#262b33" stroke="#3c434f"/>
+<text x="1188" y="859" fill="#4d7cf3" font-size="11" font-weight="700" >▸</text>
+<text x="1202" y="859" fill="#e9ebee" font-size="10.5" font-weight="400" >Узел worker · свернуть/развернуть</text>
+<text x="1282" y="818" fill="#626974" font-size="9.5" font-weight="400" text-anchor="middle" >пилюля 220 × 36 · 8 px от краёв</text>
+
+<text x="128" y="596" fill="#a8aeb8" font-size="10.5" font-weight="600" text-anchor="middle" transform="rotate(-90 128 596)">520 px</text>
+<text x="420" y="874" fill="#626974" font-size="10" font-weight="400" text-anchor="middle" >схема за подложкой видна: узлы и связи читаются, но не кликаются</text>
+
+<line x1="40" y1="880" x2="1400" y2="880" stroke="#2a2f37"/>
+
+<rect x="40" y="892" width="440" height="238" rx="12" fill="#1b1e24" stroke="#2a2f37"/>
+<text x="58" y="918" fill="#e9ebee" font-size="13" font-weight="700" >① Окно, слои и границы</text>
+<text x="58" y="944" fill="#a8aeb8" font-size="11" font-weight="400" >размер — 560 × 520 px, radius 12 px</text>
+<text x="58" y="966" fill="#a8aeb8" font-size="11" font-weight="400" >подложка — rgba(20,22,26,0.22), z-index 60</text>
+<text x="58" y="988" fill="#a8aeb8" font-size="11" font-weight="400" >окно — position: fixed, z-index 61</text>
+<text x="58" y="1010" fill="#a8aeb8" font-size="11" font-weight="400" >удаление — z-index 70; закрытие с правками — 80</text>
+<text x="58" y="1032" fill="'Cascadia Mono','Consolas',monospace" font-size="10" font-weight="400" >отступ от края — 8 px; clamp(left, 8, vw − w − 8)</text>
+<text x="58" y="1054" fill="#a8aeb8" font-size="11" font-weight="400" >узкий экран &lt; 600 px — width: 100vw − 16, left = 8</text>
+<text x="58" y="1076" fill="#a8aeb8" font-size="11" font-weight="400" >низкий экран &lt; 560 px — height: 100vh − 16, top = 8</text>
+<text x="58" y="1104" fill="#626974" font-size="10.5" font-weight="400" >Строка структуры: в покое «4 узла · 5 связей»,</text>
+<text x="58" y="1120" fill="#626974" font-size="10.5" font-weight="400" >после сохранения — «сохранено: …» (role="status").</text>
+
+<rect x="500" y="892" width="440" height="238" rx="12" fill="#1b1e24" stroke="#2a2f37"/>
+<text x="518" y="918" fill="#e9ebee" font-size="13" font-weight="700" >② Перетаскивание и память позиции</text>
+<text x="518" y="944" fill="#a8aeb8" font-size="11" font-weight="400" >ручка — 12 × 12 px, 6 точек 2 × 2, слева 8 px</text>
+<text x="518" y="966" fill="#a8aeb8" font-size="11" font-weight="400" >порог — 3 px; pointerdown → setPointerCapture</text>
+<text x="518" y="988" fill="#a8aeb8" font-size="11" font-weight="400" >движение — 1:1, целые px, содержимое статично</text>
+<text x="518" y="1010" fill="#a8aeb8" font-size="11" font-weight="400" >двойной щелчок / Home — вернуть по центру</text>
+<text x="518" y="1032" fill="'Cascadia Mono','Consolas',monospace" font-size="10" font-weight="400" >uiStore v4: windows.node { x, y }, windows.folder</text>
+<text x="518" y="1054" fill="#a8aeb8" font-size="11" font-weight="400" >запись — на pointerup и после стрелок (200 ms)</text>
+<text x="518" y="1076" fill="#a8aeb8" font-size="11" font-weight="400" >позиция общая для узлов, своя для типа окна</text>
+<text x="518" y="1104" fill="#626974" font-size="10.5" font-weight="400" >resize / orientationchange — пересчёт и сохранение;</text>
+<text x="518" y="1120" fill="#626974" font-size="10.5" font-weight="400" >за краем только шапки не бывает: кламп 8 px.</text>
+
+<rect x="960" y="892" width="440" height="238" rx="12" fill="#1b1e24" stroke="#2a2f37"/>
+<text x="978" y="918" fill="#e9ebee" font-size="13" font-weight="700" >③ Состояния и клавиатура</text>
+<text x="978" y="944" fill="#a8aeb8" font-size="11" font-weight="400" >открыто по центру · наведение на ручку (grab)</text>
+<text x="978" y="966" fill="#a8aeb8" font-size="11" font-weight="400" >перетаскивание (grabbing) · перемещено и сохранено</text>
+<text x="978" y="988" fill="#a8aeb8" font-size="11" font-weight="400" >у края — прижато · узкий экран — 100vw − 16</text>
+<text x="978" y="1010" fill="#a8aeb8" font-size="11" font-weight="400" >свёрнуто — пилюля 220 × 36, схема видна</text>
+<text x="978" y="1032" fill="#a8aeb8" font-size="11" font-weight="400" >правки не сохранены — «не сохранено: N поля»</text>
+<text x="978" y="1054" fill="#a8aeb8" font-size="11" font-weight="400" >закрытие с правками — подтверждение 80</text>
+<text x="978" y="1084" fill="#a8aeb8" font-size="11" font-weight="400" >Tab → ручка → вкладки → поля → линейка</text>
+<text x="978" y="1106" fill="#a8aeb8" font-size="11" font-weight="400" >стрелки — 8 px, Shift — 1 px, Home — по центру</text>
+<text x="978" y="1128" fill="#a8aeb8" font-size="11" font-weight="400" >Esc — отмена перетаскивания или закрытие; aria-live</text>
+
+<line x1="40" y1="1146" x2="1400" y2="1146" stroke="#2a2f37"/>
+<text x="40" y="1170" fill="#626974" font-size="11.5" font-weight="400" >Исходник: docs/design/ui-ergonomics/mockups/03-settings.svg · превью: preview.html</text>
+<text x="1400" y="1170" fill="#626974" font-size="11.5" font-weight="400" text-anchor="end" >1440 × 1200 px · SVG · проверка node docs/tasks/0333/check.mjs c1</text>
+<a href="preview.html"><rect x="40" y="1146" width="380" height="34" fill="transparent"/></a>
+</svg>
