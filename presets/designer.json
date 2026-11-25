@@ -1,0 +1,23 @@
+{
+  "node": "designer",
+  "version": 1,
+  "immutable": true,
+  "pipeline": "project_graph_spawn",
+  "requires": {
+    "evidence": [
+      "report.designer.json"
+    ],
+    "guard": {
+      "enabled": true,
+      "scope": "session",
+      "reason": "проектировщик не публикует и не выпускает"
+    }
+  },
+  "deny": [
+    "git push",
+    "publish-public",
+    "npm publish",
+    "gh release create"
+  ],
+  "secrets": "не печатать; значения только из окружения"
+}
