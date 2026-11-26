@@ -1,0 +1,334 @@
+{
+  "version": 1,
+  "nodes": [
+    {
+      "id": "coordinator",
+      "role": "координатор",
+      "provider": "opencode-go",
+      "model": "deepseek-v4.1-flash",
+      "brief": "ведёт план и раздаёт работу",
+      "prompt": "Роль: координатор структуры — ведёт план, раздаёт задания исполнителям и собирает их результат. Definition of Done: план записан, у каждого задания есть исполнитель и срок, итог сверен с заказчиком и передан дальше. Долг обмена — это обязательство: адресованное письмо считать требованием, а не выбором; отметка «разобрал» ставится точечно по одному письму и соседних не закрывает; заявка (request/question) закрывается только письмом answer/ack с Reply-To или Ref на неё.",
+      "x": 210,
+      "y": 130
+    },
+    {
+      "id": "worker",
+      "role": "исполнитель",
+      "provider": "opencode-go",
+      "model": "deepseek-v4.1-flash",
+      "brief": "делает основную работу",
+      "prompt": "Роль: исполнитель — делает основную работу по заданию координатора. Definition of Done: результат собран, проверки и тесты пройдены, в отчёте названы файлы, команды и отклонения от задания.",
+      "x": 1,
+      "y": 378,
+      "anchors": {
+        "consumes": [
+          "A2",
+          "A4"
+        ],
+        "source": "coordinator"
+      }
+    },
+    {
+      "id": "judge",
+      "role": "приёмщик",
+      "provider": "opencode-go",
+      "model": "glm-5.3-flash",
+      "brief": "проверяет работу отдельной сессией",
+      "prompt": "Роль: приёмщик — проверяет работу отдельной сессией по критериям задания. Definition of Done: вынесен вердикт принято или отклонено, каждое замечание подкреплено доказательством, код исполнителя не правится.",
+      "x": 0,
+      "y": 199,
+      "anchors": {
+        "consumes": [
+          "A1",
+          "A3",
+          "A4"
+        ],
+        "source": "coordinator"
+      }
+    },
+    {
+      "id": "designer",
+      "role": "исполнитель",
+      "provider": "opencode-go",
+      "model": "gpt-6-luna",
+      "brief": "делает графику",
+      "prompt": "Роль: дизайнер — отвечает за графику, интерфейс и подачу результата. Definition of Done: макеты и изображения соответствуют брифу, исходники и превью приложены, отклонения от брифа названы.",
+      "x": 214,
+      "y": 288,
+      "anchors": {
+        "consumes": [
+          "A2",
+          "A4"
+        ],
+        "source": "coordinator"
+      }
+    },
+    {
+      "id": "critic",
+      "role": "критик",
+      "provider": "opencode-go",
+      "model": "glm-5.3-flash",
+      "brief": "разбирает итоги дня по расписанию и возвращает аналитику координатору",
+      "prompt": "Роль: критик — по расписанию разбирает итоги дня и возвращает аналитику координатору. При каждом запуске по расписанию сначала запусти node checks/self-control.mjs и впиши его вывод в docs/critic/<дата>.md: либо SELF-CONTROL OK, либо полный список нарушений — дословно, без пересказа. Definition of Done: вывод самоконтроля записан в docs/critic/<дата>.md, собраны факты дня, названы риски и узкие места, координатору отправлены выводы и рекомендации.",
+      "schedule": {
+        "at": "03:00",
+        "timeZone": "Europe/Moscow"
+      },
+      "x": 0,
+      "y": 26
+    },
+    {
+      "id": "reviewer-1",
+      "role": "ревьюер",
+      "brief": "читает диф и контракт до приёмки",
+      "x": 0,
+      "y": 284,
+      "provider": "deepseek-official",
+      "model": "deepseek-flash",
+      "prompt": "Роль: ревьюер — читает диф и контракт до приёмки, ничего не меняет.\nПроверь: критерии не ослаблены и не подогнаны под проверку; ошибки и пустые пути; секреты и внешние вызовы; тесты проверяют поведение, а не реализацию.\nКаждое замечание: файл:строка, серьёзность, почему, что чинить. Отдельно — список «не судил» с причиной.\nDefinition of Done: вердикт ok|issues, замечания с адресами, список «не судил»; дерево не изменено.",
+      "anchors": {
+        "consumes": [
+          "A1",
+          "A2",
+          "A3",
+          "A4",
+          "A5",
+          "A6",
+          "A7",
+          "A8",
+          "A11",
+          "A12"
+        ]
+      }
+    },
+    {
+      "id": "tester-1",
+      "role": "тестировщик",
+      "brief": "независимый полный прогон",
+      "prompt": "Роль: тестировщик — независимый прогон, код не правит.\nПрогони полный набор: node tools/test.mjs; затем точечные тесты задания. Если spawn-тесты падают EPERM, повтори тот же прогон с NODE_OPTIONS=--require docs/tasks/0194/pipe-capture.cjs.\nФиксируй: команда, exit, время, первая упавшая проверка; флак — только с доказательством повтора.\nDefinition of Done: команды и exit в отчёте, вердикт pass|fail, первое падение названо.",
+      "schedule": {
+        "at": "04:00",
+        "timeZone": "Europe/Moscow"
+      },
+      "x": 209,
+      "y": 28,
+      "provider": "opencode-go",
+      "model": "glm-5.3-flash"
+    },
+    {
+      "id": "worker-1",
+      "role": "Советник",
+      "brief": "Дает альтернативное мнение",
+      "x": 280,
+      "y": 369,
+      "provider": "opencode-go",
+      "model": "gpt-6-luna"
+    },
+    {
+      "id": "worker-2",
+      "role": "Собеседник",
+      "brief": "Дискутирует",
+      "x": 282,
+      "y": 443,
+      "provider": "opencode-go",
+      "model": "glm-5.3-flash"
+    }
+  ],
+  "folders": [
+    {
+      "id": "folder-1",
+      "box": {
+        "path": "coordination",
+        "root": "shared"
+      },
+      "exchange": {
+        "threads": [
+          "critic-report"
+        ],
+        "contract": "contract.md"
+      },
+      "participants": [
+        "structure",
+        "workflow"
+      ],
+      "orchestrator": "coordinator",
+      "uid": "3d181cf2-467f-4f0e-a819-09f3f62f34be"
+    },
+    {
+      "id": "folder-2",
+      "box": {
+        "path": "ws-school-app/coordination",
+        "root": "shared"
+      },
+      "participants": [
+        "structure",
+        "ws-school-app"
+      ],
+      "orchestrator": "coordinator",
+      "paths": {},
+      "exchange": {
+        "contract": "contract-folder-2.md",
+        "threads": [
+          "critic-report"
+        ]
+      },
+      "uid": "9d8c7b4f-d22e-4dae-898a-877afab1ed94"
+    },
+    {
+      "id": "folder-3",
+      "box": {
+        "path": "reach-proxy/coordination/structure",
+        "root": "shared"
+      },
+      "participants": [
+        "reach-proxy",
+        "structure"
+      ],
+      "orchestrator": "coordinator",
+      "paths": {
+        "reach-proxy": "C:\\Users\\Goryachev\\Documents\\deepseek-harness\\reach-proxy",
+        "structure": "C:\\Users\\Goryachev\\Documents\\deepseek-harness\\dsh-project-graph"
+      },
+      "exchange": {
+        "threads": [
+          "critic-report"
+        ],
+        "contract": "contract-folder-2.md"
+      },
+      "uid": "ae314130-e2ce-4ae9-b2d5-dfba4ae15a95"
+    },
+    {
+      "id": "folder-4",
+      "box": {
+        "path": "split-optimizer/coordination",
+        "root": "shared"
+      },
+      "participants": [
+        "split-optimizer",
+        "structure"
+      ],
+      "orchestrator": "coordinator",
+      "paths": {
+        "split-optimizer": "C:\\Users\\Goryachev\\Documents\\deepseek-harness\\split-optimizer",
+        "structure": "C:\\Users\\Goryachev\\Documents\\deepseek-harness\\dsh-project-graph"
+      },
+      "exchange": {
+        "threads": [
+          "critic-report"
+        ],
+        "contract": "contract-folder-2.md"
+      },
+      "uid": "481e3a1c-37b2-41d6-8ef4-dbf43326aa88"
+    },
+    {
+      "id": "folder-5",
+      "box": {
+        "path": "tv2/coordination",
+        "root": "shared"
+      },
+      "participants": [
+        "structure",
+        "tv2"
+      ],
+      "orchestrator": "coordinator",
+      "paths": {
+        "structure": "C:\\Users\\Goryachev\\Documents\\deepseek-harness\\dsh-project-graph",
+        "tv2": "C:\\Users\\Goryachev\\Documents\\deepseek-harness\\tv2"
+      },
+      "exchange": {
+        "threads": [
+          "critic-report"
+        ],
+        "contract": "contract-folder-5.md"
+      },
+      "uid": "de0b4181-63ab-4aa4-bea4-5871c4543080"
+    }
+  ],
+  "edges": [
+    {
+      "from": "coordinator",
+      "to": "worker",
+      "kind": "delegate"
+    },
+    {
+      "from": "coordinator",
+      "to": "designer",
+      "kind": "delegate"
+    },
+    {
+      "from": "designer",
+      "to": "coordinator",
+      "kind": "report"
+    },
+    {
+      "from": "judge",
+      "to": "coordinator",
+      "kind": "report"
+    },
+    {
+      "from": "critic",
+      "to": "coordinator",
+      "kind": "report"
+    },
+    {
+      "from": "worker",
+      "to": "reviewer-1",
+      "kind": "report"
+    },
+    {
+      "from": "reviewer-1",
+      "to": "judge",
+      "kind": "review"
+    },
+    {
+      "from": "coordinator",
+      "to": "tester-1",
+      "kind": "delegate"
+    },
+    {
+      "from": "tester-1",
+      "to": "coordinator",
+      "kind": "report"
+    },
+    {
+      "from": "coordinator",
+      "to": "worker-1",
+      "kind": "delegate"
+    },
+    {
+      "from": "worker-1",
+      "to": "coordinator",
+      "kind": "report"
+    },
+    {
+      "from": "coordinator",
+      "to": "worker-2",
+      "kind": "delegate"
+    },
+    {
+      "from": "worker-2",
+      "to": "coordinator",
+      "kind": "report"
+    }
+  ],
+  "obligations": [
+    {
+      "id": "exchange-unread",
+      "title": "входящие письма разобраны",
+      "check": {
+        "kind": "exchange-unread",
+        "max": 0
+      },
+      "enforce": "fail"
+    },
+    {
+      "id": "exchange-open",
+      "title": "заявки закрыты ответом",
+      "check": {
+        "kind": "exchange-open",
+        "max": 0
+      },
+      "enforce": "fail"
+    }
+  ]
+}
