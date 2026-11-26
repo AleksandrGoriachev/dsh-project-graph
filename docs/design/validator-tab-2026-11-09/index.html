@@ -1,0 +1,559 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Валидатор структуры: сдвижная вкладка справа от координатора — макет 2026-11-09</title>
+<!--
+  МАКЕТ, а не рабочий экран. Код не менялся (идёт приёмка 0178, дерево заморожено).
+
+  Что здесь: исправленная вкладка валидатора у блока координатора. Свёрнуто — 14 x 44,
+  левый край квадратный и уходит под карточку на 1 px, тон на внешнем ребре 2 px, счёт
+  внутри полосы, без бейджа наружу. Наведение — панель 180 x 104 ВЫЕЗЖАЕТ из-под карточки
+  (сдвиг, а не рост ширины). Клик — существующее окно валидатора.
+
+  «Было» — настоящий снимок текущей сборки (lib/client.js в jsdom), см. tools/render-current.mjs.
+  Превью: msedge --headless=new --hide-scrollbars --window-size=1280,800
+          --screenshot=01.png "file:///.../index.html?scene=01"  (01..06)
+-->
+<link rel="stylesheet" href="sheet.css">
+<style>
+  body.scene { padding:16px; }
+  body.scene .sheet-head { display:none; }
+  body.scene .scene { display:none; margin:0; }
+  body.scene .scene.on { display:block; }
+  body.scene .scene > h2 { display:none; }
+  .panel-badge { margin-left:2px; font-size:10px; font-weight:700; letter-spacing:.05em; text-transform:uppercase;
+                 color:var(--accent); border:1px dashed var(--accent); border-radius:999px; padding:2px 9px; white-space:nowrap; }
+  .panel-badge.muted { color:var(--muted); border-color:var(--line-strong); }
+  .slide { position:relative; width:212px; height:132px; border:1px solid var(--line); border-radius:10px; background:var(--canvas); overflow:hidden; }
+  .slide .cardedge { position:absolute; left:0; top:21px; width:40px; height:62px; background:var(--panel); border:1px solid var(--line-strong); border-left:0; border-radius:0 10px 10px 0; box-shadow:0 1px 2px rgba(0,0,0,.06); }
+  .slide .clipzone { position:absolute; left:40px; top:0; right:0; bottom:0; overflow:hidden; }
+  .slide .bar { position:absolute; left:-1px; top:12px; width:180px; height:104px; border-radius:0 10px 10px 0;
+                background:var(--panel); border:1px solid var(--line-strong); border-left:0; border-right:2px solid var(--danger);
+                box-shadow:0 10px 26px rgba(20,20,45,.16); }
+  .slide .bar .t { position:absolute; left:10px; top:8px; font-size:9px; font-weight:700; }
+  .slide .bar .s { position:absolute; left:10px; top:24px; font-size:9px; font-weight:700; color:var(--danger); }
+  .slide .bar .r { position:absolute; left:10px; right:10px; top:38px; height:1px; background:var(--line); }
+  .slide .bar .l { position:absolute; left:10px; top:44px; font-family:var(--mono); font-size:7.5px; color:var(--muted); }
+  .slide .bar .l2 { position:absolute; left:10px; top:54px; font-family:var(--mono); font-size:7.5px; color:var(--muted); }
+  .slide .bar .l3 { position:absolute; left:10px; top:64px; font-family:var(--mono); font-size:7.5px; color:var(--muted); }
+  .slide .bar .f { position:absolute; left:10px; bottom:6px; font-size:7.5px; font-weight:600; color:var(--accent); }
+  .slide figcaption { position:absolute; left:0; right:0; bottom:4px; text-align:center; font-family:var(--mono); font-size:9px; color:var(--tertiary); }
+  .mini { position:relative; width:560px; height:250px; border:1px solid var(--line); border-radius:12px; background:var(--canvas); overflow:hidden; }
+  .mini::before { content:""; position:absolute; inset:0; background-image:radial-gradient(var(--line-strong) 1px, transparent 1px); background-size:16px 16px; opacity:.4; }
+  .mini .card { width:176px; height:62px; }
+  .mini-head { display:flex; align-items:center; gap:8px; padding:8px 12px; border-bottom:1px solid var(--line); background:var(--layer1); font-size:11.5px; color:var(--muted); }
+  .mini-head b { color:var(--text); font-size:12.5px; }
+  .statecard { width:576px; }
+  .statecard .shot-cap { display:flex; gap:8px; align-items:baseline; margin:8px 0 0; font-size:11.5px; color:var(--muted); }
+</style>
+</head>
+<body>
+<div class="sheet">
+
+<header class="sheet-head">
+  <p class="kicker">Макет · 09.11.2026 · код не менялся · приёмка 0178 идёт</p>
+  <h1>Валидатор структуры — не узел, а сдвижная вкладка справа от координатора</h1>
+  <p class="lead">Заказчик: «индикатор сделан как прицепленный сплющенный узел, а должен быть сдвижной вкладкой,
+    выступающей справа от карточки координатора». Здесь — исправление формы: вкладка <b>срастается</b>
+    с карточкой (квадратный левый край, уходит под неё на 1 px, тон на внешнем ребре), <b>короткая</b>
+    (14 × 44, а не во всю высоту блока), <b>выезжает</b> наведением, а не раздувается, и <b>лежит под
+    карточкой</b>, а не поверх неё. «Было» на листе — настоящий снимок текущей сборки, не пересказ.</p>
+  <div class="quote"><span class="qn">Заказчик</span>
+    «У узла координатора индикатор валидатора сделан как прицепленный сплющенный узел, а должен быть
+    сдвижной вкладкой, выступающей справа от карточки координатора».</div>
+  <div class="quote"><span class="qn">Бриф 0162</span>
+    «свёрнуто 14 px, по наведению 180 px со статусом и первыми 2–3 находками; видно, что задания
+    заблокированы, пока находки не устранены» — форма подачи меняется, содержание нет.</div>
+</header>
+
+<!-- ================================================================= 01 -->
+<section class="scene on" id="s01">
+  <h2><span class="no">01</span> Было → стало: одна и та же вкладка, 3× <span class="scene-note">слева — снимок текущей сборки, справа — макет</span></h2>
+  <div class="duo">
+    <figure class="shot">
+      <span class="tag before">было · снимок сборки</span>
+      <div class="zoom"><img src="tools/crop-collapsed-3x.png" width="288" height="264" alt="текущая вкладка: капсула с рамкой и бейджем"></div>
+      <figcaption><b>Капсула, приклеенная к карточке.</b> Четыре скруглённых угла (rx 8), рамка по всему
+        периметру, полоса статуса отдельной палочкой внутри, счёт — бейджем на 6 px наружу. Читается как
+        отдельный маленький узел с уведомлением, а не как часть блока. Высота 62 — во весь блок.</figcaption>
+    </figure>
+    <figure class="shot">
+      <span class="tag after">стало · макет</span>
+      <div class="zoom3">
+        <div class="stage">
+          <div class="card" style="left:-94px;top:12px">
+            <span class="cs" style="background:var(--accent)"></span>
+            <span class="c-id">coordinator</span>
+            <span class="c-role">координатор · deepseek-v4.1</span>
+            <span class="c-state">свободен</span>
+            <span class="c-dot"></span>
+          </div>
+          <div class="vt is-err" style="left:81px;top:21px;z-index:2">
+            <span class="vt-count">4</span><span class="vt-sign">!</span>
+          </div>
+        </div>
+      </div>
+      <figcaption><b>Вкладка-продолжение.</b> Левый край квадратный и на 1 px уходит под карточку —
+        шва нет. Скругление только справа (r 7). Статус — внешнее ребро 2 px, оно же единственная
+        граница справа. Счёт внутри полосы. Высота 44 — ручка, а не сплющенный блок.</figcaption>
+    </figure>
+    <div class="col" style="flex:1 1 560px;min-width:520px">
+      <table>
+        <tr><th style="width:33%">Что</th><th style="width:33%">Было (в сборке)</th><th>Стало (макет)</th></tr>
+        <tr><td>Силуэт</td><td><code>rect rx 8</code>, 4 скругления, рамка 1 px по кругу</td><td>левый край <code>0</code>, справа <code>7</code>, рамка только сверху/справа/снизу</td></tr>
+        <tr><td>Стык с карточкой</td><td>начинается ровно на <code>x+w</code> → зазор и двойная линия</td><td>начинается на <code>x+w−1</code> и уходит под карточку — стыка не видно</td></tr>
+        <tr><td>Статус</td><td>отдельная палочка 3 px внутри полосы, со своими скруглениями</td><td>само внешнее ребро 2 px (это и есть граница вкладки)</td></tr>
+        <tr><td>Счёт</td><td>бейдж 13 px на <code>−6/−6</code> наружу</td><td>цифра 9 px внутри полосы, ничего не выступает</td></tr>
+        <tr><td>Высота</td><td>62 = высота блока</td><td>44 по центру блока (y₀ + 9)</td></tr>
+        <tr><td>Появление</td><td>ширина прыгает 14 → 180 без перехода</td><td>панель выезжает из-под карточки за 140 мс</td></tr>
+        <tr><td>Слой</td><td>поверх карточек и рёбер</td><td>над рёбрами, <b>под</b> карточками</td></tr>
+      </table>
+    </div>
+  </div>
+</section>
+
+
+<!-- ================================================================= 02 -->
+<section class="scene" id="s02">
+  <h2><span class="no">02</span> Свёрнуто на канве: 14 × 44 <span class="scene-note">1:1, цифры на выносках</span></h2>
+  <div class="panel">
+    <div class="p-top">
+      <span class="p-title">Структура проекта</span>
+      <span class="chip">структура</span>
+      <span class="chip">сборка 09.11 15:04</span>
+      <span class="panel-badge">02 · свёрнуто</span>
+      <span class="spacer"></span>
+      <button class="btn">Обновить</button><button class="btn">Собрать</button><button class="btn">Добавить узел</button>
+    </div>
+    <div class="p-main">
+      <aside class="lib">
+        <div class="lib-title">Библиотека узлов</div>
+        <div class="lib-card"><span class="lib-ico">К</span><div><div class="lib-name">Координатор</div><div class="lib-role">ведёт план и раздаёт работу</div></div></div>
+        <div class="lib-card"><span class="lib-ico">И</span><div><div class="lib-name">Исполнитель</div><div class="lib-role">делает порученное</div></div></div>
+        <div class="lib-card"><span class="lib-ico">П</span><div><div class="lib-name">Приёмщик</div><div class="lib-role">проверяет работу</div></div></div>
+        <div class="lib-card"><span class="lib-ico">Кр</span><div><div class="lib-name">Критик</div><div class="lib-role">разбирает прогон</div></div></div>
+        <div class="lib-hint">Вкладку валидатора нельзя перепутать с карточкой: она не из библиотеки,
+          не перетаскивается и на канве не считается узлом.</div>
+      </aside>
+      <div class="canvas-shell">
+        <div class="c-head">
+          <strong>Structure</strong>
+          <span class="chip">4 узла</span><span class="chip">3 связи</span>
+          <span class="chip bad">4 находки · запуск заблокирован</span>
+          <span class="spacer"></span><button class="btn">Сбросить схему</button>
+        </div>
+        <div class="canvas">
+          <svg class="edges" viewBox="0 0 962 575" preserveAspectRatio="none">
+            <defs>
+              <marker id="ar" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#4176e6"/></marker>
+              <marker id="arp" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#a855f7"/></marker>
+            </defs>
+            <line x1="229" y1="49" x2="413" y2="49" stroke="#4176e6" stroke-width="1.5" marker-end="url(#ar)"/>
+            <line x1="128" y1="80" x2="128" y2="121" stroke="#4176e6" stroke-width="1.5" marker-end="url(#ar)"/>
+            <line x1="229" y1="159" x2="413" y2="159" stroke="#a855f7" stroke-width="1" stroke-dasharray="5 4" marker-end="url(#arp)"/>
+          </svg>
+          <div class="card" style="left:40px;top:18px">
+            <span class="cs" style="background:var(--accent)"></span>
+            <span class="c-id">coordinator</span><span class="c-role">координатор · deepseek-v4.1</span>
+            <span class="c-state">работает</span><span class="c-run">◷ следующий запуск 08.11 15:30</span>
+            <span class="c-dot"></span>
+          </div>
+          <div class="card" style="left:40px;top:128px">
+            <span class="cs" style="background:var(--warn)"></span>
+            <span class="c-id">judge</span><span class="c-role">приёмщик · glm-5.3-flash</span>
+            <span class="c-state">выполняется</span>
+          </div>
+          <div class="card" style="left:420px;top:18px">
+            <span class="cs" style="background:var(--success)"></span>
+            <span class="c-id">worker</span><span class="c-role">исполнитель · deepseek-v4.1</span>
+            <span class="c-state">свободен</span>
+          </div>
+          <div class="card" style="left:420px;top:128px">
+            <span class="cs" style="background:#a855f7"></span>
+            <span class="c-id">critic</span><span class="c-role">критик · glm-5.3-flash</span>
+            <span class="c-state">завершил</span>
+          </div>
+          <div class="portal" style="left:700px;top:18px">
+            <span class="portal-h">Выход вне <span style="font-size:9px;font-weight:400;color:var(--caption)">folder-1 · приёмка</span></span>
+            <span class="portal-r"></span>
+            <span class="portal-row">workflow</span>
+            <span class="portal-c">↗ 3 исходящих · ↙ 2 входящих</span>
+            <span class="portal-f">path coordination/threads</span>
+          </div>
+
+          <!-- ВКЛАДКА: 14 x 44, y = 18 + 9 -->
+          <div class="vt is-err" style="left:215px;top:27px">
+            <span class="vt-count">4</span><span class="vt-sign">!</span>
+          </div>
+          <div class="callout" style="left:246px;top:92px">
+            <b>14 × 44</b> · верх <b>y₀+9</b> · r <b>7</b> справа, слева <b>0</b><br>
+            тон — внешнее ребро <b>2 px</b> · стык спрятан на <b>1 px</b> под карточкой
+          </div>
+
+          <div class="callout" style="left:40px;top:290px;width:392px;line-height:1.55;padding:9px 12px">
+            <div style="font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--tertiary);margin-bottom:5px">Геометрия вкладки</div>
+            <table style="font-size:11px">
+              <tr><td style="width:44%;color:var(--muted);padding:2px 0">x</td><td style="padding:2px 0"><span class="mono">x₀ + w − 1 = 215</span></td></tr>
+              <tr><td style="color:var(--muted);padding:2px 0">свёрнуто</td><td style="padding:2px 0"><span class="mono">14 × 44</span>, по центру блока</td></tr>
+              <tr><td style="color:var(--muted);padding:2px 0">наведение</td><td style="padding:2px 0"><span class="mono">180 × 104</span>, верх = верх карточки</td></tr>
+              <tr><td style="color:var(--muted);padding:2px 0">тень</td><td style="padding:2px 0"><span class="mono">0 1px 2px / 7%</span> · в наведении <span class="mono">0 10px 26px / 16%</span></td></tr>
+              <tr><td style="color:var(--muted);padding:2px 0">рёбра</td><td style="padding:2px 0">начинаются на <span class="mono">x+w+13 = 229</span>, не под полосой</td></tr>
+              <tr><td style="color:var(--muted);padding:2px 0">слой</td><td style="padding:2px 0">над рёбрами, <b>под карточками</b> — поэтому шва нет</td></tr>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================= 03 -->
+<section class="scene" id="s03">
+  <h2><span class="no">03</span> Наведение: панель выезжает из-под карточки <span class="scene-note">180 × 104, 140 мс; ниже — кадры выезда и «было» для сравнения</span></h2>
+  <div class="panel">
+    <div class="p-top">
+      <span class="p-title">Структура проекта</span>
+      <span class="chip">структура</span>
+      <span class="chip">сборка 09.11 15:04</span>
+      <span class="panel-badge">03 · наведение</span>
+      <span class="spacer"></span>
+      <button class="btn">Обновить</button><button class="btn">Собрать</button><button class="btn">Добавить узел</button>
+    </div>
+    <div class="p-main">
+      <aside class="lib">
+        <div class="lib-title">Библиотека узлов</div>
+        <div class="lib-card"><span class="lib-ico">К</span><div><div class="lib-name">Координатор</div><div class="lib-role">ведёт план и раздаёт работу</div></div></div>
+        <div class="lib-card"><span class="lib-ico">И</span><div><div class="lib-name">Исполнитель</div><div class="lib-role">делает порученное</div></div></div>
+        <div class="lib-card"><span class="lib-ico">П</span><div><div class="lib-name">Приёмщик</div><div class="lib-role">проверяет работу</div></div></div>
+        <div class="lib-hint">Курсор можно вести с полосы в панель: пока он внутри, панель стоит.
+          Уход закрывает через 250 мс — случайное движение мимо блока не закрывает её на полуслове.</div>
+      </aside>
+      <div class="canvas-shell">
+        <div class="c-head">
+          <strong>Structure</strong>
+          <span class="chip">4 узла</span><span class="chip">3 связи</span>
+          <span class="chip bad">4 находки · запуск заблокирован</span>
+          <span class="spacer"></span><button class="btn">Сбросить схему</button>
+        </div>
+        <div class="canvas">
+          <svg class="edges" viewBox="0 0 962 575" preserveAspectRatio="none">
+            <line x1="229" y1="49" x2="413" y2="49" stroke="#4176e6" stroke-width="1.5" marker-end="url(#ar)"/>
+            <line x1="128" y1="80" x2="128" y2="121" stroke="#4176e6" stroke-width="1.5" marker-end="url(#ar)"/>
+            <line x1="229" y1="159" x2="413" y2="159" stroke="#a855f7" stroke-width="1" stroke-dasharray="5 4" marker-end="url(#arp)"/>
+          </svg>
+          <div class="card" style="left:40px;top:18px">
+            <span class="cs" style="background:var(--accent)"></span>
+            <span class="c-id">coordinator</span><span class="c-role">координатор · deepseek-v4.1</span>
+            <span class="c-state">работает</span><span class="c-run">◷ следующий запуск 08.11 15:30</span>
+            <span class="c-dot"></span>
+          </div>
+          <div class="card" style="left:40px;top:128px">
+            <span class="cs" style="background:var(--warn)"></span>
+            <span class="c-id">judge</span><span class="c-role">приёмщик · glm-5.3-flash</span>
+            <span class="c-state">выполняется</span>
+          </div>
+          <div class="card" style="left:420px;top:18px">
+            <span class="cs" style="background:var(--success)"></span>
+            <span class="c-id">worker</span><span class="c-role">исполнитель · deepseek-v4.1</span>
+            <span class="c-state">свободен</span>
+          </div>
+          <div class="card" style="left:420px;top:128px">
+            <span class="cs" style="background:#a855f7"></span>
+            <span class="c-id">critic</span><span class="c-role">критик · glm-5.3-flash</span>
+            <span class="c-state">завершил</span>
+          </div>
+
+          <div class="vpanel" style="left:215px;top:18px">
+            <div class="vp-top">
+              <span class="vp-title">Валидатор структуры</span>
+              <span class="vp-when">15:04</span>
+              <span class="vp-gear">⚙</span>
+            </div>
+            <div class="vp-status">4 находки</div>
+            <div class="vp-rule"></div>
+            <ul class="vp-list">
+              <li><b>duplicate-edge</b> связь дважды</li>
+              <li><b>model-missing</b> glm-5.3</li>
+              <li><b>no-acceptor</b> worker</li>
+            </ul>
+            <div class="vp-foot">запуск заблокирован · все 4 →</div>
+          </div>
+
+          <div class="callout" style="left:410px;top:205px;width:520px;line-height:1.5;white-space:normal">
+            <b>180 × 104</b> встаёт на <b>y₀</b> (верх карточки). Зазор до карточки исполнителя — <b>23 px</b>.
+            Раскладка не пересчитывается: панель — поповер над канвой.
+            Вертикального прыжка нет: верх панели = верх карточки.
+          </div>
+
+          <!-- кадры выезда -->
+          <div style="position:absolute;left:40px;top:300px;display:flex;gap:16px">
+            <figure class="slide" style="margin:0">
+              <div class="cardedge"></div>
+              <div class="clipzone">
+                <div class="bar" style="transform:translateX(-166px)">
+                  <span class="t">Валидатор структуры</span><span class="s">4 находки</span><span class="r"></span>
+                  <span class="l">duplicate-edge</span><span class="l2">model-missing</span><span class="l3">no-acceptor</span>
+                  <span class="f">запуск заблокирован · все 4 →</span>
+                </div>
+              </div>
+              <figcaption>t=0 · в покое видно 14 px</figcaption>
+            </figure>
+            <figure class="slide" style="margin:0">
+              <div class="cardedge"></div>
+              <div class="clipzone">
+                <div class="bar" style="transform:translateX(-83px)">
+                  <span class="t">Валидатор структуры</span><span class="s">4 находки</span><span class="r"></span>
+                  <span class="l">duplicate-edge</span><span class="l2">model-missing</span><span class="l3">no-acceptor</span>
+                  <span class="f">запуск заблокирован · все 4 →</span>
+                </div>
+              </div>
+              <figcaption>t≈70 мс · выехала наполовину</figcaption>
+            </figure>
+            <figure class="slide" style="margin:0">
+              <div class="cardedge"></div>
+              <div class="clipzone">
+                <div class="bar" style="transform:translateX(0)">
+                  <span class="t">Валидатор структуры</span><span class="s">4 находки</span><span class="r"></span>
+                  <span class="l">duplicate-edge</span><span class="l2">model-missing</span><span class="l3">no-acceptor</span>
+                  <span class="f">запуск заблокирован · все 4 →</span>
+                </div>
+              </div>
+              <figcaption>t=140 мс · на месте</figcaption>
+            </figure>
+            <figure style="margin:0">
+              <span class="tag before">было · снимок</span>
+              <img src="tools/crop-hover-1x.png" width="180" height="104" alt="текущая панель наведения" style="display:block;border:1px solid var(--line);border-radius:0 10px 10px 0">
+              <figcaption style="font-size:10.5px;color:var(--muted);margin-top:6px;width:220px">Рамка по кругу, полоса статуса палочкой внутри, шестерёнка поверх заголовка, «Запуск заблокирован» наезжает на коды.</figcaption>
+            </figure>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ================================================================= 04 -->
+<section class="scene" id="s04">
+  <h2><span class="no">04</span> Клик: окно валидатора <span class="scene-note">окно не меняется — снимок текущей сборки; вкладки «Сведения/Настройки» — задача 0164</span></h2>
+  <div class="duo">
+    <figure class="shot">
+      <span class="tag before">снимок сборки · окно как есть</span>
+      <img src="tools/crop-window-1x.png" width="644" height="490" alt="окно валидатора структуры">
+      <figcaption><b>Что происходит по клику.</b> Вкладка открывает существующее окно «Валидатор структуры»:
+        статус, время проверки, баннер блокировки, список находок (код · файл:строка · что не так ·
+        что сделать) и «Запустить», недоступная при error-находках. Esc, × и клик мимо закрывают.</figcaption>
+    </figure>
+    <div class="col" style="flex:1 1 540px;min-width:480px">
+      <table>
+        <tr><th style="width:34%">Действие</th><th>Что происходит</th></tr>
+        <tr><td>Клик по вкладке</td><td>окно валидатора; вкладка остаётся на месте и не «прыгает»</td></tr>
+        <tr><td>Клик по панели наведения</td><td>то же окно: панель — это подсказка, а не отдельный экран</td></tr>
+        <tr><td>Клик по ⚙ в панели</td><td>окно блока (0164: «Сведения» / «Настройки»)</td></tr>
+        <tr><td>Esc</td><td>закрывает окно; если окна нет — закрывает панель наведения</td></tr>
+        <tr><td>Tab</td><td>фокус на вкладке: рамка 2 px <span class="mono">--accent</span> вокруг ручки, панель раскрывается</td></tr>
+        <tr><td>Enter / Space</td><td>открывает окно (вкладка — <span class="mono">role="button"</span>)</td></tr>
+      </table>
+      <p class="note" style="margin-top:10px">Окно — <b>модальное</b>: вкладка под ним приглушена затемнением.
+        После закрытия панель наведения не «залипает»: состояние сбрасывается, курсор мог уехать.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================= 05 -->
+<section class="scene" id="s05">
+  <h2><span class="no">05</span> Четыре состояния <span class="scene-note">пустая структура — не находка; цвет не единственный носитель смысла</span></h2>
+  <div class="cols">
+    <div class="statecard shot" style="padding:8px">
+      <div class="mini">
+        <div class="mini-head"><b>Structure</b><span class="chip ok">структура исправна</span><span class="spacer"></span><span style="font-size:10px">запуск доступен</span></div>
+        <div class="card" style="left:24px;top:64px">
+          <span class="cs" style="background:var(--accent)"></span>
+          <span class="c-id">coordinator</span><span class="c-role">координатор · deepseek-v4.1</span>
+          <span class="c-state">свободен</span><span class="c-dot"></span>
+        </div>
+        <div class="vt is-ok" style="left:199px;top:73px"><span class="vt-sign">✓</span></div>
+        <div style="position:absolute;left:24px;top:150px;font-size:10.5px;color:var(--muted);width:380px">
+          <span class="mono" style="color:var(--text)">aria-label</span>: «Валидатор структуры: структура исправна, запуск доступен»
+        </div>
+      </div>
+      <figcaption style="font-size:11.5px;color:var(--muted);margin-top:8px">
+        <b style="color:var(--text)">1 · исправна.</b> Зелёное ребро, ✓ по центру, счёта нет. Ни пульса, ни капли анимации:
+        спокойный элемент на канве не мигает.
+      </figcaption>
+    </div>
+    <div class="statecard shot" style="padding:8px">
+      <div class="mini">
+        <div class="mini-head"><b>Structure</b><span class="chip bad">4 находки · запуск заблокирован</span></div>
+        <div class="card" style="left:24px;top:64px">
+          <span class="cs" style="background:var(--accent)"></span>
+          <span class="c-id">coordinator</span><span class="c-role">координатор · deepseek-v4.1</span>
+          <span class="c-state">свободен</span>
+        </div>
+        <div class="vt is-err" style="left:199px;top:73px"><span class="vt-count">4</span><span class="vt-sign">!</span></div>
+        <div style="position:absolute;left:24px;top:150px;font-size:10.5px;color:var(--muted);width:380px">
+          <span class="mono" style="color:var(--text)">aria-label</span>: «Валидатор структуры: 4 находки, запуск заблокирован»
+        </div>
+      </div>
+      <figcaption style="font-size:11.5px;color:var(--muted);margin-top:8px">
+        <b style="color:var(--text)">2 · есть ошибки.</b> Красное ребро, «4» и «!» внутри полосы. Блокировка
+        дублируется чипом в шапке канвы и баннером в окне — три места, а не одно.
+      </figcaption>
+    </div>
+    <div class="statecard shot" style="padding:8px">
+      <div class="mini">
+        <div class="mini-head"><b>Structure</b><span class="chip warn">1 находка · запуск доступен</span></div>
+        <div class="card" style="left:24px;top:64px">
+          <span class="cs" style="background:var(--accent)"></span>
+          <span class="c-id">coordinator</span><span class="c-role">координатор · deepseek-v4.1</span>
+          <span class="c-state">свободен</span><span class="c-dot"></span>
+        </div>
+        <div class="vt is-warn" style="left:199px;top:73px"><span class="vt-count">1</span><span class="vt-sign">!</span></div>
+        <div style="position:absolute;left:24px;top:150px;font-size:10.5px;color:var(--muted);width:380px">
+          <span class="mono" style="color:var(--text)">aria-label</span>: «Валидатор структуры: 1 находка, запуск доступен»
+        </div>
+      </div>
+      <figcaption style="font-size:11.5px;color:var(--muted);margin-top:8px">
+        <b style="color:var(--text)">3 · только предупреждения.</b> Янтарное ребро, запуск не блокируется:
+        предупреждение — не запрет (решение D1 задачи 0163).
+      </figcaption>
+    </div>
+    <div class="statecard shot" style="padding:8px">
+      <div class="mini">
+        <div class="mini-head"><b>Structure</b><span class="chip">структура пуста · начните с координатора</span></div>
+        <div class="card" style="left:24px;top:64px">
+          <span class="cs" style="background:var(--accent)"></span>
+          <span class="c-id">coordinator</span><span class="c-role">координатор · добавлен чтением</span>
+          <span class="c-state">свободен</span>
+        </div>
+        <div class="vt is-empty" style="left:199px;top:73px"><span class="vt-sign">○</span></div>
+        <div style="position:absolute;left:24px;top:150px;font-size:10.5px;color:var(--muted);width:390px">
+          <span class="mono" style="color:var(--text)">info empty-graph</span> — не находка и не ошибка:
+          структура только создана. Ребро нейтральное, счёта нет.
+        </div>
+      </div>
+      <figcaption style="font-size:11.5px;color:var(--muted);margin-top:8px">
+        <b style="color:var(--text)">4 · пусто.</b> Сегодня сборка показывает здесь «1 находка» янтарным —
+        пустой граф считается находкой. Это ложная тревога: <span class="mono">empty-graph</span> —
+        <span class="mono">info</span>, а не <span class="mono">warning</span>.
+      </figcaption>
+    </div>
+  </div>
+</section>
+
+
+<!-- ================================================================= 06 -->
+<section class="scene" id="s06">
+  <h2><span class="no">06</span> Спека: геометрия, движение, слой и правки для воркера</h2>
+  <div class="cols">
+    <div class="col" style="flex:1 1 600px">
+      <table>
+        <tr><th style="width:38%">Геометрия</th><th>Значение</th></tr>
+        <tr><td>Точка прикрепления</td><td><span class="mono">x = x₀ + w − 1</span> (уходит под карточку на 1 px)</td></tr>
+        <tr><td>Свёрнуто</td><td><span class="mono">14 × 44</span>; <span class="mono">y = y₀ + (h − 44)/2</span> = y₀ + 9</td></tr>
+        <tr><td>Наведение</td><td><span class="mono">180 × 104</span>; верх = <span class="mono">y₀</span></td></tr>
+        <tr><td>Скругление</td><td>ручка <span class="mono">0 7 7 0</span>, панель <span class="mono">0 10 10 0</span></td></tr>
+        <tr><td>Рамка</td><td><span class="mono">1 px</span> line-strong сверху/справа/снизу; слева <span class="mono">0</span></td></tr>
+        <tr><td>Статус</td><td>внешнее ребро <span class="mono">2 px</span> тоном; клип по форме вкладки</td></tr>
+        <tr><td>Фон</td><td><span class="mono">--panel</span> + тень стыка <span class="mono">linear-gradient(90deg, rgba(20,20,45,.10), transparent 8px)</span> — свет падает от карточки</td></tr>
+        <tr><td>Тон при находках</td><td>заливка тоном <span class="mono">9%</span> — цвет читается и на 14 px</td></tr>
+        <tr><td>Тень</td><td>ручка <span class="mono">0 1px 2px rgba(20,20,45,.07)</span>; панель <span class="mono">0 10px 26px rgba(20,20,45,.16)</span></td></tr>
+        <tr><td>Зазор до соседа</td><td><span class="mono">204 − 179 = 25 px</span> (карточка исполнителя не задевается)</td></tr>
+        <tr><td>Размер шрифта</td><td>счёт 9 / знак 11 / заголовок 10 / статус 10 / коды 8 · mono</td></tr>
+      </table>
+    </div>
+    <div class="col" style="flex:1 1 500px">
+      <table>
+        <tr><th style="width:42%">Движение и поведение</th><th>Значение</th></tr>
+        <tr><td>Задержка открытия</td><td><span class="mono">160 мс</span> — курсор, идущий мимо, не раскрывает</td></tr>
+        <tr><td>Задержка закрытия</td><td><span class="mono">250 мс</span> — можно перевести курсор в панель</td></tr>
+        <tr><td>Выезд</td><td>сдвиг <span class="mono">translateX(−166 → 0)</span>, <span class="mono">140 мс</span>, <span class="mono">cubic-bezier(.2,.8,.2,1)</span></td></tr>
+        <tr><td>Прозрачность</td><td><span class="mono">0 → 1</span> за <span class="mono">120 мс</span> (панель не «выпрыгивает» текстом)</td></tr>
+        <tr><td>Ручка при выезде</td><td>гаснет за <span class="mono">90 мс</span> — её место занимает панель</td></tr>
+        <tr><td>Курсор внутри</td><td>панель стоит; уход — закрытие через 250 мс</td></tr>
+        <tr><td>Клавиатура</td><td>Tab → фокус, Enter/Space → окно, Esc → закрыть</td></tr>
+        <tr><td>reduced-motion</td><td>без сдвига, без прозрачности и без задержек</td></tr>
+        <tr><td>Ширина &lt; 1100</td><td>панель 180 прижимается к вкладке, канва не сдвигается — она поповер</td></tr>
+      </table>
+      <div class="shot" style="margin-top:12px;padding:10px 12px">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--tertiary);margin-bottom:8px">Порядок слоёв снизу вверх</div>
+        <div style="display:flex;flex-direction:column;gap:4px;font-size:11.5px;color:var(--muted)">
+          <div style="display:flex;gap:8px;align-items:center"><span class="mono" style="width:22px;color:var(--tertiary)">1</span><span style="flex:0 0 auto;width:120px;height:8px;border-radius:3px;background:#e7e9ee"></span>ребра</div>
+          <div style="display:flex;gap:8px;align-items:center"><span class="mono" style="width:22px;color:var(--tertiary)">2</span><span style="flex:0 0 auto;width:120px;height:8px;border-radius:3px;background:#f0c4c0"></span>вкладка валидатора <b style="color:var(--text)">(здесь)</b></div>
+          <div style="display:flex;gap:8px;align-items:center"><span class="mono" style="width:22px;color:var(--tertiary)">3</span><span style="flex:0 0 auto;width:120px;height:8px;border-radius:3px;background:#c9ccd4"></span>карточки узлов — перекрывают стык на 1 px</div>
+          <div style="display:flex;gap:8px;align-items:center"><span class="mono" style="width:22px;color:var(--tertiary)">4</span><span style="flex:0 0 auto;width:120px;height:8px;border-radius:3px;background:#4176e6"></span>разделитель зоны «вне»</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:16px">
+    <div class="shot" style="padding:12px 16px">
+      <div style="font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--accent);margin-bottom:8px">Правки для воркера — по пунктам</div>
+      <ol style="margin:0;padding-left:1.2rem;font-size:12.5px;line-height:1.55;color:var(--muted)">
+        <li><b style="color:var(--text)">Силуэт.</b> <span class="mono">renderValidatorTab</span> (lib/client.js, ≈2579–2705):
+          убрать <span class="mono">&lt;rect rx=8 stroke&gt;</span>; группа — <span class="mono">translate(node.x + node.w − 1, node.y + (node.h − 44)/2)</span>;
+          форма 14 × 44 с квадратным левым краем и <span class="mono">r=7</span> справа; обводка line-strong по трём сторонам.</li>
+        <li><b style="color:var(--text)">Статус — ребро, а не палочка.</b> Убрать отдельный <span class="mono">rect x=width−3</span>;
+          полоса 2 px = внешняя граница справа, обрезанная тем же <span class="mono">clipPath</span>, что и фон.</li>
+        <li><b style="color:var(--text)">Счёт внутрь.</b> Убрать <span class="mono">circle cx=width−6.5</span>; цифра 9 px и знак 11 px по центру полосы.
+          Счёт без наведения остаётся в чипе шапки канвы.</li>
+        <li><b style="color:var(--text)">Выезд.</b> Два узла: ручка и панель <span class="mono">180 × 104</span> с
+          <span class="mono">transform: translate(-166px,0); opacity:0</span>; на наведении — <span class="mono">translate(0,0); opacity:1</span>,
+          <span class="mono">transition: transform 140ms cubic-bezier(.2,.8,.2,1), opacity 120ms linear</span>.
+          Задержки 160/250 мс — таймерами в <span class="mono">validatorHover</span> (сейчас раскрытие мгновенное, без задержек).</li>
+        <li><b style="color:var(--text)">Слой.</b> Перенести вызов <span class="mono">renderValidatorTab</span> выше
+          <span class="mono">canvasNodes.map</span> — карточки перекроют 1 px стыка, и он исчезнет.</li>
+        <li><b style="color:var(--text)">Рёбра не под полосой.</b> В <span class="mono">edgeSegments</span> (и в серверной раскладке
+          <span class="mono">lib/layout.js</span>): если точка выхода легла на правое ребро координатора,
+          <span class="mono">x += collapsedWidth − 1</span>. Иначе линия обрывается в середине вкладки — и вкладка читается как узел, на который «надет» провод.</li>
+        <li><b style="color:var(--text)">Состояния.</b> <span class="mono">validatorState(findings) → 'ok'|'warn'|'error'|'empty'</span>;
+          <span class="mono">info</span> не считается находкой в <span class="mono">validatorSummary</span>; <span class="mono">empty-graph</span> → «структура пуста».</li>
+        <li><b style="color:var(--text)">Чип шапки.</b> Один чип на состояние: «структура исправна» / «структура пуста» /
+          «1 находка · запуск доступен» / «4 находки · запуск заблокирован» (сейчас есть только красный).</li>
+        <li><b style="color:var(--text)">Доступность.</b> <span class="mono">data-validator-state</span>, <span class="mono">aria-expanded</span>,
+          <span class="mono">aria-label</span> по состоянию; фокус-рамка 2 px accent; <span class="mono">prefers-reduced-motion</span> — без перехода и задержек.</li>
+        <li><b style="color:var(--text)">Тесты.</b> <span class="mono">[data-validator-tab]</span> и числа 14/180 не меняются
+          (<span class="mono">checks/0162-validator-ui.mjs c1</span> зелёный); добавляются <span class="mono">[data-validator-card]</span> и
+          <span class="mono">[data-validator-state]</span> для новых проверок панели.</li>
+      </ol>
+    </div>
+  </div>
+
+  <div style="margin-top:14px" class="cols">
+    <div class="col shot" style="padding:12px 16px">
+      <div style="font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--success);margin-bottom:6px">Что не меняется</div>
+      <ul class="tight">
+        <li>Окно валидатора, вкладки окна узла и нижняя линейка — без правок.</li>
+        <li>Инварианты 0162: <span class="mono">attachedTo:'coordinator'</span>, <span class="mono">edge:'right'</span>,
+          <span class="mono">collapsedWidth:14</span>, <span class="mono">expandedWidth:180</span>, <span class="mono">hover:'expand'</span>.</li>
+        <li>Раскладка канвы не пересчитывается: вкладка живёт в зазоре 204 px.</li>
+      </ul>
+    </div>
+    <div class="col shot" style="padding:12px 16px">
+      <div style="font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--warn);margin-bottom:6px">Отклонения от прежнего макета — названы</div>
+      <ul class="tight">
+        <li><b>Высота 44 вместо 62.</b> 62 — во всю высоту блока: это и есть «сплющенный узел». 44 — ручка.</li>
+        <li><b>Счёт без бейджа.</b> Бейдж на 6 px наружу возвращает «уведомление на узле». Число — внутри полосы и в чипе шапки.</li>
+        <li><b>Панель выезжает, а не раздувается.</b> Ширина остаётся 180 — меняется положение, а не размер.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+</div>
+<script>
+  var scene = new URLSearchParams(location.search).get('scene');
+  if (scene) {
+    document.body.classList.add('scene');
+    Array.prototype.forEach.call(document.querySelectorAll('.scene'), function (node) { node.classList.remove('on'); });
+    var target = document.getElementById('s' + scene);
+    if (target) target.classList.add('on');
+  }
+</script>
+</body>
+</html>
+
+

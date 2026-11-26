@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>0333 · Макеты UI-эргономики панели — на утверждение</title>
+<style>
+  :root{
+    --bg:#0f1013; --page:#141518; --panel:#1b1e24; --card:#20242b; --line:#2a2f37; --line2:#3c434f;
+    --text:#e9ebee; --sec:#a8aeb8; --ter:#626974; --link:#4d7cf3; --ok:#31c46e; --warn:#e0a33e; --danger:#e5484d;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--page);color:var(--text);font:14px/1.55 'Segoe UI Variable Display','Segoe UI',Inter,Arial,sans-serif}
+  a{color:var(--link);text-decoration:none}
+  a:hover{text-decoration:underline}
+  header{position:sticky;top:0;z-index:10;background:rgba(15,16,19,.94);border-bottom:1px solid var(--line);backdrop-filter:blur(8px)}
+  .bar{max-width:1280px;margin:0 auto;padding:12px 24px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .logo{width:16px;height:16px;border-radius:4px;background:var(--link)}
+  .brand{font-weight:600}
+  .crumb{color:var(--ter)}
+  .bar .right{margin-left:auto;color:var(--ter);font-size:12px}
+  main{max-width:1280px;margin:0 auto;padding:28px 24px 64px}
+  h1{font-size:34px;line-height:1.15;margin:0 0 10px;font-weight:600}
+  .lead{color:var(--sec);max-width:900px;margin:0 0 18px}
+  .meta{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 22px}
+  .meta span{border:1px solid var(--line);background:var(--panel);color:var(--sec);border-radius:999px;padding:4px 12px;font-size:12px}
+  .approve{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin:18px 0 0}
+  .approve h2{font-size:15px;color:var(--link);margin:0 0 8px;letter-spacing:.02em}
+  .approve ol,.approve ul{margin:0;padding-left:22px;color:var(--text)}
+  .approve li{margin:5px 0}
+  .approve small{color:var(--ter)}
+  .approve .verdict{margin:12px 0 0;padding:10px 12px;border-left:2px solid var(--ok);background:rgba(49,196,110,.06);color:var(--sec);border-radius:0 8px 8px 0}
+  nav.toc{display:flex;gap:10px;flex-wrap:wrap;margin:20px 0 0}
+  nav.toc a{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:8px 14px;color:var(--sec);font-size:13px}
+  nav.toc a:hover{border-color:var(--link);color:var(--text);text-decoration:none}
+  section.mock{margin:44px 0 0;background:var(--bg);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+  .mockhead{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:20px 22px 0}
+  .num{font:700 12px/1 'Cascadia Mono',Consolas,monospace;color:var(--link);border:1px solid var(--link);border-radius:8px;padding:7px 9px}
+  .mockhead h2{font-size:21px;margin:0;font-weight:600}
+  .mockhead .open{margin-left:auto;border:1px solid var(--line2);border-radius:8px;padding:6px 12px;font-size:12.5px;color:var(--sec)}
+  .mockhead .open:hover{color:var(--text);border-color:var(--link);text-decoration:none}
+  .what{padding:14px 22px 6px;color:var(--sec);max-width:1050px}
+  .what strong{color:var(--text);font-weight:600}
+  .what ul{margin:6px 0 0;padding-left:20px}
+  .what li{margin:3px 0}
+  .what li::marker{color:var(--link)}
+  .frame{padding:10px 22px 22px}
+  .frame a{display:block;border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+  .frame img{display:block;width:100%;height:auto;background:#141518}
+  .frame .hint{color:var(--ter);font-size:12px;margin:8px 2px 0;display:flex;gap:16px;flex-wrap:wrap}
+  .files{margin-top:26px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 20px}
+  .files h2{font-size:15px;margin:0 0 10px}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--line)}
+  th{color:var(--ter);font-weight:600;font-size:11.5px;text-transform:uppercase;letter-spacing:.06em}
+  td code{font-family:'Cascadia Mono',Consolas,monospace;font-size:12px;color:var(--sec)}
+  .dev{margin-top:26px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 20px}
+  .dev h2{font-size:15px;margin:0 0 10px}
+  .dev ul{margin:0;padding-left:20px;color:var(--sec)}
+  .dev li{margin:5px 0}
+  .dev li::marker{color:var(--warn)}
+  .checks{margin-top:26px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 20px}
+  .checks h2{font-size:15px;margin:0 0 10px}
+  pre{background:#0b0c0e;border:1px solid var(--line);border-radius:8px;padding:12px 14px;overflow:auto;color:var(--sec);font:12px/1.6 'Cascadia Mono',Consolas,monospace}
+  footer{max-width:1280px;margin:0 auto;padding:26px 24px 48px;color:var(--ter);font-size:12px;border-top:1px solid var(--line)}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;color:var(--ter);font-size:12px;margin-top:10px}
+  .legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+  @media (max-width:720px){h1{font-size:26px}.mockhead h2{font-size:18px}}
+</style>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <span class="logo"></span>
+    <span class="brand">DeepSeek Harness</span>
+    <span class="crumb">/ дизайн · UI-эргономика панели</span>
+    <span class="right">Задание 0333 · правка 0334 · макеты v1.1 · 2026-11-22</span>
+  </div>
+</header>
+
+<main>
+  <h1>UI-эргономика панели: четыре макета на утверждение</h1>
+  <p class="lead">Статические макеты к спеке <a href="../2026-11-22-ergonomics.md">docs/design/ui-ergonomics/2026-11-22-ergonomics.md</a>: пиктограмма якорей, палитра узлов, подвижное окно настроек и карточка связи source&nbsp;→&nbsp;target. Код панели и спека не менялись.</p>
+  <div class="meta">
+    <span>4 SVG · 1440 × 1200 px</span>
+    <span>Русские подписи</span>
+    <span>Размеры в px</span>
+    <span>Задание <a href="../../../tasks/0333/task.md">0333</a></span>
+    <span>Проверка: node docs/tasks/0333/check.mjs c1 · 0334/check.mjs c1</span>
+  </div>
+
+  <div class="approve">
+    <h2>Что утверждаем — коротко</h2>
+    <ol>
+      <li><strong>01 · Якоря.</strong> Якорь — SVG-силуэт 12 × 12 в плитке 16 × 16 на оси x = node.w − 34 (шестерёнка — та же ось, y = 34); точка активности 8 px вынесена из плитки с зазором 8 px и с ней не пересекается.</li>
+      <li><strong>02 · Палитра.</strong> Высота H = clamp(320 px, calc(100vh − 192 px), 560 px); прокручивается только список, у палитры своя нижняя граница.</li>
+      <li><strong>03 · Окно настроек.</strong> Окно 560 × 520 px двигается за шапку; подложка 0.22, позиция в uiStore v4, изменения видны без закрытия.</li>
+      <li><strong>04 · Связь.</strong> Стрелка всегда source → target; предпросмотр 48 px, список связей узла, кнопка с полной подписью.</li>
+    </ol>
+    <p class="verdict">Утвердить все четыре макета или вернуть с правками — решение заказчика; подписи «Что утверждаем» стоят у каждого макета, отклонения перечислены в конце страницы.</p>
+  </div>
+
+  <nav class="toc">
+    <a href="#m01">01 · Якоря у шестерёнки</a>
+    <a href="#m02">02 · Палитра со scroll</a>
+    <a href="#m03">03 · Подвижное окно</a>
+    <a href="#m04">04 · Связь source → target</a>
+    <a href="#files">Файлы</a>
+    <a href="#deviations">Отклонения</a>
+  </nav>
+
+  <section class="mock" id="m01">
+    <div class="mockhead">
+      <span class="num">01</span>
+      <h2>Пиктограмма якорей рядом с шестерёнкой</h2>
+      <a class="open" href="01-anchors.svg" target="_blank" rel="noopener">Открыть SVG ↗</a>
+    </div>
+    <div class="what">
+      <strong>Что утверждаем:</strong>
+      <ul>
+        <li>Обе кнопки — один класс «кнопка-розетка» 16 × 16 px, radius 4 px, глиф 12 × 12, поле 2 px; плитка x = node.w − 34, y = 14, шестерёнка на той же оси y = 34.</li>
+        <li>Якорь рисуется SVG-силуэтом (stroke 1.5 px), а не юникод-глифом; шестерёнка остаётся ⚙ 14 px с той же плиткой.</li>
+        <li>Восемь состояний: норма, внимание, ошибка, нет данных, наведение, фокус, нажатие, меню открыто — каждое подписано словом, цвет только дублирует.</li>
+        <li>Tooltip 280 px, z-index 47; Tab → Enter/Space → Esc; зелёная точка активности 8 px (cx = node.w − 10, cy = 10, r = 4) вместо цифры/галочки и не пересекается с плиткой.</li>
+      </ul>
+    </div>
+    <div class="frame">
+      <a href="01-anchors.svg" target="_blank" rel="noopener"><img src="01-anchors.svg" width="1440" height="1200" alt="Макет 01: якорь и шестерёнка — до/после, зелёная точка активности вне плитки, восемь состояний, геометрия силуэта, tooltip"></a>
+      <div class="hint"><span>Исходник: 01-anchors.svg</span><span>1440 × 1200 px</span><span>Иллюстрации: ×2 и ×5, реальные размеры подписаны</span></div>
+    </div>
+  </section>
+
+  <section class="mock" id="m02">
+    <div class="mockhead">
+      <span class="num">02</span>
+      <h2>Палитра узлов: своя высота и свой scroll</h2>
+      <a class="open" href="02-palette.svg" target="_blank" rel="noopener">Открыть SVG ↗</a>
+    </div>
+    <div class="what">
+      <strong>Что утверждаем:</strong>
+      <ul>
+        <li>Коробка 250 × H, где H = clamp(320 px, calc(100vh − 192 px), 560 px); overflow: hidden, ширина не меняется.</li>
+        <li>Скроллится только список (flex: 1 1 auto, min-height: 0, overflow-y: auto); шапка 40 px, поиск 36 px, подсказка 40 px — вне прокрутки.</li>
+        <li>Нижняя граница: список padding 0 2px 12px 0, 12 px до следующего блока; карточка не обрезается по низу.</li>
+        <li>Липкие заголовки групп, поиск «4/12», свёрнутый корешок 44 px, roving tabindex и фокус 2 px T.link.</li>
+      </ul>
+    </div>
+    <div class="frame">
+      <a href="02-palette.svg" target="_blank" rel="noopener"><img src="02-palette.svg" width="1440" height="1200" alt="Макет 02: палитра узлов 250 px с внутренним списком, слоты, схема «сейчас/после», состояния"></a>
+      <div class="hint"><span>Исходник: 02-palette.svg</span><span>1440 × 1200 px</span><span>Палитра показана в масштабе 1.45</span></div>
+    </div>
+  </section>
+
+  <section class="mock" id="m03">
+    <div class="mockhead">
+      <span class="num">03</span>
+      <h2>Окно настроек: двигается и показывает изменения</h2>
+      <a class="open" href="03-settings.svg" target="_blank" rel="noopener">Открыть SVG ↗</a>
+    </div>
+    <div class="what">
+      <strong>Что утверждаем:</strong>
+      <ul>
+        <li>Окно 560 × 520 px двигается за всю шапку 37 px: ручка 12 × 12 из шести точек, порог 3 px, 1:1 к курсору, кламп 8 px от краёв.</li>
+        <li>Подложка светлее — rgba(20,22,26,0.22), схема за окном видна; слои 60 (подложка) и 61 (окно), удаление 70, закрытие с правками 80.</li>
+        <li>Изменения видны без закрытия: строка «сохранено: 3 поля · 4 узла · 5 связей — схема обновлена», подсветка узла 2 px T.success 1200 ms.</li>
+        <li>Позиция хранится в uiStore v4 (windows.node / windows.folder); «Свернуть» уводит окно в пилюлю 220 × 36.</li>
+      </ul>
+    </div>
+    <div class="frame">
+      <a href="03-settings.svg" target="_blank" rel="noopener"><img src="03-settings.svg" width="1440" height="1200" alt="Макет 03: модальное окно настроек узла 560 × 520 с ручкой в шапке, светлой подложкой, строкой сохранения и свёрнутой пилюлей"></a>
+      <div class="hint"><span>Исходник: 03-settings.svg</span><span>1440 × 1200 px</span><span>Экран показан схематично, окно — в реальных пропорциях</span></div>
+    </div>
+  </section>
+
+  <section class="mock" id="m04">
+    <div class="mockhead">
+      <span class="num">04</span>
+      <h2>Назначение связи: source → target и предпросмотр</h2>
+      <a class="open" href="04-edges.svg" target="_blank" rel="noopener">Открыть SVG ↗</a>
+    </div>
+    <div class="what">
+      <strong>Что утверждаем:</strong>
+      <ul>
+        <li>Карточка «Новая связь» min(520 px, 100 %): два select с подписями «source — отсюда» и «target — сюда», кнопка обмена «⇄» 28 × 28.</li>
+        <li>Стрелка всегда идёт source → target, как from/to в файле; смысл вида подписан словами и может читаться наоборот (review: target проверяет source).</li>
+        <li>Полоса предпросмотра 48 px: чипы 132 × 24, линия 1.5 px цветом вида, наконечник у target; для peer — пунктир 4 3 без наконечников.</li>
+        <li>Список связей узла до создания; кнопка «Создать: coordinator → worker (delegate)»; проверки дубля, self-link и peer — до записи.</li>
+      </ul>
+    </div>
+    <div class="frame">
+      <a href="04-edges.svg" target="_blank" rel="noopener"><img src="04-edges.svg" width="1440" height="1200" alt="Макет 04: карточка новой связи source → target, четыре вида связи, предпросмотр стрелки, проверки до записи"></a>
+      <div class="hint"><span>Исходник: 04-edges.svg</span><span>1440 × 1200 px</span><span>Карточка показана в масштабе 1.5</span></div>
+    </div>
+  </section>
+
+  <div class="files" id="files">
+    <h2>Файлы макетов</h2>
+    <table>
+      <thead><tr><th>Файл</th><th>Что внутри</th><th>Размер</th></tr></thead>
+      <tbody>
+        <tr><td><a href="01-anchors.svg">01-anchors.svg</a></td><td>Якорь и шестерёнка: до/после, 8 состояний, геометрия, tooltip, aria</td><td><code>22.7 КБ</code></td></tr>
+        <tr><td><a href="02-palette.svg">02-palette.svg</a></td><td>Палитра 250 × H, слоты, правила scroll, состояния, клавиатура</td><td><code>18.9 КБ</code></td></tr>
+        <tr><td><a href="03-settings.svg">03-settings.svg</a></td><td>Окно 560 × 520, drag-handle, подложка, позиция, пилюля, состояния</td><td><code>18.3 КБ</code></td></tr>
+        <tr><td><a href="04-edges.svg">04-edges.svg</a></td><td>Карточка связи, 4 вида, предпросмотр, список связей, проверки</td><td><code>19.3 КБ</code></td></tr>
+        <tr><td><a href="preview.html">preview.html</a></td><td>Эта страница: все 4 макета, подписи «Что утверждаем», ссылки</td><td><code>HTML</code></td></tr>
+      </tbody>
+    </table>
+    <div class="legend">
+      <span><i style="background:#4d7cf3"></i>T.link · действие и фокус</span>
+      <span><i style="background:#31c46e"></i>T.success · норма, сохранено</span>
+      <span><i style="background:#e0a33e"></i>T.warn · внимание, дубль</span>
+      <span><i style="background:#e5484d"></i>T.danger · ошибка</span>
+      <span><i style="background:#626974"></i>T.tertiary · подписи</span>
+    </div>
+  </div>
+
+  <div class="dev" id="deviations">
+    <h2>Отклонения и границы</h2>
+    <ul>
+      <li>Макеты статические (SVG + HTML): живого приложения и скриншотов из него нет — так задано в 0333.</li>
+      <li>Показана тёмная тема DSH. В коде цвета остаются токенами <code>T.*</code> с fallback; hex на макетах — значения тёмной темы, а не жёстко заданные цвета.</li>
+      <li>В макете 01 шестерёнка нарисована юникод-глифом ⚙, как в текущем коде; замены шестерёнки на SVG нет — спека её не просит.</li>
+      <li>Правка <a href="../../../tasks/0334/task.md">0334</a>: в макете 01 плитка якоря и зелёная точка активности разнесены. «Зазор 8 px» — расстояние от правого края плитки до <em>центра</em> точки; свободный просвет между краями 4 px, поэтому плитка и точка не пересекаются.</li>
+      <li>Для свободного просвета ровно 8 px центр точки должен быть <code>w − 6</code>: это меняет координаты задания 0334, поэтому не применялось без решения заказчика.</li>
+      <li><code>y = 34</code> у шестерёнки прочитано как верх её плитки 16 × 16 (центр 42, базовая линия ⚙ ≈ 47): при чтении «34 — центр глифа» плитки 16 × 16 пересекались бы на 4 px.</li>
+      <li>Масштабы иллюстраций указаны (01 — ×2 и ×5; 02 — 1.45; 04 — 1.5); реальные размеры в px подписаны рядом.</li>
+      <li>Спека <a href="../2026-11-22-ergonomics.md">2026-11-22-ergonomics.md</a> и код панели не изменялись; задача 0333 не коммитилась.</li>
+      <li>Осознанно не показаны: интерактивный drag, живой поиск, реальные данные проекта — это поведение, а не макет; оно описано в спеке и проверяется в реализации.</li>
+    </ul>
+  </div>
+
+  <div class="checks">
+    <h2>Как проверять</h2>
+    <pre>node docs/tasks/0333/check.mjs c1
+node test/contract.test.mjs</pre>
+    <p style="color:var(--sec);margin:8px 0 0">Макеты открываются локально: <code>preview.html</code> показывает все четыре SVG и ссылается на исходники. Ничего не генерируется скриптом при просмотре.</p>
+  </div>
+
+  <footer>
+    0333 · узел designer · макеты на утверждение заказчиком · <a href="../../../tasks/0333/task.md">задание 0333</a> · <a href="../2026-11-22-ergonomics.md">спека</a>
+  </footer>
+</main>
+</body>
+</html>

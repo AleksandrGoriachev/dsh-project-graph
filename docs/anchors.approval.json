@@ -1,0 +1,21 @@
+{
+  "version": 2,
+  "anchors": "docs/anchors.json",
+  "algo": "sha256",
+  "hash": "f14076e3b1976ef8f641c1998ebd61141e940eee3cd4163170e5369279f34dcc",
+  "bytes": 6059,
+  "layer": "project",
+  "sides": "project",
+  "enforcedBy": "nodes",
+  "by": [
+    "пользователь"
+  ],
+  "at": "2026-11-20T10:12:06.474Z",
+  "publicKeyFingerprint": "6eb4af89734cda7a",
+  "signature": {
+    "keyId": "human-1",
+    "algo": "ed25519",
+    "covers": "hash+by+at",
+    "value": "kRHWBZyEBvENn8BSp8nAMVLoyHUFbwdsGPKKJy8BgAxN2BfcB3+XyvieGyT8iiOr20mqOX7haLe9gvp8VxV9Aw=="
+  }
+}
